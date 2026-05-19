@@ -13,11 +13,12 @@ import EarningsPage from '@/components/dashboard/EarningsPage';
 import AnalyticsPage from '@/components/dashboard/AnalyticsPage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
+import IncubatorPage from '@/components/dashboard/IncubatorPage';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator'>('feed');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -85,6 +86,7 @@ export default function DashboardPage() {
       case 'projects': return 'Projets';
       case 'earnings': return 'Revenus';
       case 'analytics': return 'Analytiques';
+      case 'incubator': return 'Incubateur Virtuel';
       default: return 'Tableau de bord';
     }
   };
@@ -118,11 +120,12 @@ export default function DashboardPage() {
         {/* Content Area */}
         <main className="flex-1 overflow-hidden">
           {activeTab === 'feed' && <div className="h-full overflow-y-auto"><ActivityFeed user={user} /></div>}
-          {activeTab === 'connections' && <div className="h-full overflow-y-auto"><ConnectionsPage user={user} /></div>}
+          {activeTab === 'connections' && <div className="h-full overflow-y-auto"><ConnectionsPage user={user} setActiveTab={setActiveTab} /></div>}
           {activeTab === 'messages' && <div className="h-full overflow-y-auto"><MessagesPage user={user} /></div>}
           {activeTab === 'projects' && <div className="h-full overflow-y-auto"><ProjectsPage user={user} /></div>}
           {activeTab === 'earnings' && <div className="h-full overflow-y-auto"><EarningsPage user={user} /></div>}
           {activeTab === 'analytics' && <div className="h-full overflow-y-auto"><AnalyticsPage user={user} /></div>}
+          {activeTab === 'incubator' && <div className="h-full overflow-y-auto"><IncubatorPage user={user} /></div>}
         </main>
       </div>
     </div>

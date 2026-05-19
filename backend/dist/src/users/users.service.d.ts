@@ -3,12 +3,12 @@ export declare class UsersService {
     private prisma;
     constructor(prisma: PrismaService);
     findOne(id: string): Promise<{
+        id: string;
         email: string;
         firstName: string;
         lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
         avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
         isEmailVerified: boolean;
         createdAt: Date;
     }>;
@@ -17,14 +17,20 @@ export declare class UsersService {
         lastName?: string;
         avatarUrl?: string;
     }): Promise<{
+        id: string;
         email: string;
         firstName: string;
         lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
         avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
     }>;
     getSuggestions(userId: string): Promise<{
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
         freelancerProfile: {
             id: string;
             createdAt: Date;
@@ -43,15 +49,9 @@ export declare class UsersService {
             createdAt: Date;
             updatedAt: Date;
             bio: string | null;
-            userId: string;
             companyName: string | null;
             website: string | null;
+            userId: string;
         } | null;
-        email: string;
-        firstName: string;
-        lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
-        avatarUrl: string | null;
     }[]>;
 }

@@ -12,10 +12,11 @@ import { IncubatorModule } from './incubator/incubator.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { FeedModule } from './feed/feed.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, FreelancersModule, EntrepreneursModule, ProjectsModule, MessagingModule, NotificationsModule, IncubatorModule, AdminModule, UploadsModule, AnalyticsModule, PrismaModule],
+  imports: [AuthModule, UsersModule, FreelancersModule, EntrepreneursModule, ProjectsModule, MessagingModule, NotificationsModule, IncubatorModule, AdminModule, UploadsModule, AnalyticsModule, PrismaModule, FeedModule],
   controllers: [AppController],
   providers: [AppService],
 })

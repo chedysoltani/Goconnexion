@@ -8,11 +8,11 @@ export declare class IncubatorService {
         category: string;
     }): Promise<{
         author: {
+            id: string;
             firstName: string;
             lastName: string;
-            role: import("@prisma/client").$Enums.UserRole;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
     } & {
         id: string;
@@ -38,11 +38,11 @@ export declare class IncubatorService {
             postId: string;
         })[];
         author: {
+            id: string;
             firstName: string;
             lastName: string;
-            role: import("@prisma/client").$Enums.UserRole;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
         likes: {
             id: string;
@@ -73,11 +73,11 @@ export declare class IncubatorService {
             postId: string;
         })[];
         author: {
+            id: string;
             firstName: string;
             lastName: string;
-            role: import("@prisma/client").$Enums.UserRole;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
         likes: {
             id: string;

@@ -6,8 +6,8 @@ import { User } from '@/types/auth';
 
 interface DashboardSidebarProps {
   user: User | null;
-  activeTab: 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics';
-  setActiveTab: (tab: 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics') => void;
+  activeTab: 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator';
+  setActiveTab: (tab: 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator') => void;
 }
 
 interface NavItem {
@@ -73,6 +73,15 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab }: Dash
         icon: (
           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 8v8l-4-4-4 4M4 16v-8l4 4 4-4" />
+          </svg>
+        ),
+      },
+      {
+        id: 'incubator',
+        label: 'Incubateur Virtuel',
+        icon: (
+          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l.707-.707m2.808 13.07a3 3 0 11-5.714 0" />
           </svg>
         ),
       },

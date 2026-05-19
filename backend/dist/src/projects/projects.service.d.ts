@@ -34,9 +34,9 @@ export declare class ProjectsService {
             createdAt: Date;
             updatedAt: Date;
             bio: string | null;
-            userId: string;
             companyName: string | null;
             website: string | null;
+            userId: string;
         };
     } & {
         id: string;
@@ -61,9 +61,9 @@ export declare class ProjectsService {
             createdAt: Date;
             updatedAt: Date;
             bio: string | null;
-            userId: string;
             companyName: string | null;
             website: string | null;
+            userId: string;
         };
         applications: ({
             project: {
@@ -82,9 +82,9 @@ export declare class ProjectsService {
             createdAt: Date;
             updatedAt: Date;
             status: import("@prisma/client").$Enums.ApplicationStatus;
-            projectId: string;
             freelancerId: string;
             coverLetter: string | null;
+            projectId: string;
         })[];
     } & {
         id: string;
@@ -130,26 +130,26 @@ export declare class ProjectsService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        projectId: string;
         freelancerId: string;
         coverLetter: string | null;
+        projectId: string;
     }>;
     getApplications(projectId: string, userId: string): Promise<({} & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        projectId: string;
         freelancerId: string;
         coverLetter: string | null;
+        projectId: string;
     })[]>;
     updateApplicationStatus(applicationId: string, userId: string, status: ApplicationStatus): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        projectId: string;
         freelancerId: string;
         coverLetter: string | null;
+        projectId: string;
     }>;
 }

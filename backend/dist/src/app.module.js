@@ -21,13 +21,14 @@ const incubator_module_1 = require("./incubator/incubator.module");
 const admin_module_1 = require("./admin/admin.module");
 const uploads_module_1 = require("./uploads/uploads.module");
 const analytics_module_1 = require("./analytics/analytics.module");
+const feed_module_1 = require("./feed/feed.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule, users_module_1.UsersModule, freelancers_module_1.FreelancersModule, entrepreneurs_module_1.EntrepreneursModule, projects_module_1.ProjectsModule, messaging_module_1.MessagingModule, notifications_module_1.NotificationsModule, incubator_module_1.IncubatorModule, admin_module_1.AdminModule, uploads_module_1.UploadsModule, analytics_module_1.AnalyticsModule, prisma_module_1.PrismaModule],
+        imports: [auth_module_1.AuthModule, users_module_1.UsersModule, freelancers_module_1.FreelancersModule, entrepreneurs_module_1.EntrepreneursModule, projects_module_1.ProjectsModule, messaging_module_1.MessagingModule, notifications_module_1.NotificationsModule, incubator_module_1.IncubatorModule, admin_module_1.AdminModule, uploads_module_1.UploadsModule, analytics_module_1.AnalyticsModule, prisma_module_1.PrismaModule, feed_module_1.FeedModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

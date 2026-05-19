@@ -42,6 +42,9 @@ model User {
   uploadedFiles        File[]
   incubatorComments    IncubatorComment[]
   incubatorLikes       IncubatorLike[]
+  feedPosts            FeedPost[]
+  feedPostLikes        FeedPostLike[]
+  feedPostComments     FeedPostComment[]
 }
 
 model FreelancerProfile {
@@ -196,4 +199,36 @@ model File {
   messageId  String?
   message    Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
+}
+
+model FeedPost {
+  id        String            @id @default(uuid())
+  content   String
+  imageUrl  String?
+  authorId  String
+  author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     FeedPostLike[]
+  comments  FeedPostComment[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model FeedPostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model FeedPostComment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
 }

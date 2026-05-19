@@ -4,11 +4,12 @@ export declare class FreelancersController {
     constructor(freelancersService: FreelancersService);
     findAll(skills?: string, minRate?: number, maxRate?: number, availableOnly?: string): Promise<({
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
     } & {
         id: string;
@@ -25,11 +26,12 @@ export declare class FreelancersController {
     })[]>;
     getProfile(req: any): Promise<{
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
     } & {
         id: string;

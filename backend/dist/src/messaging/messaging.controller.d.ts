@@ -5,10 +5,11 @@ export declare class MessagingController {
     startConversation(req: any, targetUserId: string): Promise<{
         participants: ({
             user: {
+                id: string;
                 firstName: string;
                 lastName: string;
-                id: string;
                 avatarUrl: string | null;
+                role: import("@prisma/client").$Enums.UserRole;
             };
         } & {
             id: string;
@@ -27,16 +28,17 @@ export declare class MessagingController {
         messages: {
             id: string;
             createdAt: Date;
+            content: string;
             conversationId: string;
             senderId: string;
-            content: string;
         }[];
         participants: ({
             user: {
+                id: string;
                 firstName: string;
                 lastName: string;
-                id: string;
                 avatarUrl: string | null;
+                role: import("@prisma/client").$Enums.UserRole;
             };
         } & {
             id: string;
@@ -53,30 +55,30 @@ export declare class MessagingController {
     })[]>;
     getMessages(conversationId: string, req: any): Promise<({
         sender: {
+            id: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
         createdAt: Date;
+        content: string;
         conversationId: string;
         senderId: string;
-        content: string;
     })[]>;
     sendMessage(conversationId: string, req: any, content: string): Promise<{
         sender: {
+            id: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
         createdAt: Date;
+        content: string;
         conversationId: string;
         senderId: string;
-        content: string;
     }>;
 }

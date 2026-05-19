@@ -178,6 +178,21 @@ export const api = {
     dashboard: () => request('/analytics/dashboard'),
   },
 
+  feed: {
+    list: () => request('/feed'),
+    create: (data: { content: string; imageUrl?: string }) => request('/feed', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    toggleLike: (id: string) => request(`/feed/${id}/like`, {
+      method: 'POST',
+    }),
+    addComment: (id: string, content: string) => request(`/feed/${id}/comment`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
+  },
+
   uploads: {
     upload: (file: File) => {
       const formData = new FormData();

@@ -4,10 +4,10 @@ export declare class EntrepreneursService {
     constructor(prisma: PrismaService);
     getProfile(userId: string): Promise<{
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
         projects: {
@@ -26,9 +26,9 @@ export declare class EntrepreneursService {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     }>;
     updateProfile(userId: string, data: {
         companyName?: string;
@@ -39,16 +39,16 @@ export declare class EntrepreneursService {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     }>;
     findAll(): Promise<({
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
@@ -56,8 +56,8 @@ export declare class EntrepreneursService {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     })[]>;
 }

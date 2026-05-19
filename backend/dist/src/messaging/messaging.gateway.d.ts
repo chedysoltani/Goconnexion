@@ -22,16 +22,16 @@ export declare class MessagingGateway implements OnGatewayConnection, OnGatewayD
         content: string;
     }): Promise<{
         sender: {
+            id: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
         createdAt: Date;
+        content: string;
         conversationId: string;
         senderId: string;
-        content: string;
     }>;
 }

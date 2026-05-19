@@ -4,11 +4,12 @@ export declare class FreelancersService {
     constructor(prisma: PrismaService);
     getProfile(userId: string): Promise<{
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
     } & {
         id: string;
@@ -51,11 +52,12 @@ export declare class FreelancersService {
         availableOnly?: boolean;
     }): Promise<({
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
+            role: import("@prisma/client").$Enums.UserRole;
         };
     } & {
         id: string;

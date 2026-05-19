@@ -4,10 +4,10 @@ export declare class EntrepreneursController {
     constructor(entrepreneursService: EntrepreneursService);
     findAll(): Promise<({
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
@@ -15,16 +15,16 @@ export declare class EntrepreneursController {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     })[]>;
     getProfile(req: any): Promise<{
         user: {
+            id: string;
             email: string;
             firstName: string;
             lastName: string;
-            id: string;
             avatarUrl: string | null;
         };
         projects: {
@@ -43,9 +43,9 @@ export declare class EntrepreneursController {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     }>;
     updateProfile(req: any, body: {
         companyName?: string;
@@ -56,8 +56,8 @@ export declare class EntrepreneursController {
         createdAt: Date;
         updatedAt: Date;
         bio: string | null;
-        userId: string;
         companyName: string | null;
         website: string | null;
+        userId: string;
     }>;
 }

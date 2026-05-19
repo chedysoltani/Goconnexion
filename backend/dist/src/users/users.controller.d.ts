@@ -3,6 +3,12 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     getSuggestions(req: any): Promise<{
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
         freelancerProfile: {
             id: string;
             createdAt: Date;
@@ -21,24 +27,18 @@ export declare class UsersController {
             createdAt: Date;
             updatedAt: Date;
             bio: string | null;
-            userId: string;
             companyName: string | null;
             website: string | null;
+            userId: string;
         } | null;
-        email: string;
-        firstName: string;
-        lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
-        avatarUrl: string | null;
     }[]>;
     findOne(id: string): Promise<{
+        id: string;
         email: string;
         firstName: string;
         lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
         avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
         isEmailVerified: boolean;
         createdAt: Date;
     }>;
@@ -47,11 +47,11 @@ export declare class UsersController {
         lastName?: string;
         avatarUrl?: string;
     }): Promise<{
+        id: string;
         email: string;
         firstName: string;
         lastName: string;
-        role: import("@prisma/client").$Enums.UserRole;
-        id: string;
         avatarUrl: string | null;
+        role: import("@prisma/client").$Enums.UserRole;
     }>;
 }

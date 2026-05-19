@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
+import { api } from '@/lib/api';
 import {
   Heart,
   MessageCircle,
@@ -9,356 +10,381 @@ import {
   Image as ImageIcon,
   Send,
   X,
+  Sparkles,
+  User as UserIcon,
+  Globe,
 } from 'lucide-react';
 
 interface EnhancedActivityFeedProps {
   user: User | null;
 }
 
-interface ActivityItem {
+interface FeedComment {
   id: string;
-  type: 'post' | 'connection' | 'project' | 'achievement' | 'story';
+  content: string;
+  createdAt: string;
   author: {
-    name: string;
-    avatar: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+  };
+}
+
+interface FeedPost {
+  id: string;
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  author: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
     role: string;
   };
-  content: string;
-  timestamp: Date;
-  likes?: number;
-  comments?: number;
-  image?: string;
-  tags?: string[];
-  mentions?: string[];
-  liked?: boolean;
+  likes: Array<{ userId: string }>;
+  comments: FeedComment[];
 }
 
 export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps) {
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      type: 'story',
-      author: {
-        name: 'Marie Laurent',
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face',
-        role: 'Freelancer | Développeuse',
-      },
-      content: 'Aujourd\'hui, j\'ai signé mon plus grand contrat ! Une mission de 6 mois pour une entreprise fintech. Merci GoConnexions pour m\'avoir connectée avec le client parfait. 🚀',
-      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      image: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&h=400&fit=crop',
-      likes: 156,
-      comments: 23,
-      liked: false,
-    },
-    {
-      id: '2',
-      type: 'post',
-      author: {
-        name: 'Thomas Bernard',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-        role: 'Fondateur & CEO',
-      },
-      content: 'Super excité de lancer notre nouvelle plateforme de recrutement IA ! Après 6 mois de développement, nous sommes prêts à révolutionner le marché. Merci à toute l\'équipe pour leur dévouement. 🚀',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop',
-      likes: 89,
-      comments: 34,
-      tags: ['startup', 'IA', 'recrutement'],
-      liked: false,
-    },
-    {
-      id: '3',
-      type: 'connection',
-      author: {
-        name: 'Sophie Martin',
-        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face',
-        role: 'Experte en Cybersécurité',
-      },
-      content: 'Nouvelle collaboration avec David Chen - Expert en cybersécurité. Nous travaillons sur un projet de blockchain pour la banque. 🔐',
-      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-      image: 'https://images.unsplash.com/photo-1633412802994-5c058f151b66?w=800&h=400&fit=crop',
-      likes: 45,
-      comments: 12,
-      liked: false,
-    },
-  ]);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [showImageInput, setShowImageInput] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'public' | 'profile'>('public');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [newPost, setNewPost] = useState('');
-  const [showImageUpload, setShowImageUpload] = useState(false);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  // States to hold typed comments per post
+  const [postCommentsInputs, setPostCommentsInputs] = useState<Record<string, string>>({});
+  // States to toggle comments expand per post
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
-  const formatTimeAgo = (date: Date) => {
+  const fetchFeed = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.feed.list();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching feed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeed();
+  }, [user]);
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostContent.trim()) return;
+
+    try {
+      await api.feed.create({
+        content: newPostContent,
+        imageUrl: newImageUrl.trim() ? newImageUrl.trim() : undefined,
+      });
+      setNewPostContent('');
+      setNewImageUrl('');
+      setShowImageInput(false);
+      await fetchFeed();
+    } catch (error) {
+      console.error('Error creating feed post:', error);
+    }
+  };
+
+  const handleToggleLike = async (postId: string) => {
+    try {
+      await api.feed.toggleLike(postId);
+      await fetchFeed();
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  };
+
+  const handleAddComment = async (postId: string) => {
+    const commentText = postCommentsInputs[postId];
+    if (!commentText || !commentText.trim()) return;
+
+    try {
+      await api.feed.addComment(postId, commentText);
+      setPostCommentsInputs(prev => ({ ...prev, [postId]: '' }));
+      await fetchFeed();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInHours / 24);
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInDays > 0) {
-      return `il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
-    } else if (diffInHours > 0) {
-      return `il y a ${diffInHours} heure${diffInHours > 1 ? 's' : ''}`;
-    } else if (diffInMinutes > 0) {
-      return `il y a ${diffInMinutes} min`;
-    } else {
-      return 'à l\'instant';
+    if (diffInDays > 0) return `il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
+    if (diffInHours > 0) return `il y a ${diffInHours} heure${diffInHours > 1 ? 's' : ''}`;
+    if (diffInMinutes > 0) return `il y a ${diffInMinutes} min`;
+    return 'à l\'instant';
+  };
+
+  const isLikedByCurrentUser = (post: FeedPost) => {
+    if (!user) return false;
+    return post.likes.some(like => like.userId === user.id);
+  };
+
+  const filteredPosts = posts.filter(post => {
+    if (activeFilter === 'profile') {
+      return post.author.id === user?.id;
     }
-  };
-
-  const getActivityBadge = (type: string) => {
-    const badges = {
-      story: { label: 'Story', color: 'bg-amber-100 text-amber-700' },
-      post: { label: 'Post', color: 'bg-blue-100 text-blue-700' },
-      connection: { label: 'Connexion', color: 'bg-emerald-100 text-emerald-700' },
-      project: { label: 'Projet', color: 'bg-purple-100 text-purple-700' },
-      achievement: { label: 'Succès', color: 'bg-orange-100 text-orange-700' },
-    };
-    const badge = badges[type as keyof typeof badges] || badges.post;
-    return (
-      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${badge.color}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
-  const toggleLike = (id: string) => {
-    const newLiked = new Set(likedPosts);
-    if (newLiked.has(id)) {
-      newLiked.delete(id);
-    } else {
-      newLiked.add(id);
-    }
-    setLikedPosts(newLiked);
-  };
-
-  const handlePostSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPost.trim()) {
-      const post: ActivityItem = {
-        id: Date.now().toString(),
-        type: 'post',
-        author: {
-          name: `${user?.firstName || 'Utilisateur'} ${user?.lastName || ''}`,
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4?w=400&h=400&fit=crop&crop=face',
-          role: user?.role || 'Professionnel',
-        },
-        content: newPost,
-        timestamp: new Date(),
-        likes: 0,
-        comments: 0,
-        liked: false,
-      };
-      setActivities([post, ...activities]);
-      setNewPost('');
-    }
-  };
+    return true;
+  });
 
   return (
-    <div className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100">
-      <div className="max-w-2xl mx-auto py-6">
+    <div className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100 min-h-full">
+      <div className="max-w-2xl mx-auto py-6 px-4">
+        {/* Toggle Public / Profile */}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => setActiveFilter('public')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              activeFilter === 'public'
+                ? 'bg-accent text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            <Globe size={14} />
+            <span>Fil Public</span>
+          </button>
+          <button
+            onClick={() => setActiveFilter('profile')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              activeFilter === 'profile'
+                ? 'bg-accent text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            <UserIcon size={14} />
+            <span>Mon Profil</span>
+          </button>
+        </div>
+
         {/* Create Post Card */}
-        <div className="bg-white shadow-sm border-b border-slate-100 rounded-xl mb-4">
-          <div className="p-4 sm:p-5">
-            <div className="flex gap-3">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
-                </div>
-              </div>
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6 p-4 sm:p-5">
+          <div className="flex gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold flex-shrink-0">
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </div>
 
-              {/* Form */}
-              <div className="flex-1">
-                <form onSubmit={handlePostSubmit} className="space-y-3">
-                  <textarea
-                    placeholder="Partagez votre expertise, une réussite ou une actualité..."
-                    value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none resize-none transition-colors placeholder-slate-400 text-sm"
-                    rows={3}
-                  />
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setShowImageUpload(!showImageUpload)}
-                      className="inline-flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors font-medium text-xs"
-                    >
-                      <ImageIcon size={16} />
-                      <span>Photo</span>
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!newPost.trim()}
-                      className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-lg transition-colors font-medium text-xs shadow-md"
-                    >
-                      <Send size={16} />
-                      <span>Publier</span>
-                    </button>
-                  </div>
-                </form>
+            <div className="flex-1 min-w-0">
+              <form onSubmit={handleCreatePost} className="space-y-3">
+                <textarea
+                  placeholder="Partagez votre expertise, une réussite ou une actualité..."
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none resize-none transition-all placeholder-slate-400 text-xs bg-slate-50"
+                  rows={3}
+                />
 
-                {/* Image Upload Modal */}
-                {showImageUpload && (
-                  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-slate-900">Ajouter une photo</h3>
-                        <button
-                          onClick={() => setShowImageUpload(false)}
-                          className="text-slate-400 hover:text-slate-600"
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-                      <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
-                        <ImageIcon size={32} className="mx-auto text-slate-400 mb-2" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="w-full text-sm text-slate-500"
-                        />
-                        <p className="text-xs text-slate-500 mt-2">PNG, JPG jusqu'à 5MB</p>
-                      </div>
-                      <div className="flex gap-3 mt-6">
-                        <button
-                          type="button"
-                          className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
-                          onClick={() => setShowImageUpload(false)}
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="button"
-                          className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-                        >
-                          Ajouter
-                        </button>
-                      </div>
+                {showImageInput && (
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                    <label className="block text-[10px] font-bold text-slate-700">Lien URL de l'image (ex: Unsplash) :</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="https://images.unsplash.com/..."
+                        value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewImageUrl('');
+                          setShowImageInput(false);
+                        }}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        Annuler
+                      </button>
                     </div>
                   </div>
                 )}
-              </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowImageInput(!showImageInput)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors font-semibold text-[11px]"
+                  >
+                    <ImageIcon size={14} className="text-accent" />
+                    <span>Ajouter une photo</span>
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newPostContent.trim()}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-bold text-[11px] shadow-sm"
+                  >
+                    <Send size={12} />
+                    <span>Publier</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
 
-        {/* Feed Items */}
-        <div className="space-y-3 p-3 sm:p-4">
-          {activities.map((activity) => (
-            <article
-              key={activity.id}
-              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-slate-100"
-            >
-              {/* Card Header */}
-              <div className="p-4 sm:p-5">
-                <div className="flex items-start gap-3 mb-3">
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src={activity.author.avatar}
-                      alt={activity.author.name}
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100"
-                    />
-                  </div>
-
-                  {/* Author Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-medium text-slate-900 text-sm">
-                        {activity.author.name}
-                      </h3>
-                      {getActivityBadge(activity.type)}
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1">
-                      {activity.author.role}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {formatTimeAgo(activity.timestamp)}
-                    </p>
-                  </div>
-
-                  {/* Menu Button */}
-                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 11-4 0 2 2 0 014 0zM16 14a2 2 0 100-4 2 2 0 000 4z" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="mb-3">
-                  <p className="text-slate-800 leading-relaxed text-sm">
-                    {activity.content}
-                  </p>
-                </div>
-
-                {/* Tags */}
-                {activity.tags && activity.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {activity.tags.map((tag, index) => (
-                      <a
-                        key={index}
-                        href="#"
-                        className="px-2 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium rounded-full transition-colors"
-                      >
-                        #{tag}
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {/* Image */}
-                {activity.image && (
-                  <div className="mb-3 -mx-4 sm:-mx-5">
-                    <img
-                      src={activity.image}
-                      alt="Activity"
-                      className="w-full h-auto object-cover hover:brightness-95 transition-all cursor-pointer"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Stats Bar */}
-              <div className="px-4 sm:px-5 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <div className="flex items-center gap-3">
-                  <span className="hover:text-blue-600 cursor-pointer transition-colors">
-                    {activity.likes} mentions j&apos;aime
-                  </span>
-                  <span className="hover:text-blue-600 cursor-pointer transition-colors">
-                    {activity.comments} commentaires
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="px-4 sm:px-5 py-2 flex items-center justify-between">
-                <button
-                  onClick={() => toggleLike(activity.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg transition-colors font-medium text-xs ${
-                    likedPosts.has(activity.id)
-                      ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                      : 'text-slate-700 hover:bg-slate-100'
-                  }`}
+        {/* Feed Posts */}
+        {isLoading ? (
+          <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-muted">Chargement de votre fil d'activités...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+            <Sparkles className="text-accent mx-auto mb-3" size={28} />
+            <h3 className="text-xs font-bold text-slate-900 mb-1">Aucune publication</h3>
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+              Soyez le premier à partager une actualité ou une opportunité de collaboration !
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredPosts.map((post) => {
+              const liked = isLikedByCurrentUser(post);
+              const isExpanded = !!expandedComments[post.id];
+              
+              return (
+                <article
+                  key={post.id}
+                  className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden"
                 >
-                  <Heart
-                    size={16}
-                    fill={likedPosts.has(activity.id) ? 'currentColor' : 'none'}
-                  />
-                  <span>Aimer</span>
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-700 font-medium text-xs">
-                  <MessageCircle size={16} />
-                  <span>Commenter</span>
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-700 font-medium text-xs">
-                  <Share2 size={16} />
-                  <span>Partager</span>
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
+                  <div className="p-4 sm:p-5">
+                    {/* Header */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold flex-shrink-0">
+                        {post.author.firstName[0]}{post.author.lastName[0]}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-slate-900 text-xs">
+                            {post.author.firstName} {post.author.lastName}
+                          </h3>
+                          <span className="px-2 py-0.5 text-[8px] font-bold rounded-full bg-slate-100 text-slate-600 capitalize">
+                            {post.author.role.toLowerCase()}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {formatTimeAgo(post.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="mb-4">
+                      <p className="text-slate-800 leading-relaxed text-xs">
+                        {post.content}
+                      </p>
+                    </div>
+
+                    {/* Optional Image */}
+                    {post.imageUrl && (
+                      <div className="mb-4 -mx-4 sm:-mx-5 border-y border-slate-100 bg-slate-50 max-h-96 overflow-hidden">
+                        <img
+                          src={post.imageUrl}
+                          alt="Post attachment"
+                          className="w-full h-auto object-contain max-h-96"
+                        />
+                      </div>
+                    )}
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-100">
+                      <div className="flex gap-4">
+                        <span>{post.likes.length} j'aime</span>
+                        <span 
+                          className="cursor-pointer hover:underline"
+                          onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !isExpanded }))}
+                        >
+                          {post.comments.length} commentaire{post.comments.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="px-4 py-2 border-t border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <button
+                      onClick={() => handleToggleLike(post.id)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                        liked
+                          ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+                      <span>J'aime</span>
+                    </button>
+                    <button
+                      onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !isExpanded }))}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 text-[11px] font-bold transition-all"
+                    >
+                      <MessageCircle size={14} />
+                      <span>Commenter</span>
+                    </button>
+                  </div>
+
+                  {/* Expanded Comments */}
+                  {isExpanded && (
+                    <div className="p-4 bg-slate-50 border-t border-slate-100 space-y-4">
+                      {/* Comments List */}
+                      {post.comments.length > 0 && (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                          {post.comments.map((comment) => (
+                            <div key={comment.id} className="flex gap-2.5 items-start">
+                              <div className="w-7 h-7 rounded-full bg-accent-light flex items-center justify-center text-accent text-[10px] font-bold flex-shrink-0">
+                                {comment.author.firstName[0]}{comment.author.lastName[0]}
+                              </div>
+                              <div className="flex-1 bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm text-[11px]">
+                                <div className="flex justify-between items-center mb-0.5">
+                                  <span className="font-semibold text-slate-900">{comment.author.firstName} {comment.author.lastName}</span>
+                                  <span className="text-[8px] text-slate-400">{formatTimeAgo(comment.createdAt)}</span>
+                                </div>
+                                <p className="text-slate-700 leading-normal">{comment.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Comment Input Form */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Ajouter un commentaire..."
+                          value={postCommentsInputs[post.id] || ''}
+                          onChange={(e) => setPostCommentsInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                          className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
+                        />
+                        <button
+                          onClick={() => handleAddComment(post.id)}
+                          disabled={!postCommentsInputs[post.id]?.trim()}
+                          className="px-3 py-1.5 bg-accent text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-[10px] font-bold shadow-sm"
+                        >
+                          <Send size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
