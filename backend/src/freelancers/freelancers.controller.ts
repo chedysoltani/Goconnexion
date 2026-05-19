@@ -15,12 +15,14 @@ export class FreelancersController {
     @Query('minRate') minRate?: number,
     @Query('maxRate') maxRate?: number,
     @Query('availableOnly') availableOnly?: string,
+    @Query('search') search?: string,
   ) {
     return this.freelancersService.findAll({
       skills,
       minRate,
       maxRate,
       availableOnly: availableOnly === 'true',
+      search,
     });
   }
 

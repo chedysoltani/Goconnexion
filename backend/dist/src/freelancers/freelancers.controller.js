@@ -24,12 +24,13 @@ let FreelancersController = class FreelancersController {
     constructor(freelancersService) {
         this.freelancersService = freelancersService;
     }
-    async findAll(skills, minRate, maxRate, availableOnly) {
+    async findAll(skills, minRate, maxRate, availableOnly, search) {
         return this.freelancersService.findAll({
             skills,
             minRate,
             maxRate,
             availableOnly: availableOnly === 'true',
+            search,
         });
     }
     async getProfile(req) {
@@ -46,8 +47,9 @@ __decorate([
     __param(1, (0, common_1.Query)('minRate')),
     __param(2, (0, common_1.Query)('maxRate')),
     __param(3, (0, common_1.Query)('availableOnly')),
+    __param(4, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number, Number, String]),
+    __metadata("design:paramtypes", [String, Number, Number, String, String]),
     __metadata("design:returntype", Promise)
 ], FreelancersController.prototype, "findAll", null);
 __decorate([

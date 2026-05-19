@@ -50,6 +50,7 @@ export declare class FreelancersService {
         minRate?: number;
         maxRate?: number;
         availableOnly?: boolean;
+        search?: string;
     }): Promise<({
         user: {
             id: string;

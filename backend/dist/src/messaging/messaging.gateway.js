@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var MessagingGateway_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagingGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
@@ -19,12 +20,20 @@ const jwt_1 = require("@nestjs/jwt");
 const messaging_service_1 = require("./messaging.service");
 const common_1 = require("@nestjs/common");
 let MessagingGateway = class MessagingGateway {
+    static { MessagingGateway_1 = this; }
     jwtService;
     messagingService;
     server;
+    static instance = null;
     constructor(jwtService, messagingService) {
         this.jwtService = jwtService;
         this.messagingService = messagingService;
+        MessagingGateway_1.instance = this;
+    }
+    static emitToUser(userId, event, data) {
+        if (MessagingGateway_1.instance && MessagingGateway_1.instance.server) {
+            MessagingGateway_1.instance.server.to(userId).emit(event, data);
+        }
     }
     async handleConnection(client) {
         try {
@@ -37,6 +46,7 @@ let MessagingGateway = class MessagingGateway {
                 secret: process.env.JWT_SECRET || 'goconnexions-super-secret-key-12345!',
             });
             client.data.user = payload;
+            await client.join(payload.sub);
             console.log(`Client connected: ${client.id} (User: ${payload.sub})`);
         }
         catch (err) {
@@ -93,7 +103,7 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
 ], MessagingGateway.prototype, "handleSendMessage", null);
-exports.MessagingGateway = MessagingGateway = __decorate([
+exports.MessagingGateway = MessagingGateway = MessagingGateway_1 = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
             origin: '*',

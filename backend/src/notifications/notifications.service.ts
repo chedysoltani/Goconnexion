@@ -6,9 +6,16 @@ export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: { userId: string; title: string; content: string; type: string }) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data,
     });
+    try {
+      const { MessagingGateway } = require('../messaging/messaging.gateway');
+      MessagingGateway.emitToUser(data.userId, 'notification', notification);
+    } catch (err) {
+      console.error('Error emitting live notification:', err);
+    }
+    return notification;
   }
 
   async findAll(userId: string) {

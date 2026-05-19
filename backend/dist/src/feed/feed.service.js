@@ -104,6 +104,27 @@ let FeedService = class FeedService {
                     userId,
                 },
             });
+            try {
+                const post = await this.prisma.feedPost.findUnique({ where: { id: postId } });
+                if (post && post.authorId !== userId) {
+                    const sender = await this.prisma.user.findUnique({ where: { id: userId } });
+                    if (sender) {
+                        const notif = await this.prisma.notification.create({
+                            data: {
+                                userId: post.authorId,
+                                title: 'Nouveau j\'aime sur votre publication',
+                                content: `${sender.firstName} ${sender.lastName} a aimé votre publication.`,
+                                type: 'LIKE',
+                            },
+                        });
+                        const { MessagingGateway } = require('../messaging/messaging.gateway');
+                        MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+                    }
+                }
+            }
+            catch (err) {
+                console.error('Error creating post like notification:', err);
+            }
             return { liked: true };
         }
     }
@@ -112,7 +133,7 @@ let FeedService = class FeedService {
         if (!post) {
             throw new common_1.NotFoundException('Post not found');
         }
-        return this.prisma.feedPostComment.create({
+        const comment = await this.prisma.feedPostComment.create({
             data: {
                 postId,
                 authorId: userId,
@@ -129,6 +150,24 @@ let FeedService = class FeedService {
                 },
             },
         });
+        try {
+            if (post.authorId !== userId) {
+                const notif = await this.prisma.notification.create({
+                    data: {
+                        userId: post.authorId,
+                        title: 'Nouveau commentaire sur votre publication',
+                        content: `${comment.author.firstName} ${comment.author.lastName} a commenté : "${content.length > 40 ? content.substring(0, 40) + '...' : content}"`,
+                        type: 'COMMENT',
+                    },
+                });
+                const { MessagingGateway } = require('../messaging/messaging.gateway');
+                MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+            }
+        }
+        catch (err) {
+            console.error('Error creating post comment notification:', err);
+        }
+        return comment;
     }
 };
 exports.FeedService = FeedService;

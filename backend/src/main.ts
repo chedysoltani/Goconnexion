@@ -6,10 +6,16 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import express from 'express';
 import { join } from 'path';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Security headers
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+
   // Enforce validation globally
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

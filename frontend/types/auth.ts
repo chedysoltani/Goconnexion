@@ -6,6 +6,7 @@ export interface BaseUser {
   firstName: string;
   lastName: string;
   role: UserRole;
+  avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

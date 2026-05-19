@@ -52,8 +52,17 @@ let UsersService = class UsersService {
     }
     async getSuggestions(userId) {
         const user = await this.findOne(userId);
+        let userSkills = [];
+        if (user.role === 'FREELANCER') {
+            const flProfile = await this.prisma.freelancerProfile.findUnique({
+                where: { userId },
+            });
+            if (flProfile && flProfile.skills) {
+                userSkills = flProfile.skills;
+            }
+        }
         const suggestedRole = user.role === 'ENTREPRENEUR' ? 'FREELANCER' : 'ENTREPRENEUR';
-        return this.prisma.user.findMany({
+        const suggestions = await this.prisma.user.findMany({
             where: {
                 role: suggestedRole,
                 NOT: { id: userId },
@@ -68,8 +77,18 @@ let UsersService = class UsersService {
                 freelancerProfile: true,
                 entrepreneurProfile: true,
             },
-            take: 10,
+            take: 20,
         });
+        if (userSkills.length > 0) {
+            return suggestions.sort((a, b) => {
+                const aSkills = a.freelancerProfile?.skills || [];
+                const bSkills = b.freelancerProfile?.skills || [];
+                const aMatches = aSkills.filter((s) => userSkills.includes(s)).length;
+                const bMatches = bSkills.filter((s) => userSkills.includes(s)).length;
+                return bMatches - aMatches;
+            });
+        }
+        return suggestions;
     }
 };
 exports.UsersService = UsersService;

@@ -64,6 +64,21 @@ let FreelancersService = class FreelancersService {
                 where.hourlyRate.lte = Number(filters.maxRate);
             }
         }
+        if (filters.search) {
+            const searchWord = filters.search.trim();
+            where.OR = [
+                { title: { contains: searchWord, mode: 'insensitive' } },
+                { bio: { contains: searchWord, mode: 'insensitive' } },
+                {
+                    user: {
+                        OR: [
+                            { firstName: { contains: searchWord, mode: 'insensitive' } },
+                            { lastName: { contains: searchWord, mode: 'insensitive' } },
+                        ],
+                    },
+                },
+            ];
+        }
         return this.prisma.freelancerProfile.findMany({
             where,
             include: {

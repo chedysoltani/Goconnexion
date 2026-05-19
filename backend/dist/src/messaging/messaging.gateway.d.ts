@@ -6,7 +6,9 @@ export declare class MessagingGateway implements OnGatewayConnection, OnGatewayD
     private jwtService;
     private messagingService;
     server: Server;
+    static instance: MessagingGateway | null;
     constructor(jwtService: JwtService, messagingService: MessagingService);
+    static emitToUser(userId: string, event: string, data: any): void;
     handleConnection(client: Socket): Promise<void>;
     handleDisconnect(client: Socket): void;
     handleJoinConversation(client: Socket, conversationId: string): {

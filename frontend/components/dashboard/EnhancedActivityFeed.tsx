@@ -76,6 +76,19 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
     fetchFeed();
   }, [user]);
 
+  const handlePostImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const res = await api.uploads.upload(file);
+      const imageUrl = `http://localhost:3001${res.file.path}`;
+      setNewImageUrl(imageUrl);
+    } catch (err: any) {
+      console.error("Erreur lors du téléversement de l'image de publication:", err);
+    }
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostContent.trim()) return;
@@ -190,14 +203,30 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
 
                 {showImageInput && (
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                    <label className="block text-[10px] font-bold text-slate-700">Lien URL de l'image (ex: Unsplash) :</label>
-                    <div className="flex gap-2">
+                    <label className="block text-[10px] font-bold text-slate-700">Ajouter une image à votre publication :</label>
+                    <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('post-image-upload')?.click()}
+                        className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                      >
+                        <ImageIcon size={12} className="text-slate-500" />
+                        <span>{newImageUrl ? 'Changer l\'image' : 'Importer une image'}</span>
+                      </button>
+                      <input
+                        id="post-image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePostImageUpload}
+                      />
+                      <span className="text-[10px] text-slate-400">ou</span>
                       <input
                         type="text"
-                        placeholder="https://images.unsplash.com/..."
+                        placeholder="Coller l'URL d'une image..."
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
-                        className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] focus:outline-none"
+                        className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] focus:outline-none bg-white"
                       />
                       <button
                         type="button"
@@ -205,11 +234,23 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
                           setNewImageUrl('');
                           setShowImageInput(false);
                         }}
-                        className="text-xs text-red-500 hover:underline"
+                        className="text-[10px] text-red-500 hover:underline font-bold"
                       >
                         Annuler
                       </button>
                     </div>
+                    {newImageUrl && (
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 mt-2">
+                        <img src={newImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setNewImageUrl('')}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] hover:bg-red-600 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

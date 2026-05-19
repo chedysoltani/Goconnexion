@@ -44,7 +44,7 @@ export class FreelancersService {
     });
   }
 
-  async findAll(filters: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean }) {
+  async findAll(filters: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string }) {
     const where: any = {};
 
     if (filters.skills) {
@@ -67,6 +67,22 @@ export class FreelancersService {
       if (filters.maxRate !== undefined) {
         where.hourlyRate.lte = Number(filters.maxRate);
       }
+    }
+
+    if (filters.search) {
+      const searchWord = filters.search.trim();
+      where.OR = [
+        { title: { contains: searchWord, mode: 'insensitive' } },
+        { bio: { contains: searchWord, mode: 'insensitive' } },
+        {
+          user: {
+            OR: [
+              { firstName: { contains: searchWord, mode: 'insensitive' } },
+              { lastName: { contains: searchWord, mode: 'insensitive' } },
+            ],
+          },
+        },
+      ];
     }
 
     return this.prisma.freelancerProfile.findMany({

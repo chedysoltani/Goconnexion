@@ -162,6 +162,29 @@ let MessagingService = class MessagingService {
                 where: { id: conversationId },
                 data: { updatedAt: new Date() },
             });
+            const otherParticipants = await tx.conversationParticipant.findMany({
+                where: {
+                    conversationId,
+                    userId: { not: senderId },
+                },
+            });
+            for (const p of otherParticipants) {
+                try {
+                    const notif = await tx.notification.create({
+                        data: {
+                            userId: p.userId,
+                            title: `Nouveau message de ${message.sender.firstName}`,
+                            content: content.length > 60 ? `${content.substring(0, 60)}...` : content,
+                            type: 'MESSAGE',
+                        },
+                    });
+                    const { MessagingGateway } = require('./messaging.gateway');
+                    MessagingGateway.emitToUser(p.userId, 'notification', notif);
+                }
+                catch (err) {
+                    console.error('Error creating/emitting message notification:', err);
+                }
+            }
             return message;
         });
     }

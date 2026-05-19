@@ -38,6 +38,7 @@ export default function ProfilePage() {
     portfolioUrl: '',
     hourlyRate: 0,
     isAvailable: true,
+    cvUrl: '',
   });
 
   // Entrepreneur specific fields
@@ -70,6 +71,7 @@ export default function ProfilePage() {
                 portfolioUrl: profile.portfolioUrl || '',
                 hourlyRate: profile.hourlyRate || 0,
                 isAvailable: profile.isAvailable ?? true,
+                cvUrl: profile.cvUrl || '',
               });
             }
           } catch (err) {
@@ -145,6 +147,57 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsSaving(true);
+      setSaveSuccess(false);
+      setSaveError(null);
+      const res = await api.uploads.upload(file);
+      const avatarUrl = `http://localhost:3001${res.file.path}`;
+
+      await api.users.updateProfile({ avatarUrl });
+      setUser(prev => prev ? { ...prev, avatarUrl } : null);
+
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        parsed.avatarUrl = avatarUrl;
+        localStorage.setItem('user', JSON.stringify(parsed));
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      setSaveError(err.message || "Erreur lors du téléversement de l'image.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsSaving(true);
+      setSaveSuccess(false);
+      setSaveError(null);
+      const res = await api.uploads.upload(file);
+      const cvUrl = `http://localhost:3001${res.file.path}`;
+
+      setFreelancerData(prev => ({ ...prev, cvUrl }));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      setSaveError(err.message || "Erreur lors du téléversement du CV.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
@@ -173,9 +226,26 @@ export default function ProfilePage() {
         <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm mb-6">
           <div className="h-32 bg-gradient-to-r from-accent to-indigo-600 relative">
             <div className="absolute -bottom-10 left-6 sm:left-10">
-              <div className="w-20 h-20 rounded-full bg-indigo-50 border-4 border-white flex items-center justify-center text-accent text-2xl font-bold shadow-md">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              <div
+                onClick={() => document.getElementById('avatar-upload')?.click()}
+                className="w-20 h-20 rounded-full bg-indigo-50 border-4 border-white flex items-center justify-center text-accent text-2xl font-bold shadow-md cursor-pointer overflow-hidden group relative"
+              >
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+                )}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                  Changer
+                </div>
               </div>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
             </div>
           </div>
           <div className="pt-12 pb-6 px-6 sm:px-10">
@@ -298,6 +368,37 @@ export default function ProfilePage() {
                         onChange={(e) => setFreelancerData({ ...freelancerData, portfolioUrl: e.target.value })}
                         className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-xs bg-slate-50"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Téléverser votre CV (PDF uniquement)</label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('cv-upload')?.click()}
+                        className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors bg-white shadow-sm"
+                      >
+                        <FileText size={14} className="text-slate-500" />
+                        <span>{freelancerData.cvUrl ? 'Modifier le CV' : 'Choisir un fichier'}</span>
+                      </button>
+                      <input
+                        id="cv-upload"
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={handleCvUpload}
+                      />
+                      {freelancerData.cvUrl && (
+                        <a
+                          href={freelancerData.cvUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-accent hover:underline font-bold truncate flex-1"
+                        >
+                          Voir le CV téléversé
+                        </a>
+                      )}
                     </div>
                   </div>
 

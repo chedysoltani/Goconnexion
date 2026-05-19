@@ -2,7 +2,7 @@ import { FreelancersService } from './freelancers.service';
 export declare class FreelancersController {
     private readonly freelancersService;
     constructor(freelancersService: FreelancersService);
-    findAll(skills?: string, minRate?: number, maxRate?: number, availableOnly?: string): Promise<({
+    findAll(skills?: string, minRate?: number, maxRate?: number, availableOnly?: string, search?: string): Promise<({
         user: {
             id: string;
             email: string;

@@ -74,12 +74,13 @@ export const api = {
   },
 
   freelancers: {
-    list: (params: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean } = {}) => {
+    list: (params: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string } = {}) => {
       const query = new URLSearchParams();
       if (params.skills) query.set('skills', params.skills);
       if (params.minRate) query.set('minRate', String(params.minRate));
       if (params.maxRate) query.set('maxRate', String(params.maxRate));
       if (params.availableOnly) query.set('availableOnly', 'true');
+      if (params.search) query.set('search', params.search);
       
       return request(`/freelancers?${query.toString()}`);
     },
@@ -202,5 +203,24 @@ export const api = {
         body: formData,
       });
     },
+  },
+
+  connections: {
+    sendRequest: (receiverId: string) => request('/connections/request', {
+      method: 'POST',
+      body: JSON.stringify({ receiverId }),
+    }),
+    acceptRequest: (requestId: string) => request(`/connections/accept/${requestId}`, {
+      method: 'POST',
+    }),
+    declineRequest: (requestId: string) => request(`/connections/decline/${requestId}`, {
+      method: 'POST',
+    }),
+    pending: () => request('/connections/pending'),
+    sent: () => request('/connections/sent'),
+    friends: () => request('/connections/friends'),
+    remove: (friendId: string) => request(`/connections/${friendId}`, {
+      method: 'DELETE',
+    }),
   },
 };

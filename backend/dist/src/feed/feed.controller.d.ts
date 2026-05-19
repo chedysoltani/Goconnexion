@@ -12,9 +12,9 @@ export declare class FeedController {
             };
         } & {
             id: string;
+            createdAt: Date;
             content: string;
             authorId: string;
-            createdAt: Date;
             postId: string;
         })[];
         author: {
@@ -29,11 +29,11 @@ export declare class FeedController {
         }[];
     } & {
         id: string;
-        content: string;
-        imageUrl: string | null;
-        authorId: string;
         createdAt: Date;
         updatedAt: Date;
+        content: string;
+        authorId: string;
+        imageUrl: string | null;
     })[]>;
     createPost(req: any, body: {
         content: string;
@@ -41,9 +41,9 @@ export declare class FeedController {
     }): Promise<{
         comments: {
             id: string;
+            createdAt: Date;
             content: string;
             authorId: string;
-            createdAt: Date;
             postId: string;
         }[];
         author: {
@@ -55,16 +55,16 @@ export declare class FeedController {
         };
         likes: {
             id: string;
-            postId: string;
             userId: string;
+            postId: string;
         }[];
     } & {
         id: string;
-        content: string;
-        imageUrl: string | null;
-        authorId: string;
         createdAt: Date;
         updatedAt: Date;
+        content: string;
+        authorId: string;
+        imageUrl: string | null;
     }>;
     toggleLike(req: any, id: string): Promise<{
         liked: boolean;
@@ -80,9 +80,9 @@ export declare class FeedController {
         };
     } & {
         id: string;
+        createdAt: Date;
         content: string;
         authorId: string;
-        createdAt: Date;
         postId: string;
     }>;
 }

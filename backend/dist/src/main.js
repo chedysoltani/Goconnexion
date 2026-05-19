@@ -43,8 +43,12 @@ const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const express_1 = __importDefault(require("express"));
 const path_1 = require("path");
+const helmet_1 = __importDefault(require("helmet"));
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: "cross-origin" }
+    }));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,

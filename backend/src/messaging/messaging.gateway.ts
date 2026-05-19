@@ -21,10 +21,20 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   @WebSocketServer()
   server!: Server;
 
+  static instance: MessagingGateway | null = null;
+
   constructor(
     private jwtService: JwtService,
     private messagingService: MessagingService,
-  ) {}
+  ) {
+    MessagingGateway.instance = this;
+  }
+
+  static emitToUser(userId: string, event: string, data: any) {
+    if (MessagingGateway.instance && MessagingGateway.instance.server) {
+      MessagingGateway.instance.server.to(userId).emit(event, data);
+    }
+  }
 
   async handleConnection(client: Socket) {
     try {
@@ -39,6 +49,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       });
 
       client.data.user = payload;
+      await client.join(payload.sub);
       console.log(`Client connected: ${client.id} (User: ${payload.sub})`);
     } catch (err) {
       console.log(`Connection rejected for client ${client.id}:`, err instanceof Error ? err.message : err);

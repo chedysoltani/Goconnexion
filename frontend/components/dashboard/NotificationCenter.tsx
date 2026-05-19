@@ -1,95 +1,125 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { api } from '@/lib/api';
+import { io, Socket } from 'socket.io-client';
+import { Bell, UserCheck, MessageSquare, Heart, MessageCircle, Info, Check } from 'lucide-react';
 
 interface Notification {
   id: string;
-  type: 'connection' | 'message' | 'project' | 'system';
+  type: string;
   title: string;
   content: string;
-  timestamp: Date;
+  createdAt: string;
   read: boolean;
 }
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'connection',
-      title: 'Nouvelle connexion',
-      content: 'Sarah Martin veut se connecter avec vous',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '2',
-      type: 'message',
-      title: 'Nouveau message',
-      content: 'Vous avez reçu un message de Thomas Dubois',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '3',
-      type: 'project',
-      title: 'Proposition de projet',
-      content: 'Nouveau projet correspondant à vos compétences',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '4',
-      type: 'system',
-      title: 'Bienvenue !',
-      content: 'Votre profil est maintenant complet à 80%',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const socketRef = useRef<Socket | null>(null);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'connection':
-        return (
-          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-            <svg width="16" height="16" fill="none" stroke="#10B981" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2A3 3 0 015.356-1.857M7 20v-2C0-.656.126-1.283.356-1.857m0 0A5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-        );
-      case 'message':
-        return (
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg width="16" height="16" fill="none" stroke="#3B82F6" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8c1.55 0 2.823.62 3.734 1.51L21 12z" />
-            </svg>
-          </div>
-        );
-      case 'project':
-        return (
-          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-            <svg width="16" height="16" fill="none" stroke="#8B5CF6" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2v2a2 2 0 002 2h-2" />
-            </svg>
-          </div>
-        );
-      case 'system':
-        return (
-          <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-            <svg width="16" height="16" fill="none" stroke="#F59E0B" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        );
-      default:
-        return null;
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.notifications.list();
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
     }
   };
 
-  const formatTimeAgo = (date: Date) => {
+  useEffect(() => {
+    fetchNotifications();
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Connect to WebSocket gateway
+    const socket = io('http://localhost:3001', {
+      auth: { token },
+      query: { token },
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Notification WebSocket connected');
+    });
+
+    socket.on('notification', (newNotif: Notification) => {
+      console.log('Received live notification:', newNotif);
+      setNotifications((prev) => [newNotif, ...prev]);
+    });
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const getNotificationIcon = (type: string) => {
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes('connection')) {
+      return (
+        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
+          <UserCheck size={16} />
+        </div>
+      );
+    }
+    if (lowerType.includes('message')) {
+      return (
+        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">
+          <MessageSquare size={16} />
+        </div>
+      );
+    }
+    if (lowerType.includes('like')) {
+      return (
+        <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 flex-shrink-0">
+          <Heart size={16} />
+        </div>
+      );
+    }
+    if (lowerType.includes('comment')) {
+      return (
+        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 flex-shrink-0">
+          <MessageCircle size={16} />
+        </div>
+      );
+    }
+    return (
+      <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 flex-shrink-0">
+        <Info size={16} />
+      </div>
+    );
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.notifications.markAllRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  const handleMarkRead = async (id: string, isAlreadyRead: boolean) => {
+    if (isAlreadyRead) return;
+    try {
+      await api.notifications.markRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
@@ -97,13 +127,13 @@ export default function NotificationCenter() {
     const diffInDays = Math.floor(diffInHours / 24);
 
     if (diffInDays > 0) {
-      return `il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
+      return `il y a ${diffInDays} j`;
     } else if (diffInHours > 0) {
-      return `il y a ${diffInHours} heure${diffInHours > 1 ? 's' : ''}`;
+      return `il y a ${diffInHours} h`;
     } else if (diffInMinutes > 0) {
       return `il y a ${diffInMinutes} min`;
     } else {
-      return 'à l\'instant';
+      return "à l'instant";
     }
   };
 
@@ -111,14 +141,11 @@ export default function NotificationCenter() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-gc-bg transition-colors"
+        className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center justify-center"
       >
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159C0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        
+        <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-bounce">
             {unreadCount}
           </span>
         )}
@@ -126,46 +153,59 @@ export default function NotificationCenter() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gc-border z-50">
-          <div className="p-4 border-b border-gc-border">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-medium text-foreground">Notifications</h3>
-              <button className="text-sm text-accent hover:text-primary">
-                Tout marquer comme lu
+        <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden transform origin-top-right transition-all">
+          <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+            <h3 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <span>Notifications</span>
+              {unreadCount > 0 && (
+                <span className="bg-accent-light text-accent text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadCount} nouvelles
+                </span>
+              )}
+            </h3>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-[10px] font-semibold text-accent hover:text-indigo-600 transition-colors flex items-center gap-0.5"
+              >
+                <Check size={10} />
+                <span>Tout lire</span>
               </button>
-            </div>
+            )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`p-4 border-b border-gc-border hover:bg-gc-bg transition-colors ${
-                  !notification.read ? 'bg-blue-50' : ''
-                }`}
-              >
-                <div className="flex gap-3 mb-2">
+          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+            {notifications.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">
+                <Bell size={24} className="mx-auto mb-2 text-slate-300" />
+                <p className="text-[10px]">Aucune notification pour le moment.</p>
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  onClick={() => handleMarkRead(notification.id, notification.read)}
+                  className={`p-3.5 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3 items-start ${
+                    !notification.read ? 'bg-slate-50/70 border-l-2 border-accent' : ''
+                  }`}
+                >
                   {getNotificationIcon(notification.type)}
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground text-sm">
-                      {notification.title}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {formatTimeAgo(notification.timestamp)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="font-bold text-slate-900 text-[11px] truncate">
+                        {notification.title}
+                      </p>
+                      <span className="text-[9px] text-slate-400 flex-shrink-0">
+                        {formatTimeAgo(notification.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-600 leading-relaxed break-words">
+                      {notification.content}
                     </p>
                   </div>
                 </div>
-                <p className="text-sm text-muted">
-                  {notification.content}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-3 border-t border-gc-border">
-            <button className="w-full text-center text-sm text-accent hover:text-primary transition-colors">
-              Voir toutes les notifications
-            </button>
+              ))
+            )}
           </div>
         </div>
       )}
