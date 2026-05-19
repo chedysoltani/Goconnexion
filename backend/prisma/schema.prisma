@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  FREELANCER
+  ENTREPRENEUR
+  COLLABORATOR
+}
+
+model User {
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  password             String
+  firstName            String
+  lastName             String
+  avatarUrl            String?
+  role                 UserRole             @default(FREELANCER)
+  isEmailVerified      Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  
+  // Profile relations
+  freelancerProfile    FreelancerProfile?
+  entrepreneurProfile  EntrepreneurProfile?
+
+  // Messenger relations
+  conversations        ConversationParticipant[]
+  messages             Message[]
+
+  // Other relations
+  notifications        Notification[]
+  incubatorPosts       IncubatorPost[]
+  uploadedFiles        File[]
+  incubatorComments    IncubatorComment[]
+  incubatorLikes       IncubatorLike[]
+}
+
+model FreelancerProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String?  // e.g. "Fullstack Developer"
+  bio          String?
+  skills       String[] // PostgreSQL array support
+  portfolioUrl String?
+  cvUrl        String?
+  isAvailable  Boolean  @default(true)
+  hourlyRate   Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model EntrepreneurProfile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String?
+  website     String?
+  bio         String?
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum ProjectStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Project {
+  id            String              @id @default(uuid())
+  title         String
+  description   String
+  budget        Float?
+  skills        String[]
+  status        ProjectStatus       @default(OPEN)
+  ownerId       String
+  owner         EntrepreneurProfile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  applications  ProjectApplication[]
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model ProjectApplication {
+  id           String            @id @default(uuid())
+  projectId    String
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  freelancerId String
+  coverLetter  String?
+  status       ApplicationStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  name         String?                   // Group chat name, null for private direct message
+  isGroup      Boolean                   @default(false)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  attachments    File[]
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  type      String   // e.g. "MESSAGE", "PROJECT_APPLICATION", "SYSTEM"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model IncubatorPost {
+  id        String             @id @default(uuid())
+  title     String
+  content   String
+  category  String             // e.g. "Idea Validation", "Mentorship", "Collaboration"
+  authorId  String
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  IncubatorComment[]
+  likes     IncubatorLike[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model IncubatorComment {
+  id        String        @id @default(uuid())
+  postId    String
+  post      IncubatorPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime      @default(now())
+}
+
+model IncubatorLike {
+  id        String        @id @default(uuid())
+  postId    String
+  post      IncubatorPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model File {
+  id         String   @id @default(uuid())
+  name       String
+  path       String
+  mimeType   String
+  size       Int
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messageId  String?
+  message    Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+}
