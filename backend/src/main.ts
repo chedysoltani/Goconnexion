@@ -29,7 +29,7 @@ async function bootstrap() {
   app.enableCors();
 
   // Serve static files from public/uploads folder
-  app.use('/uploads', express.static(join(__dirname, '..', 'public', 'uploads')));
+  app.use('/uploads', express.static(join(process.cwd(), 'public', 'uploads')));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

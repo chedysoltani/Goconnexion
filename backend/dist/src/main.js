@@ -55,7 +55,7 @@ async function bootstrap() {
     }));
     app.setGlobalPrefix('api');
     app.enableCors();
-    app.use('/uploads', express_1.default.static((0, path_1.join)(__dirname, '..', 'public', 'uploads')));
+    app.use('/uploads', express_1.default.static((0, path_1.join)(process.cwd(), 'public', 'uploads')));
     const port = process.env.PORT || 3001;
     await app.listen(port);
     console.log(`GoConnexions Backend is running on: http://localhost:${port}/api`);
