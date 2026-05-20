@@ -40,12 +40,15 @@ export declare class UsersController {
         avatarUrl: string | null;
         role: import("@prisma/client").$Enums.UserRole;
         isEmailVerified: boolean;
+        birthDate: Date | null;
+        lastActiveAt: Date;
         createdAt: Date;
     }>;
     update(req: any, body: {
         firstName?: string;
         lastName?: string;
         avatarUrl?: string;
+        birthDate?: string;
     }): Promise<{
         id: string;
         email: string;
@@ -53,5 +56,7 @@ export declare class UsersController {
         lastName: string;
         avatarUrl: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        birthDate: Date | null;
+        lastActiveAt: Date;
     }>;
 }

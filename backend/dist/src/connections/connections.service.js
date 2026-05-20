@@ -18,7 +18,7 @@ let ConnectionsService = class ConnectionsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async sendRequest(senderId, receiverId) {
+    async sendRequest(senderId, receiverId, message, isCoffee) {
         if (senderId === receiverId) {
             throw new common_1.BadRequestException('Vous ne pouvez pas vous connecter avec vous-même.');
         }
@@ -52,6 +52,8 @@ let ConnectionsService = class ConnectionsService {
                 senderId,
                 receiverId,
                 status: client_1.RequestStatus.PENDING,
+                message,
+                isCoffee: isCoffee ?? false,
             },
             include: {
                 sender: {
@@ -80,8 +82,10 @@ let ConnectionsService = class ConnectionsService {
                 const notif = await this.prisma.notification.create({
                     data: {
                         userId: receiverId,
-                        title: 'Nouvelle invitation de connexion',
-                        content: `${sender.firstName} ${sender.lastName} souhaite rejoindre votre réseau professionnel.`,
+                        title: isCoffee ? '☕ Proposition de Café Virtuel !' : 'Nouvelle invitation de connexion',
+                        content: isCoffee
+                            ? `${sender.firstName} ${sender.lastName} vous propose de prendre un café virtuel ☕`
+                            : `${sender.firstName} ${sender.lastName} souhaite rejoindre votre réseau professionnel.`,
                         type: 'CONNECTION_REQUEST',
                     }
                 });

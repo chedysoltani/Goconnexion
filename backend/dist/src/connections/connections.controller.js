@@ -23,7 +23,7 @@ let ConnectionsController = class ConnectionsController {
     }
     async sendRequest(req, body) {
         const senderId = req.user.id;
-        return this.connectionsService.sendRequest(senderId, body.receiverId);
+        return this.connectionsService.sendRequest(senderId, body.receiverId, body.message, body.isCoffee);
     }
     async acceptRequest(req, id) {
         const receiverId = req.user.id;

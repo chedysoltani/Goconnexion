@@ -8,9 +8,17 @@ export class ConnectionsController {
   constructor(private readonly connectionsService: ConnectionsService) {}
 
   @Post('request')
-  async sendRequest(@Req() req: any, @Body() body: { receiverId: string }) {
+  async sendRequest(
+    @Req() req: any,
+    @Body() body: { receiverId: string; message?: string; isCoffee?: boolean },
+  ) {
     const senderId = req.user.id;
-    return this.connectionsService.sendRequest(senderId, body.receiverId);
+    return this.connectionsService.sendRequest(
+      senderId,
+      body.receiverId,
+      body.message,
+      body.isCoffee,
+    );
   }
 
   @Post('accept/:id')

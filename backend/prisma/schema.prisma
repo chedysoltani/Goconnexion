@@ -25,6 +25,8 @@ model User {
   avatarUrl            String?
   role                 UserRole             @default(FREELANCER)
   isEmailVerified      Boolean              @default(false)
+  birthDate            DateTime?
+  lastActiveAt         DateTime             @default(now())
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
   
@@ -252,6 +254,8 @@ model ConnectionRequest {
   receiverId  String
   receiver    User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
   status      RequestStatus @default(PENDING)
+  message     String?
+  isCoffee    Boolean       @default(false)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

@@ -20,8 +20,12 @@ export class UsersController {
   @Put('profile')
   async update(
     @Request() req: any,
-    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string },
+    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: string },
   ) {
-    return this.usersService.update(req.user.id, body);
+    const updateData: any = { ...body };
+    if (body.birthDate) {
+      updateData.birthDate = new Date(body.birthDate);
+    }
+    return this.usersService.update(req.user.id, updateData);
   }
 }

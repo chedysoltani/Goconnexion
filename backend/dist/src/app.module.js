@@ -26,6 +26,8 @@ const prisma_module_1 = require("./prisma/prisma.module");
 const connections_module_1 = require("./connections/connections.module");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
+const schedule_1 = require("@nestjs/schedule");
+const last_active_interceptor_1 = require("./auth/interceptors/last-active.interceptor");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,6 +38,7 @@ exports.AppModule = AppModule = __decorate([
                     ttl: 60000,
                     limit: 100,
                 }]),
+            schedule_1.ScheduleModule.forRoot(),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             freelancers_module_1.FreelancersModule,
@@ -57,6 +60,10 @@ exports.AppModule = AppModule = __decorate([
             {
                 provide: core_1.APP_GUARD,
                 useClass: throttler_1.ThrottlerGuard,
+            },
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: last_active_interceptor_1.LastActiveInterceptor,
             },
         ],
     })

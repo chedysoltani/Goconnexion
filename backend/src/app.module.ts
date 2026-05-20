@@ -17,7 +17,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConnectionsModule } from './connections/connections.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { LastActiveInterceptor } from './auth/interceptors/last-active.interceptor';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { APP_GUARD } from '@nestjs/core';
       ttl: 60000,
       limit: 100,
     }]),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     FreelancersModule,
@@ -46,6 +49,10 @@ import { APP_GUARD } from '@nestjs/core';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LastActiveInterceptor,
     },
   ],
 })

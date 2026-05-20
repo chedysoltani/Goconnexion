@@ -206,10 +206,11 @@ export const api = {
   },
 
   connections: {
-    sendRequest: (receiverId: string) => request('/connections/request', {
-      method: 'POST',
-      body: JSON.stringify({ receiverId }),
-    }),
+    sendRequest: (receiverId: string, options?: { message?: string; isCoffee?: boolean }) =>
+      request('/connections/request', {
+        method: 'POST',
+        body: JSON.stringify({ receiverId, ...options }),
+      }),
     acceptRequest: (requestId: string) => request(`/connections/accept/${requestId}`, {
       method: 'POST',
     }),

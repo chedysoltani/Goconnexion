@@ -28,7 +28,11 @@ let UsersController = class UsersController {
         return this.usersService.findOne(id);
     }
     async update(req, body) {
-        return this.usersService.update(req.user.id, body);
+        const updateData = { ...body };
+        if (body.birthDate) {
+            updateData.birthDate = new Date(body.birthDate);
+        }
+        return this.usersService.update(req.user.id, updateData);
     }
 };
 exports.UsersController = UsersController;

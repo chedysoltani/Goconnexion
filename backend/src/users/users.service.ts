@@ -16,6 +16,8 @@ export class UsersService {
         avatarUrl: true,
         role: true,
         isEmailVerified: true,
+        birthDate: true,
+        lastActiveAt: true,
         createdAt: true,
       },
     });
@@ -27,7 +29,7 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string }) {
+  async update(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: Date }) {
     return this.prisma.user.update({
       where: { id },
       data,
@@ -38,6 +40,8 @@ export class UsersService {
         lastName: true,
         avatarUrl: true,
         role: true,
+        birthDate: true,
+        lastActiveAt: true,
       },
     });
   }

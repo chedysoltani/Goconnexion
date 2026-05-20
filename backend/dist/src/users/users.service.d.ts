@@ -10,12 +10,15 @@ export declare class UsersService {
         avatarUrl: string | null;
         role: import("@prisma/client").$Enums.UserRole;
         isEmailVerified: boolean;
+        birthDate: Date | null;
+        lastActiveAt: Date;
         createdAt: Date;
     }>;
     update(id: string, data: {
         firstName?: string;
         lastName?: string;
         avatarUrl?: string;
+        birthDate?: Date;
     }): Promise<{
         id: string;
         email: string;
@@ -23,6 +26,8 @@ export declare class UsersService {
         lastName: string;
         avatarUrl: string | null;
         role: import("@prisma/client").$Enums.UserRole;
+        birthDate: Date | null;
+        lastActiveAt: Date;
     }>;
     getSuggestions(userId: string): Promise<{
         id: string;

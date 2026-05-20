@@ -28,6 +28,8 @@ let UsersService = class UsersService {
                 avatarUrl: true,
                 role: true,
                 isEmailVerified: true,
+                birthDate: true,
+                lastActiveAt: true,
                 createdAt: true,
             },
         });
@@ -47,6 +49,8 @@ let UsersService = class UsersService {
                 lastName: true,
                 avatarUrl: true,
                 role: true,
+                birthDate: true,
+                lastActiveAt: true,
             },
         });
     }

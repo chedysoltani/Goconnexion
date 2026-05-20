@@ -147,62 +147,85 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab }: Dash
   const navItems = getNavItems();
 
   return (
-    <aside className="w-64 bg-white border-r border-gc-border flex flex-col">
+    <aside className="w-64 bg-white/80 backdrop-blur-xl border-r border-gc-border/50 flex flex-col relative overflow-hidden">
+      {/* Noise texture overlay */}
+      <div className="noise absolute inset-0 pointer-events-none opacity-[0.03]" />
+
+      {/* Subtle gradient accent along the top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-accent/40 via-indigo-500/30 to-transparent" />
+
       {/* Logo */}
-      <div className="p-6 border-b border-gc-border">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-            <span className="text-white font-bold text-sm">GC</span>
+      <div className="relative z-10 p-6 pb-5">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-indigo-500 flex items-center justify-center ring-2 ring-accent/20 shadow-lg shadow-accent/10 group-hover:shadow-accent/25 transition-all duration-300 group-hover:scale-105">
+            <span className="text-white font-bold text-sm tracking-tight">GC</span>
           </div>
-          <span className="font-sans font-semibold text-foreground">GoConnexions</span>
+          <span className="font-sans font-semibold text-foreground text-[15px] tracking-tight group-hover:text-accent transition-colors duration-300">GoConnexions</span>
         </Link>
       </div>
 
-      {/* User Info */}
+      {/* User Info Card */}
       {user && (
-        <div className="p-4 border-b border-gc-border">
+        <div className="relative z-10 mx-4 mb-5 p-4 rounded-2xl bg-gradient-to-br from-accent-light/60 to-white/80 border border-accent/10 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center">
-              <span className="text-accent font-semibold text-sm">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent/20 to-indigo-400/20 flex items-center justify-center ring-2 ring-white shadow-sm">
+              <span className="text-accent font-bold text-sm">
                 {user.firstName[0]}{user.lastName[0]}
               </span>
             </div>
-            <div>
-              <p className="font-medium text-foreground text-sm">
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted/70 font-medium">
+                👋 Bon retour !
+              </p>
+              <p className="font-semibold text-foreground text-sm truncate leading-tight">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="text-xs text-muted capitalize">
+              <p className="text-[11px] text-muted capitalize mt-0.5">
                 {user.role}
               </p>
             </div>
+          </div>
+          {/* Coffee status pill */}
+          <div className="mt-3 flex">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60 text-[10px] font-semibold text-amber-700">
+              ☕ Dispo pour un café
+            </span>
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="relative z-10 flex-1 px-3 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.id}>
               {item.href ? (
                 <Link
                   href={item.href}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted hover:text-foreground hover:bg-accent/5 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted hover:text-foreground hover:bg-accent/5 transition-all duration-200 hover:scale-[1.01] group"
                 >
-                  {item.icon}
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="opacity-60 group-hover:opacity-100 transition-opacity duration-200">{item.icon}</span>
+                  <span className="text-[13px] font-medium">{item.label}</span>
                 </Link>
               ) : (
                 <button
                   onClick={() => setActiveTab(item.id as any)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                     activeTab === item.id
-                      ? 'bg-accent text-white'
-                      : 'text-muted hover:text-foreground hover:bg-accent/5'
+                      ? 'bg-gradient-to-r from-accent/10 to-transparent text-foreground'
+                      : 'text-muted hover:text-foreground hover:bg-accent/5 hover:scale-[1.01]'
                   }`}
                 >
-                  {item.icon}
-                  <span className="text-sm font-medium">{item.label}</span>
+                  {/* Active left border glow */}
+                  {activeTab === item.id && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-full bg-gradient-to-b from-accent to-indigo-500 shadow-[0_0_8px_rgba(74,144,217,0.4)]" />
+                  )}
+                  <span className={`transition-opacity duration-200 ${activeTab === item.id ? 'opacity-100 text-accent' : 'opacity-60 group-hover:opacity-100'}`}>
+                    {item.icon}
+                  </span>
+                  <span className={`text-[13px] font-medium ${activeTab === item.id ? 'font-semibold' : ''}`}>
+                    {item.label}
+                  </span>
                 </button>
               )}
             </li>
@@ -210,16 +233,19 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab }: Dash
         </ul>
       </nav>
 
-      {/* Settings */}
-      <div className="p-4 border-t border-gc-border">
+      {/* Settings - bottom with separator */}
+      <div className="relative z-10 p-4 mt-auto">
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-gc-border/60 to-transparent mb-4" />
         <Link
           href="/dashboard/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted hover:text-foreground hover:bg-accent/5 transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted hover:text-foreground hover:bg-gc-bg transition-all duration-200 group"
         >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-.663-.218 1.724 1.724 0 002.573-1.066c1.543.94 3.31.826 2.37 2.37zm3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31-.826 2.37-2.37a1.724 1.724 0 00-.663-.218 1.724 1.724 0 002.573 1.066c1.543.94 3.31.826 2.37 2.37z" />
-          </svg>
-          <span className="text-sm font-medium">Paramètres</span>
+          <span className="opacity-50 group-hover:opacity-80 transition-opacity duration-200">
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-.663-.218 1.724 1.724 0 002.573-1.066c1.543.94 3.31.826 2.37 2.37zm3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31-.826 2.37-2.37a1.724 1.724 0 00-.663-.218 1.724 1.724 0 002.573 1.066c1.543.94 3.31.826 2.37 2.37z" />
+            </svg>
+          </span>
+          <span className="text-[13px] font-medium">Paramètres</span>
         </Link>
       </div>
     </aside>

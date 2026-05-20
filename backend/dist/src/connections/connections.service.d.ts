@@ -2,7 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class ConnectionsService {
     private prisma;
     constructor(prisma: PrismaService);
-    sendRequest(senderId: string, receiverId: string): Promise<{
+    sendRequest(senderId: string, receiverId: string, message?: string, isCoffee?: boolean): Promise<{
         sender: {
             id: string;
             firstName: string;
@@ -22,8 +22,10 @@ export declare class ConnectionsService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
+        message: string | null;
         senderId: string;
         receiverId: string;
+        isCoffee: boolean;
     }>;
     acceptRequest(requestId: string, receiverId: string): Promise<{
         success: boolean;
@@ -46,8 +48,10 @@ export declare class ConnectionsService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
+        message: string | null;
         senderId: string;
         receiverId: string;
+        isCoffee: boolean;
     })[]>;
     getSentRequests(userId: string): Promise<({
         receiver: {
@@ -62,8 +66,10 @@ export declare class ConnectionsService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
+        message: string | null;
         senderId: string;
         receiverId: string;
+        isCoffee: boolean;
     })[]>;
     getFriends(userId: string): Promise<{
         id: string;

@@ -15,11 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsController = void 0;
 const common_1 = require("@nestjs/common");
 const notifications_service_1 = require("./notifications.service");
+const cron_service_1 = require("./cron.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let NotificationsController = class NotificationsController {
     notificationsService;
-    constructor(notificationsService) {
+    cronService;
+    constructor(notificationsService, cronService) {
         this.notificationsService = notificationsService;
+        this.cronService = cronService;
     }
     async findAll(req) {
         return this.notificationsService.findAll(req.user.id);
@@ -29,6 +32,12 @@ let NotificationsController = class NotificationsController {
     }
     async markAllAsRead(req) {
         return this.notificationsService.markAllAsRead(req.user.id);
+    }
+    async testBirthday(req) {
+        return this.cronService.triggerBirthdayWishForUser(req.user.id);
+    }
+    async testInactivity(req) {
+        return this.cronService.triggerInactivityCheckForUser(req.user.id);
     }
 };
 exports.NotificationsController = NotificationsController;
@@ -54,9 +63,24 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], NotificationsController.prototype, "markAllAsRead", null);
+__decorate([
+    (0, common_1.Post)('test/birthday'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "testBirthday", null);
+__decorate([
+    (0, common_1.Post)('test/inactivity'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "testInactivity", null);
 exports.NotificationsController = NotificationsController = __decorate([
     (0, common_1.Controller)('notifications'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __metadata("design:paramtypes", [notifications_service_1.NotificationsService])
+    __metadata("design:paramtypes", [notifications_service_1.NotificationsService,
+        cron_service_1.CronService])
 ], NotificationsController);
 //# sourceMappingURL=notifications.controller.js.map
