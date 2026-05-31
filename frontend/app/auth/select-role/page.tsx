@@ -1,149 +1,194 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserRole } from '@/types/auth';
 
-const roleOptions = [
+const roles = [
   {
-    role: 'freelancer' as UserRole,
+    id: 'freelancer' as UserRole,
+    emoji: '💻',
     title: 'Freelancer',
-    description: 'Trouvez des clients et développez votre activité',
-    features: ['Portfolio professionnel', 'Accès aux projets', 'Facturation simplifiée'],
-    icon: (
-      <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
+    subtitle: 'Je propose mes compétences',
+    description: 'Trouvez des projets correspondant à vos skills, gérez votre portfolio et construisez une clientèle solide.',
+    benefits: ['Accès aux projets ouverts', 'Portfolio visible', 'Mise en relation directe'],
+    gradient: 'from-blue-500/20 to-cyan-500/10',
+    border: 'rgba(59,130,246,0.5)',
+    glow: 'rgba(59,130,246,0.15)',
+    dot: '#3b82f6',
   },
   {
-    role: 'entrepreneur' as UserRole,
+    id: 'entrepreneur' as UserRole,
+    emoji: '🚀',
     title: 'Entrepreneur',
-    description: 'Connectez-vous avec des talents et développez votre réseau',
-    features: ['Recrutement', 'Networking B2B', 'Visibilité entreprise'],
-    icon: (
-      <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A9.002 9.002 0 0112 21a9.002 9.002 0 01-9-9.255M12 3v18m0-12a3 3 0 110 6 3 3 0 010-6z" />
-      </svg>
-    ),
+    subtitle: 'Je cherche des talents',
+    description: 'Publiez vos projets, recrutez les meilleurs freelancers et développez votre réseau professionnel.',
+    benefits: ['Publiez vos projets', 'Accès aux freelancers', 'Réseau B2B'],
+    gradient: 'from-violet-500/20 to-purple-500/10',
+    border: 'rgba(139,92,246,0.5)',
+    glow: 'rgba(139,92,246,0.15)',
+    dot: '#8b5cf6',
   },
   {
-    role: 'user' as UserRole,
-    title: 'Utilisateur',
-    description: 'Explorez les opportunités et développez votre carrière',
-    features: ['Développement carrière', 'Mentorat', 'Formation continue'],
-    icon: (
-      <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-      </svg>
-    ),
+    id: 'user' as UserRole,
+    emoji: '🌱',
+    title: 'Explorateur',
+    subtitle: 'Je découvre la communauté',
+    description: 'Explorez le fil d\'actualités, rejoignez les discussions de l\'incubateur et construisez votre réseau à votre rythme.',
+    benefits: ['Fil d\'actualités', 'Incubateur d\'idées', 'Networking libre'],
+    gradient: 'from-emerald-500/20 to-teal-500/10',
+    border: 'rgba(16,185,129,0.5)',
+    glow: 'rgba(16,185,129,0.15)',
+    dot: '#10b981',
   },
 ];
 
 export default function SelectRolePage() {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const router = useRouter();
+  const [selected, setSelected] = useState<UserRole | null>(null);
+  const [hovered, setHovered] = useState<UserRole | null>(null);
+
+  const handleContinue = () => {
+    if (selected) router.push(`/auth/signup?role=${selected}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gc-bg flex flex-col">
+    <div className="auth-bg min-h-screen flex flex-col">
+      {/* Decorative lines */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+        {[15, 35, 55, 75, 92].map((left, i) => (
+          <div
+            key={i}
+            className="absolute top-0 bottom-0 w-px"
+            style={{
+              left: `${left}%`,
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(74,144,217,0.07) 40%, rgba(74,144,217,0.07) 60%, transparent 100%)',
+            }}
+          />
+        ))}
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b border-gc-border">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-              <span className="text-white font-bold text-sm">GC</span>
-            </div>
-            <span className="font-sans font-semibold text-foreground">GoConnexions</span>
-          </Link>
-          <Link href="/auth/login" className="text-sm text-muted hover:text-foreground transition-colors">
-            Déjà un compte ? Se connecter
-          </Link>
-        </div>
+      <header className="relative z-10 px-6 py-5 flex items-center justify-between max-w-7xl mx-auto w-full">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shadow-lg shadow-accent/30 group-hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-sm">GC</span>
+          </div>
+          <span className="font-semibold text-white/90 text-[15px]">GoConnexions</span>
+        </Link>
+        <Link href="/auth/login" className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Déjà un compte ?{' '}
+          <span className="text-accent font-medium hover:underline">Se connecter</span>
+        </Link>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Header Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Rejoignez GoConnexions
+      {/* Main */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-4xl">
+          {/* Heading */}
+          <div className="text-center mb-12 slide-up">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[11px] font-semibold uppercase tracking-widest"
+              style={{
+                background: 'rgba(74,144,217,0.1)',
+                border: '1px solid rgba(74,144,217,0.2)',
+                color: 'rgba(74,144,217,0.9)',
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+              Étape 1 sur 4
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+              Qui êtes-vous ?
             </h1>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
-              Choisissez votre profil pour accéder à des fonctionnalités adaptées à vos besoins
+            <p className="text-base max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Choisissez le profil qui vous correspond. Vous pourrez le modifier à tout moment.
             </p>
           </div>
 
-          {/* Role Cards */}
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {roleOptions.map((option) => (
-              <div
-                key={option.role}
-                onClick={() => setSelectedRole(option.role)}
-                className={`relative bg-white rounded-2xl p-8 border-2 cursor-pointer transition-all duration-300 ${
-                  selectedRole === option.role
-                    ? 'border-accent shadow-lg scale-105'
-                    : 'border-gc-border hover:border-accent/50 hover:shadow-md'
-                }`}
-              >
-                {selectedRole === option.role && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-accent rounded-full flex items-center justify-center">
-                    <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                    </svg>
+          {/* Role cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+            {roles.map((role, i) => {
+              const isSelected = selected === role.id;
+              const isHov = hovered === role.id;
+              return (
+                <button
+                  key={role.id}
+                  onClick={() => setSelected(role.id)}
+                  onMouseEnter={() => setHovered(role.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  className={`role-card text-left slide-up slide-up-${i + 2} ${isSelected ? 'selected' : ''}`}
+                  style={isSelected ? {
+                    boxShadow: `0 0 0 1.5px ${role.border}, 0 24px 48px ${role.glow}`,
+                    borderColor: role.border,
+                  } : isHov ? {
+                    borderColor: role.border,
+                    boxShadow: `0 20px 40px rgba(0,0,0,0.25)`,
+                  } : {}}
+                >
+                  {/* Top */}
+                  <div className="flex items-start justify-between mb-5">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300"
+                      style={{
+                        background: isSelected || isHov ? `linear-gradient(135deg, ${role.glow.replace('0.15', '0.3')}, transparent)` : 'rgba(255,255,255,0.06)',
+                        border: `1px solid ${isSelected ? role.border : 'rgba(255,255,255,0.1)'}`,
+                        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                      }}
+                    >
+                      {role.emoji}
+                    </div>
+                    {isSelected && (
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                        style={{ background: role.dot }}
+                      >
+                        ✓
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="flex flex-col items-center text-center">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${
-                    selectedRole === option.role ? 'bg-accent text-white' : 'bg-accent-light text-accent'
-                  }`}>
-                    {option.icon}
-                  </div>
-                  
-                  <h3 className="text-xl font-bold text-foreground mb-3">
-                    {option.title}
-                  </h3>
-                  
-                  <p className="text-muted mb-6">
-                    {option.description}
+                  <h3 className="text-lg font-bold text-white mb-1">{role.title}</h3>
+                  <p className="text-xs font-medium mb-3" style={{ color: role.dot }}>{role.subtitle}</p>
+                  <p className="text-sm leading-relaxed mb-5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    {role.description}
                   </p>
 
-                  <ul className="space-y-2 text-sm text-left w-full">
-                    {option.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                        <span className="text-foreground">{feature}</span>
+                  {/* Benefits */}
+                  <ul className="space-y-2">
+                    {role.benefits.map((b, j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: role.dot }} />
+                        {b}
                       </li>
                     ))}
                   </ul>
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Action Button */}
-          <div className="text-center">
-            <Link
-              href={selectedRole ? `/auth/signup?role=${selectedRole}` : '#'}
-              className={`inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold transition-all ${
-                selectedRole
-                  ? 'bg-accent text-white hover:bg-primary shadow-md hover:shadow-lg'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-              onClick={(e) => {
-                if (!selectedRole) {
-                  e.preventDefault();
-                }
+          {/* CTA */}
+          <div className="flex flex-col items-center gap-3 slide-up slide-up-5">
+            <button
+              onClick={handleContinue}
+              disabled={!selected}
+              className="px-10 py-4 rounded-2xl font-semibold text-sm text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={selected ? {
+                background: 'linear-gradient(135deg, #4a90d9 0%, #2563eb 100%)',
+                boxShadow: '0 8px 24px rgba(74,144,217,0.4)',
+              } : {
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
               }}
             >
-              Continuer avec {selectedRole ? roleOptions.find(opt => opt.role === selectedRole)?.title : '...'}
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-            
-            <p className="text-sm text-muted mt-4">
-              Vous pourrez changer votre profil plus tard dans les paramètres
+              {selected
+                ? `Continuer en tant que ${roles.find((r) => r.id === selected)?.title} →`
+                : 'Sélectionnez un profil pour continuer'}
+            </button>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              Modifiable à tout moment dans les paramètres
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -36,14 +37,11 @@ export class AuthService {
       });
 
       // Automatically create a profile based on user role
-      if (role === 'FREELANCER') {
+      if (role === UserRole.FREELANCER) {
         await tx.freelancerProfile.create({
-          data: {
-            userId: user.id,
-            skills: [],
-          },
+          data: { userId: user.id, skills: [] },
         });
-      } else if (role === 'ENTREPRENEUR') {
+      } else if (role === UserRole.ENTREPRENEUR) {
         await tx.entrepreneurProfile.create({
           data: {
             userId: user.id,
@@ -51,6 +49,7 @@ export class AuthService {
           },
         });
       }
+      // COLLABORATOR and ADMIN: no dedicated profile
 
       // Generate token
       const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -94,6 +93,31 @@ export class AuthService {
       },
       ...tokens,
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+        ...tokens,
+      };
+    } catch {
+      throw new UnauthorizedException('Refresh token invalide ou expiré');
+    }
   }
 
   private async generateTokens(userId: string, email: string, role: string) {

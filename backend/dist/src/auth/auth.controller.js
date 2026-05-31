@@ -28,6 +28,9 @@ let AuthController = class AuthController {
     async login(dto) {
         return this.authService.login(dto);
     }
+    async refresh(dto) {
+        return this.authService.refresh(dto.refreshToken);
+    }
     async getMe(req) {
         return req.user;
     }
@@ -49,6 +52,14 @@ __decorate([
     __metadata("design:paramtypes", [auth_dto_1.LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('refresh'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.RefreshTokenDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refresh", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('me'),

@@ -204,73 +204,90 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
   return (
     <div className="max-w-6xl mx-auto p-6 h-full flex flex-col">
       {/* Header Banner */}
-      <div className="relative bg-gradient-to-r from-accent via-indigo-600 to-purple-600 rounded-3xl p-8 text-white mb-6 overflow-hidden shadow-xl flex-shrink-0">
-        {/* Noise overlay */}
-        <div className="noise absolute inset-0 opacity-[0.03] pointer-events-none" />
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-purple-400/10 animated-gradient pointer-events-none" />
-        {/* Sparkle/glow effects */}
+      <div
+        className="relative rounded-3xl p-8 text-white mb-6 overflow-hidden flex-shrink-0"
+        style={{
+          background: 'linear-gradient(135deg, #080f1a 0%, #0a1628 50%, #0d1f38 100%)',
+          boxShadow: '0 8px 32px rgba(8,15,26,0.3)',
+        }}
+      >
+        {/* Dot grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(74,144,217,0.12) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Glow blobs */}
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(74,144,217,0.12) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)', transform: 'translateY(40%)' }} />
+
+        {/* Sparkle dots */}
         <div className="absolute top-4 right-24 w-2 h-2 bg-amber-300 rounded-full animate-pulse opacity-80" />
-        <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white rounded-full animate-pulse opacity-60" style={{ animationDelay: '0.5s' }} />
-        <div className="absolute bottom-6 right-32 w-1 h-1 bg-amber-200 rounded-full animate-pulse opacity-70" style={{ animationDelay: '1s' }} />
-        {/* Floating lightbulb with bob animation */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-15 animate-bounce" style={{ animationDuration: '3s' }}>
+        <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white rounded-full animate-pulse opacity-50" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-6 right-32 w-1 h-1 bg-blue-300 rounded-full animate-pulse opacity-60" style={{ animationDelay: '1s' }} />
+
+        {/* Floating lightbulb */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 animate-bounce" style={{ animationDuration: '3s' }}>
           <Lightbulb size={200} />
         </div>
-        {/* Glow circle behind lightbulb */}
-        <div className="absolute right-16 top-1/2 -translate-y-1/2 w-40 h-40 bg-amber-300/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-2xl">
-          <div className="flex items-center gap-2 mb-3 bg-white/15 w-fit px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border border-white/10">
-            <Sparkles size={14} className="text-amber-300" />
+          <div
+            className="flex items-center gap-2 mb-3 w-fit px-4 py-1.5 rounded-full text-xs font-semibold"
+            style={{ background: 'rgba(74,144,217,0.15)', border: '1px solid rgba(74,144,217,0.25)', color: '#93c5fd' }}
+          >
+            <Sparkles size={14} style={{ color: '#fbbf24' }} />
             <span>Incubateur Virtuel GoConnexions</span>
           </div>
           <h1 className="font-serif text-3xl font-bold mb-3 tracking-tight">
             Partagez vos Idées & Propulsez votre Startup
           </h1>
-          <p className="text-white/75 text-sm leading-relaxed max-w-xl">
+          <p className="text-sm leading-relaxed max-w-xl" style={{ color: 'rgba(255,255,255,0.65)' }}>
             Un espace interactif plus humain pour pitcher vos concepts innovants, recruter des associés talentueux, solliciter du mentorat et co-créer les entreprises de demain.
           </p>
         </div>
       </div>
 
       {/* Control Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6 glass rounded-2xl p-4 border border-white/60 shadow-sm flex-shrink-0">
-        {/* Search – frosted glass with inner shadow */}
+      <div
+        className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-5 rounded-2xl p-4 flex-shrink-0"
+        style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(26,35,50,0.03)' }}
+      >
         <div className="relative flex-1 max-w-md">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted/60" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#94a3b8' }} />
           <input
             type="text"
             placeholder="Rechercher des projets ou mentors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gc-border/50 rounded-xl text-sm shadow-inner focus:ring-2 focus:ring-accent/40 focus:border-accent/30 outline-none transition-all placeholder:text-muted/50"
+            style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '0.75rem', fontSize: '13px', color: '#1a2332', outline: 'none' }}
+            className="w-full pl-9 pr-4 py-2.5 transition-all duration-200"
+            onFocus={e => { e.currentTarget.style.borderColor = '#4a90d9'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; }}
           />
         </div>
-
-        {/* Proposer une Idée button – gradient with hover glow */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-accent/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-          >
-            <Plus size={16} />
-            <span>Proposer une Idée</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02]"
+          style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 12px rgba(74,144,217,0.3)' }}
+        >
+          <Plus size={16} />
+          Proposer une Idée
+        </button>
       </div>
 
-      {/* Category Pills Selector */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-2 flex-shrink-0 scrollbar-thin">
+      {/* Category Pills */}
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-2 flex-shrink-0">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setCategoryFilter(cat)}
-            className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold border transition-all duration-200 whitespace-nowrap ${
-              categoryFilter === cat
-                ? 'bg-gradient-to-r from-accent to-indigo-600 border-accent/50 text-white shadow-md shadow-accent/20 scale-[1.05]'
-                : 'bg-white/80 backdrop-blur-sm border-gc-border/60 text-muted hover:text-foreground hover:bg-white hover:border-accent/30 hover:shadow-sm'
-            }`}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap"
+            style={categoryFilter === cat
+              ? { background: 'linear-gradient(135deg, #4a90d9, #2563eb)', color: '#fff', boxShadow: '0 4px 10px rgba(74,144,217,0.3)' }
+              : { background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0' }}
           >
             <span>{getCategoryIcon(cat)}</span>
             <span>{cat}</span>
@@ -424,29 +441,32 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
         )}
       </div>
 
-      {/* Idea Creation Modal – premium frosted glass */}
+      {/* Idea Creation Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden border border-white/30 animate-in fade-in zoom-in duration-200">
-            {/* Modal Header – rich gradient */}
-            <div className="relative bg-gradient-to-r from-accent via-indigo-600 to-purple-600 px-6 py-5 text-white flex justify-between items-center overflow-hidden">
-              {/* Noise overlay in header */}
-              <div className="noise absolute inset-0 opacity-[0.04] pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-purple-400/10 pointer-events-none" />
-              <div className="relative flex items-center gap-3">
-                <div className="w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
-                  <Lightbulb size={18} className="text-amber-300" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(8,15,26,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="w-full max-w-lg overflow-hidden" style={{ background: '#fff', borderRadius: '1.5rem', boxShadow: '0 24px 80px rgba(8,15,26,0.25)', border: '1px solid #e2e8f0' }}>
+            {/* Modal Header */}
+            <div
+              className="px-6 py-5 flex justify-between items-center"
+              style={{ background: 'linear-gradient(135deg, #080f1a, #0a1628)', borderBottom: '1px solid rgba(74,144,217,0.2)' }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(74,144,217,0.2)' }}>
+                  <Lightbulb size={18} style={{ color: '#fbbf24' }} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base">Soumettre un concept innovant</h3>
-                  <p className="text-[10px] text-white/60">Partagez votre vision avec la communauté</p>
+                  <h3 className="font-bold text-base text-white">Soumettre un concept innovant</h3>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>Partagez votre vision avec la communauté</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
-                className="relative text-white/70 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all duration-200"
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.08)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.15)'; (e.currentTarget as HTMLElement).style.color = '#fff'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)'; }}
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
 

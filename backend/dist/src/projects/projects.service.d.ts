@@ -50,21 +50,6 @@ export declare class ProjectsService {
         ownerId: string;
     })[]>;
     findOne(id: string): Promise<{
-        owner: {
-            user: {
-                firstName: string;
-                lastName: string;
-                avatarUrl: string | null;
-            };
-        } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            bio: string | null;
-            companyName: string | null;
-            website: string | null;
-            userId: string;
-        };
         applications: ({
             project: {
                 id: string;
@@ -82,10 +67,25 @@ export declare class ProjectsService {
             createdAt: Date;
             updatedAt: Date;
             status: import("@prisma/client").$Enums.ApplicationStatus;
-            freelancerId: string;
             coverLetter: string | null;
             projectId: string;
+            freelancerId: string;
         })[];
+        owner: {
+            user: {
+                firstName: string;
+                lastName: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            bio: string | null;
+            companyName: string | null;
+            website: string | null;
+            userId: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -130,26 +130,48 @@ export declare class ProjectsService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        freelancerId: string;
         coverLetter: string | null;
         projectId: string;
+        freelancerId: string;
     }>;
-    getApplications(projectId: string, userId: string): Promise<({} & {
+    getApplications(projectId: string, userId: string): Promise<({
+        freelancer: {
+            user: {
+                id: string;
+                email: string;
+                firstName: string;
+                lastName: string;
+                avatarUrl: string | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string | null;
+            bio: string | null;
+            skills: string[];
+            portfolioUrl: string | null;
+            cvUrl: string | null;
+            isAvailable: boolean;
+            hourlyRate: number | null;
+            userId: string;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        freelancerId: string;
         coverLetter: string | null;
         projectId: string;
+        freelancerId: string;
     })[]>;
     updateApplicationStatus(applicationId: string, userId: string, status: ApplicationStatus): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.ApplicationStatus;
-        freelancerId: string;
         coverLetter: string | null;
         projectId: string;
+        freelancerId: string;
     }>;
 }

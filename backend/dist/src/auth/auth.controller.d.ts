@@ -1,5 +1,5 @@
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/auth.dto';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -15,6 +15,17 @@ export declare class AuthController {
         };
     }>;
     login(dto: LoginDto): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            role: import("@prisma/client").$Enums.UserRole;
+        };
+    }>;
+    refresh(dto: RefreshTokenDto): Promise<{
         accessToken: string;
         refreshToken: string;
         user: {

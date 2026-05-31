@@ -1,18 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
+import { FeedSkeleton } from '@/components/ui/skeleton';
 import {
   Heart,
   MessageCircle,
   Share2,
   Image as ImageIcon,
   Send,
-  X,
-  Sparkles,
-  User as UserIcon,
   Globe,
+  Sparkles,
+  MoreHorizontal,
+  Bookmark,
+  Link,
+  Hash,
+  TrendingUp,
+  UserPlus,
+  BarChart2,
+  ChevronDown,
 } from 'lucide-react';
 
 interface EnhancedActivityFeedProps {
@@ -23,12 +31,7 @@ interface FeedComment {
   id: string;
   content: string;
   createdAt: string;
-  author: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
-  };
+  author: { id: string; firstName: string; lastName: string; avatarUrl?: string };
 }
 
 interface FeedPost {
@@ -36,430 +39,820 @@ interface FeedPost {
   content: string;
   imageUrl?: string;
   createdAt: string;
-  author: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
-    role: string;
-  };
+  author: { id: string; firstName: string; lastName: string; avatarUrl?: string; role: string };
   likes: Array<{ userId: string }>;
   comments: FeedComment[];
 }
 
-const getRoleBadge = (role: string) => {
-  const roleLower = role.toLowerCase();
-  switch (roleLower) {
-    case 'entrepreneur':
-      return { label: '🚀 Entrepreneur', bg: 'bg-purple-50', border: 'border-purple-200/60', text: 'text-purple-700' };
-    case 'freelancer':
-    case 'freelance':
-      return { label: '💼 Freelancer', bg: 'bg-blue-50', border: 'border-blue-200/60', text: 'text-blue-700' };
-    case 'investor':
-    case 'investisseur':
-      return { label: '💎 Investisseur', bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-700' };
-    case 'mentor':
-      return { label: '🎯 Mentor', bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-700' };
-    case 'user':
-      return { label: '✨ Membre', bg: 'bg-indigo-50', border: 'border-indigo-200/60', text: 'text-indigo-700' };
-    default:
-      return { label: `✨ ${role}`, bg: 'bg-slate-50', border: 'border-slate-200/60', text: 'text-slate-600' };
-  }
+// ── Role badge config ──────────────────────────────────────────
+const ROLE_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  entrepreneur: { label: 'Entrepreneur', color: '#6d28d9', bg: 'rgba(139,92,246,0.1)' },
+  freelancer: { label: 'Freelancer', color: '#1d4ed8', bg: 'rgba(59,130,246,0.1)' },
+  freelance: { label: 'Freelancer', color: '#1d4ed8', bg: 'rgba(59,130,246,0.1)' },
+  investor: { label: 'Investisseur', color: '#065f46', bg: 'rgba(16,185,129,0.1)' },
+  investisseur: { label: 'Investisseur', color: '#065f46', bg: 'rgba(16,185,129,0.1)' },
+  mentor: { label: 'Mentor', color: '#92400e', bg: 'rgba(245,158,11,0.1)' },
+  user: { label: 'Membre', color: '#3730a3', bg: 'rgba(99,102,241,0.1)' },
 };
 
+const getRoleBadge = (role: string) =>
+  ROLE_BADGE[role?.toLowerCase()] ?? { label: role, color: '#475569', bg: 'rgba(100,116,139,0.1)' };
+
+const getInitials = (first: string, last: string) =>
+  `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
+
+const getAvatarGradient = (role: string) => {
+  const r = role?.toLowerCase();
+  if (r === 'entrepreneur') return 'linear-gradient(135deg,#8b5cf6,#6d28d9)';
+  if (r === 'freelancer' || r === 'freelance') return 'linear-gradient(135deg,#60a5fa,#1d4ed8)';
+  if (r === 'mentor') return 'linear-gradient(135deg,#fbbf24,#92400e)';
+  if (r === 'investor' || r === 'investisseur') return 'linear-gradient(135deg,#34d399,#065f46)';
+  return 'linear-gradient(135deg,#818cf8,#3730a3)';
+};
+
+function formatTimeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days}j`;
+  if (hours > 0) return `${hours}h`;
+  if (mins > 0) return `${mins}min`;
+  return 'maintenant';
+}
+
+// ── Avatar ─────────────────────────────────────────────────────
+function Avatar({
+  firstName,
+  lastName,
+  role,
+  size = 40,
+}: {
+  firstName: string;
+  lastName: string;
+  role: string;
+  size?: number;
+}) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.06 }}
+      className="flex-shrink-0 flex items-center justify-center text-white font-bold rounded-full ring-2 ring-white"
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.28,
+        background: getAvatarGradient(role),
+        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+      }}
+    >
+      {getInitials(firstName, lastName)}
+    </motion.div>
+  );
+}
+
+// ── PostCard ───────────────────────────────────────────────────
+function PostCard({
+  post,
+  currentUserId,
+  onToggleLike,
+  onAddComment,
+  index,
+}: {
+  post: FeedPost;
+  currentUserId?: string;
+  onToggleLike: (id: string) => void;
+  onAddComment: (id: string, text: string) => void;
+  index: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: '-40px' });
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [localLiked, setLocalLiked] = useState(post.likes.some(l => l.userId === currentUserId));
+  const [localLikeCount, setLocalLikeCount] = useState(post.likes.length);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const roleBadge = getRoleBadge(post.author.role);
+
+  const handleLike = () => {
+    const next = !localLiked;
+    setLocalLiked(next);
+    setLocalLikeCount(c => c + (next ? 1 : -1));
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 600);
+    onToggleLike(post.id);
+  };
+
+  const handleComment = () => {
+    if (!commentText.trim()) return;
+    onAddComment(post.id, commentText);
+    setCommentText('');
+  };
+
+  const actions = [
+    {
+      label: "J'aime",
+      active: localLiked,
+      activeColor: '#ef4444',
+      icon: (
+        <motion.div animate={likeAnimating ? { scale: [1, 1.5, 1] } : {}} transition={{ duration: 0.4 }}>
+          <Heart
+            size={15}
+            className={localLiked ? 'fill-red-500 text-red-500' : 'text-slate-400'}
+          />
+        </motion.div>
+      ),
+      onClick: handleLike,
+    },
+    {
+      label: 'Commenter',
+      active: showComments,
+      activeColor: '#3b82f6',
+      icon: <MessageCircle size={15} className={showComments ? 'text-blue-500' : 'text-slate-400'} />,
+      onClick: () => setShowComments(v => !v),
+    },
+    {
+      label: 'Partager',
+      active: false,
+      activeColor: '#10b981',
+      icon: <Share2 size={15} className="text-slate-400" />,
+      onClick: () => { },
+    },
+    {
+      label: 'Sauvegarder',
+      active: saved,
+      activeColor: '#f59e0b',
+      icon: <Bookmark size={15} className={saved ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} />,
+      onClick: () => setSaved(v => !v),
+    },
+  ];
+
+  return (
+    <motion.article
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.5, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+      className="group"
+      style={{
+        background: 'white',
+        border: '1px solid #e8edf3',
+        borderRadius: 16,
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.03)',
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+      }}
+      whileHover={{
+        boxShadow: '0 4px 16px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.04)',
+        borderColor: '#d1dae6',
+      }}
+    >
+      {/* Header */}
+      <div className="px-5 pt-5 pb-0">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start gap-3">
+            <Avatar
+              firstName={post.author.firstName}
+              lastName={post.author.lastName}
+              role={post.author.role}
+              size={42}
+            />
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[13.5px] font-semibold text-slate-800">
+                  {post.author.firstName} {post.author.lastName}
+                </span>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ color: roleBadge.color, background: roleBadge.bg }}
+                >
+                  {roleBadge.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 mt-0.5 text-slate-400">
+                <Globe size={10} />
+                <span className="text-[11px]">
+                  {formatTimeAgo(post.createdAt)} · Public
+                </span>
+              </div>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ background: '#f1f5f9' }}
+            whileTap={{ scale: 0.9 }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"
+          >
+            <MoreHorizontal size={16} />
+          </motion.button>
+        </div>
+
+        {/* Content */}
+        <p className="text-[13.5px] leading-[1.7] text-slate-700 whitespace-pre-wrap mb-4">
+          {post.content}
+        </p>
+      </div>
+
+      {/* Image */}
+      {post.imageUrl && (
+        <div className="overflow-hidden" style={{ borderTop: '1px solid #f1f5f9', background: '#f8fafc' }}>
+          <img
+            src={post.imageUrl}
+            alt=""
+            className="w-full object-contain max-h-96"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* Stats row */}
+      {(localLikeCount > 0 || post.comments.length > 0) && (
+        <div
+          className="mx-5 py-2.5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid #f1f5f9' }}
+        >
+          {localLikeCount > 0 ? (
+            <div className="flex items-center gap-1.5">
+              <span
+                className="w-[18px] h-[18px] rounded-full flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg,#ef4444,#f97316)' }}
+              >
+                <Heart size={9} className="fill-white text-white" />
+              </span>
+              <span className="text-[11.5px] text-slate-400">{localLikeCount}</span>
+            </div>
+          ) : <div />}
+          {post.comments.length > 0 && (
+            <button
+              onClick={() => setShowComments(v => !v)}
+              className="text-[11.5px] text-slate-400 hover:text-blue-500 transition-colors"
+            >
+              {post.comments.length} commentaire{post.comments.length > 1 ? 's' : ''}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex px-2 py-1" style={{ borderBottom: showComments ? '1px solid #f1f5f9' : 'none' }}>
+        {actions.map(action => (
+          <motion.button
+            key={action.label}
+            onClick={action.onClick}
+            whileHover={{ background: `${action.activeColor}0d` }}
+            whileTap={{ scale: 0.93 }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl"
+          >
+            {action.icon}
+            <span
+              className="text-[11.5px] font-semibold hidden sm:inline"
+              style={{ color: action.active ? action.activeColor : '#94a3b8' }}
+            >
+              {action.label}
+            </span>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Comments */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="px-5 py-4 space-y-3">
+              {post.comments.map((comment, i) => (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06, duration: 0.25 }}
+                  className="flex gap-2.5"
+                >
+                  <Avatar
+                    firstName={comment.author.firstName}
+                    lastName={comment.author.lastName}
+                    role="user"
+                    size={30}
+                  />
+                  <div
+                    className="flex-1 rounded-2xl px-3.5 py-2.5"
+                    style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[12px] font-semibold text-slate-800">
+                        {comment.author.firstName} {comment.author.lastName}
+                      </span>
+                      <span className="text-[10px] text-slate-300">
+                        {formatTimeAgo(comment.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[12px] leading-relaxed text-slate-600">
+                      {comment.content}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* Comment input */}
+              <div className="flex gap-2 items-center pt-1">
+                <input
+                  type="text"
+                  placeholder="Écrire un commentaire..."
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleComment()}
+                  className="flex-1 px-3.5 py-2 rounded-xl text-[12.5px] outline-none transition-all"
+                  style={{
+                    background: '#f8fafc',
+                    border: '1.5px solid #e2e8f0',
+                    color: '#0f172a',
+                  }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#93c5fd')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#e2e8f0')}
+                />
+                <motion.button
+                  onClick={handleComment}
+                  disabled={!commentText.trim()}
+                  whileHover={commentText.trim() ? { scale: 1.05 } : {}}
+                  whileTap={commentText.trim() ? { scale: 0.95 } : {}}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0 disabled:opacity-30 transition-all"
+                  style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+                >
+                  <Send size={13} />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.article>
+  );
+}
+
+// ── CreatePostCard ─────────────────────────────────────────────
+function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () => void }) {
+  const [content, setContent] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [showImage, setShowImage] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const initials = user
+    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
+    : '';
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await api.uploads.upload(file);
+      setImageUrl(`http://localhost:3001${res.file.path}`);
+    } catch { }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim() || posting) return;
+    setPosting(true);
+    try {
+      await api.feed.create({ content, imageUrl: imageUrl || undefined });
+      setContent('');
+      setImageUrl('');
+      setShowImage(false);
+      onCreated();
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        background: 'white',
+        border: '1px solid #e8edf3',
+        borderRadius: 16,
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+        marginBottom: 14,
+      }}
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="px-5 pt-4 pb-3">
+          <div className="flex gap-3">
+            {/* Avatar */}
+            <div
+              className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold ring-2 ring-white"
+              style={{
+                background: getAvatarGradient(user?.role ?? 'user'),
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              }}
+            >
+              {initials}
+            </div>
+
+            {/* Textarea */}
+            <div className="flex-1">
+              <textarea
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder="Partagez une actualité, une réussite ou une idée..."
+                rows={focused || content ? 3 : 1}
+                className="w-full resize-none outline-none text-[13.5px] leading-relaxed bg-transparent placeholder:text-slate-400 transition-all duration-300"
+                style={{ color: '#1e293b' }}
+              />
+            </div>
+          </div>
+
+          {/* Image section */}
+          <AnimatePresence>
+            {showImage && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{ overflow: 'hidden', marginTop: 10 }}
+              >
+                <div
+                  className="rounded-xl p-3 flex items-center gap-2"
+                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
+                >
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => document.getElementById('post-img-input')?.click()}
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-blue-600 flex items-center gap-1.5 flex-shrink-0"
+                    style={{ background: 'white', border: '1px solid #e2e8f0' }}
+                  >
+                    <ImageIcon size={12} />
+                    {imageUrl ? 'Changer' : 'Importer'}
+                  </motion.button>
+                  <input id="post-img-input" type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+                  <input
+                    type="text"
+                    placeholder="ou coller une URL..."
+                    value={imageUrl}
+                    onChange={e => setImageUrl(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 rounded-lg text-[11.5px] outline-none min-w-0"
+                    style={{ background: 'white', border: '1px solid #e2e8f0', color: '#0f172a' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setImageUrl(''); setShowImage(false); }}
+                    className="text-[11px] font-medium text-red-400 hover:text-red-500 flex-shrink-0"
+                  >
+                    Annuler
+                  </button>
+                </div>
+                {imageUrl && (
+                  <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden">
+                    <img src={imageUrl} alt="preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer */}
+        <div
+          className="px-5 py-3 flex items-center justify-between"
+          style={{ borderTop: '1px solid #f1f5f9' }}
+        >
+          <div className="flex gap-1">
+            <motion.button
+              type="button"
+              onClick={() => setShowImage(v => !v)}
+              whileHover={{ background: 'rgba(59,130,246,0.06)' }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold text-slate-500"
+            >
+              <ImageIcon size={14} className="text-blue-500" />
+              Photo
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ background: 'rgba(59,130,246,0.06)' }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold text-slate-500"
+            >
+              <Link size={14} className="text-blue-500" />
+              Lien
+            </motion.button>
+          </div>
+
+          <motion.button
+            type="submit"
+            disabled={!content.trim() || posting}
+            animate={content.trim() ? { scale: 1, opacity: 1 } : { scale: 0.97, opacity: 0.5 }}
+            whileHover={content.trim() ? { scale: 1.03 } : {}}
+            whileTap={content.trim() ? { scale: 0.97 } : {}}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl text-[12.5px] font-bold text-white disabled:cursor-not-allowed transition-all"
+            style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+          >
+            {posting ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full"
+              />
+            ) : <Send size={13} />}
+            Publier
+          </motion.button>
+        </div>
+      </form>
+    </motion.div>
+  );
+}
+
+// ── FilterTabs ─────────────────────────────────────────────────
+function FilterTabs({
+  active,
+  onChange,
+}: {
+  active: 'public' | 'profile';
+  onChange: (v: 'public' | 'profile') => void;
+}) {
+  const tabs = [
+    {
+      id: 'public' as const,
+      label: 'Fil public',
+      icon: <Globe size={13} />,
+    },
+    {
+      id: 'profile' as const,
+      label: 'Mes posts',
+      icon: (
+        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div
+      className="inline-flex p-1 rounded-2xl"
+      style={{
+        background: 'rgba(255,255,255,0.9)',
+        border: '1px solid #e8edf3',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
+      }}
+    >
+      {tabs.map(tab => (
+        <motion.button
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          className="relative flex items-center gap-1.5 px-5 py-2 rounded-xl text-[12.5px] font-semibold z-10"
+          style={{ color: active === tab.id ? 'white' : '#64748b' }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {active === tab.id && (
+            <motion.div
+              layoutId="tab-pill"
+              className="absolute inset-0 rounded-xl"
+              style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            />
+          )}
+          <span className="relative z-10 flex items-center gap-1.5">
+            {tab.icon}
+            {tab.label}
+          </span>
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+// ── EmptyState ─────────────────────────────────────────────────
+function EmptyState({ filter }: { filter: 'public' | 'profile' }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+      className="text-center py-16"
+      style={{
+        background: 'white',
+        border: '1px solid #e8edf3',
+        borderRadius: 16,
+        boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+      }}
+    >
+      <motion.div
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+        style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)' }}
+      >
+        <Sparkles size={22} className="text-blue-500" />
+      </motion.div>
+      <h3 className="text-[14px] font-bold text-slate-800 mb-2">
+        {filter === 'profile' ? 'Aucune publication' : 'Le fil est vide'}
+      </h3>
+      <p className="text-[12.5px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+        {filter === 'profile'
+          ? 'Partagez votre première publication pour la voir ici.'
+          : 'Connectez-vous à des professionnels pour enrichir votre fil.'}
+      </p>
+    </motion.div>
+  );
+}
+
+// ── RightSidebar ───────────────────────────────────────────────
+function RightSidebar({ user }: { user: User | null }) {
+  return (
+    <div className="space-y-4" style={{ width: 240, flexShrink: 0 }}>
+      {/* Profile card */}
+      {user && (
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          style={{
+            background: 'white',
+            border: '1px solid #e8edf3',
+            borderRadius: 16,
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+          }}
+        >
+          {/* Banner */}
+          <div
+            className="h-14"
+            style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+          />
+          <div className="px-4 pb-4">
+            <div className="flex items-end gap-3 -mt-5 mb-3">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[13px] font-bold ring-2 ring-white flex-shrink-0"
+                style={{
+                  background: getAvatarGradient(user.role ?? 'user'),
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+              >
+                {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()}
+              </div>
+              <div className="mb-0.5">
+                <div className="text-[13px] font-bold text-slate-800 leading-tight">
+                  {user.firstName} {user.lastName}
+                </div>
+                <span
+                  className="text-[9.5px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ ...getRoleBadge(user.role ?? 'user') as any, color: getRoleBadge(user.role ?? 'user').color, background: getRoleBadge(user.role ?? 'user').bg }}
+                >
+                  {getRoleBadge(user.role ?? 'user').label}
+                </span>
+              </div>
+            </div>
+            <div
+              className="rounded-xl p-3 grid grid-cols-2 gap-3"
+              style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}
+            >
+              {[
+                { label: 'Vues du profil', value: '142', icon: <BarChart2 size={12} /> },
+                { label: 'Connexions', value: '38', icon: <UserPlus size={12} /> },
+              ].map(stat => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-[18px] font-bold text-slate-800">{stat.value}</div>
+                  <div className="text-[10px] text-slate-400 leading-tight mt-0.5">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Trending */}
+      <motion.div
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        style={{
+          background: 'white',
+          border: '1px solid #e8edf3',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+        }}
+      >
+        <div
+          className="px-4 py-3 flex items-center gap-2"
+          style={{ borderBottom: '1px solid #f1f5f9' }}
+        >
+          <TrendingUp size={14} className="text-blue-500" />
+          <span className="text-[12.5px] font-semibold text-slate-700">Tendances</span>
+        </div>
+        {['#NextJS', '#FreelanceLife', '#MVPLaunch', '#GoConnexion'].map((tag, i) => (
+          <div
+            key={tag}
+            className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
+            style={{ borderBottom: i < 3 ? '1px solid #f8fafc' : 'none' }}
+          >
+            <div className="flex items-center gap-1.5 text-blue-600 text-[12px] font-semibold mb-0.5">
+              <Hash size={11} />
+              {tag.slice(1)}
+            </div>
+            <div className="text-[10.5px] text-slate-400">
+              {[48, 31, 27, 19][i]} posts cette semaine
+            </div>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
 export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [newPostContent, setNewPostContent] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [showImageInput, setShowImageInput] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'public' | 'profile'>('public');
   const [isLoading, setIsLoading] = useState(true);
-
-  // States to hold typed comments per post
-  const [postCommentsInputs, setPostCommentsInputs] = useState<Record<string, string>>({});
-  // States to toggle comments expand per post
-  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
   const fetchFeed = async () => {
     setIsLoading(true);
     try {
       const data = await api.feed.list();
       setPosts(data);
-    } catch (error) {
-      console.error('Error fetching feed:', error);
+    } catch {
+      console.error('Feed fetch error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchFeed();
-  }, [user]);
+  useEffect(() => { fetchFeed(); }, [user]);
 
-  const handlePostImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const res = await api.uploads.upload(file);
-      const imageUrl = `http://localhost:3001${res.file.path}`;
-      setNewImageUrl(imageUrl);
-    } catch (err: any) {
-      console.error("Erreur lors du téléversement de l'image de publication:", err);
-    }
-  };
-
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostContent.trim()) return;
-
-    try {
-      await api.feed.create({
-        content: newPostContent,
-        imageUrl: newImageUrl.trim() ? newImageUrl.trim() : undefined,
-      });
-      setNewPostContent('');
-      setNewImageUrl('');
-      setShowImageInput(false);
-      await fetchFeed();
-    } catch (error) {
-      console.error('Error creating feed post:', error);
-    }
-  };
+  const filtered = posts.filter(p =>
+    activeFilter === 'profile' ? p.author.id === user?.id : true
+  );
 
   const handleToggleLike = async (postId: string) => {
+    try { await api.feed.toggleLike(postId); } catch { }
+  };
+
+  const handleAddComment = async (postId: string, text: string) => {
     try {
-      await api.feed.toggleLike(postId);
+      await api.feed.addComment(postId, text);
       await fetchFeed();
-    } catch (error) {
-      console.error('Error toggling like:', error);
-    }
+    } catch { }
   };
-
-  const handleAddComment = async (postId: string) => {
-    const commentText = postCommentsInputs[postId];
-    if (!commentText || !commentText.trim()) return;
-
-    try {
-      await api.feed.addComment(postId, commentText);
-      setPostCommentsInputs(prev => ({ ...prev, [postId]: '' }));
-      await fetchFeed();
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
-
-  const formatTimeAgo = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInDays > 0) return `il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
-    if (diffInHours > 0) return `il y a ${diffInHours} heure${diffInHours > 1 ? 's' : ''}`;
-    if (diffInMinutes > 0) return `il y a ${diffInMinutes} min`;
-    return 'à l\'instant';
-  };
-
-  const isLikedByCurrentUser = (post: FeedPost) => {
-    if (!user) return false;
-    return post.likes.some(like => like.userId === user.id);
-  };
-
-  const filteredPosts = posts.filter(post => {
-    if (activeFilter === 'profile') {
-      return post.author.id === user?.id;
-    }
-    return true;
-  });
 
   return (
-    <div className="flex-1 bg-gradient-to-b from-gc-bg via-white/40 to-gc-bg/80 min-h-full">
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        {/* Toggle Public / Profile */}
-        <div className="flex justify-center gap-3 mb-8">
-          <button
-            onClick={() => setActiveFilter('public')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 ${
-              activeFilter === 'public'
-                ? 'bg-gradient-to-r from-accent to-indigo-500 text-white shadow-lg shadow-accent/20'
-                : 'bg-white/80 backdrop-blur-sm text-muted hover:text-foreground hover:bg-white border border-gc-border/60 hover:border-accent/30 hover:shadow-md'
-            }`}
-          >
-            <Globe size={14} />
-            <span>Fil Public</span>
-          </button>
-          <button
-            onClick={() => setActiveFilter('profile')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 ${
-              activeFilter === 'profile'
-                ? 'bg-gradient-to-r from-accent to-indigo-500 text-white shadow-lg shadow-accent/20'
-                : 'bg-white/80 backdrop-blur-sm text-muted hover:text-foreground hover:bg-white border border-gc-border/60 hover:border-accent/30 hover:shadow-md'
-            }`}
-          >
-            <UserIcon size={14} />
-            <span>Mon Profil</span>
-          </button>
+    <div style={{ background: '#f4f7fb', minHeight: '100%' }}>
+      <div
+        className="mx-auto py-7 px-4"
+        style={{ maxWidth: 1040 }}
+      >
+        {/* Tabs */}
+        <div className="flex justify-center mb-5">
+          <FilterTabs active={activeFilter} onChange={setActiveFilter} />
         </div>
 
-        {/* Create Post Card - Frosted glass with gradient border */}
-        <div className="relative bg-white/80 backdrop-blur-xl border border-gc-border/40 rounded-3xl shadow-sm mb-8 overflow-hidden group">
-          {/* Gradient border bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-accent via-indigo-400 to-accent/30 opacity-60" />
+        {/* Main layout: feed + right sidebar */}
+        <div className="flex gap-5 items-start">
+          {/* Feed column */}
+          <div className="flex-1 min-w-0">
+            <CreatePostCard user={user} onCreated={fetchFeed} />
 
-          <div className="p-5 sm:p-6">
-            <div className="flex gap-4">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent/20 to-indigo-400/20 flex items-center justify-center text-accent text-xs font-bold flex-shrink-0 ring-2 ring-white shadow-sm">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+            {isLoading ? (
+              <FeedSkeleton />
+            ) : filtered.length === 0 ? (
+              <EmptyState filter={activeFilter} />
+            ) : (
+              <div className="space-y-4">
+                <AnimatePresence>
+                  {filtered.map((post, i) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={user?.id}
+                      onToggleLike={handleToggleLike}
+                      onAddComment={handleAddComment}
+                      index={i}
+                    />
+                  ))}
+                </AnimatePresence>
               </div>
-
-              <div className="flex-1 min-w-0">
-                <form onSubmit={handleCreatePost} className="space-y-4">
-                  <textarea
-                    placeholder="Partagez votre expertise, une réussite ou une actualité... ✨"
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                    className="w-full px-4 py-3.5 border border-gc-border/40 rounded-2xl focus:ring-2 focus:ring-accent/30 focus:border-accent/40 outline-none resize-none transition-all duration-300 placeholder-muted/50 text-sm bg-gc-bg/50 shadow-inner shadow-gc-border/10 leading-relaxed"
-                    rows={3}
-                  />
-
-                  {showImageInput && (
-                    <div className="bg-gc-bg/60 backdrop-blur-sm p-4 rounded-2xl border border-gc-border/30 space-y-3">
-                      <label className="block text-[11px] font-bold text-foreground/70">Ajouter une image à votre publication :</label>
-                      <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => document.getElementById('post-image-upload')?.click()}
-                          className="px-3.5 py-2 bg-white border border-gc-border/50 hover:bg-accent-light/50 hover:border-accent/30 rounded-xl text-[11px] font-bold text-foreground/70 shadow-sm transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <ImageIcon size={13} className="text-accent" />
-                          <span>{newImageUrl ? 'Changer l\'image' : 'Importer une image'}</span>
-                        </button>
-                        <input
-                          id="post-image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handlePostImageUpload}
-                        />
-                        <span className="text-[11px] text-muted/60">ou</span>
-                        <input
-                          type="text"
-                          placeholder="Coller l'URL d'une image..."
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          className="flex-1 px-3.5 py-2 border border-gc-border/40 rounded-xl text-[11px] focus:outline-none focus:ring-2 focus:ring-accent/20 bg-white transition-all duration-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewImageUrl('');
-                            setShowImageInput(false);
-                          }}
-                          className="text-[11px] text-red-400 hover:text-red-600 font-bold transition-colors duration-200"
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                      {newImageUrl && (
-                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-gc-border/30 mt-2 shadow-sm">
-                          <img src={newImageUrl} alt="Preview" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => setNewImageUrl('')}
-                            className="absolute top-1.5 right-1.5 bg-red-500/90 backdrop-blur-sm text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px] hover:bg-red-600 transition-colors shadow-sm"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-3 border-t border-gc-border/20">
-                    <button
-                      type="button"
-                      onClick={() => setShowImageInput(!showImageInput)}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 text-muted hover:text-accent hover:bg-accent-light/50 rounded-xl transition-all duration-200 font-semibold text-[12px] group/photo"
-                    >
-                      <span className="p-1 rounded-lg bg-gradient-to-br from-accent/10 to-indigo-400/10 group-hover/photo:from-accent/20 group-hover/photo:to-indigo-400/20 transition-all duration-200">
-                        <ImageIcon size={14} className="text-accent" />
-                      </span>
-                      <span>Ajouter une photo</span>
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!newPostContent.trim()}
-                      className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-accent to-indigo-500 hover:from-accent/90 hover:to-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-300 font-bold text-[12px] shadow-md shadow-accent/15 hover:shadow-lg hover:shadow-accent/25 hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      <Send size={13} />
-                      <span>Publier</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            )}
           </div>
+
+          {/* Right sidebar */}
+          <RightSidebar user={user} />
         </div>
-
-        {/* Feed Posts */}
-        {isLoading ? (
-          <div className="py-24 text-center flex flex-col items-center justify-center gap-4">
-            <div className="w-10 h-10 border-[3px] border-accent/30 border-t-accent rounded-full animate-spin"></div>
-            <p className="text-xs text-muted font-medium">Chargement de votre fil d&apos;activités...</p>
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-xl border border-gc-border/30 rounded-3xl p-16 text-center shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-light to-indigo-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Sparkles className="text-accent" size={24} />
-            </div>
-            <h3 className="text-sm font-bold text-foreground mb-2">Aucune publication</h3>
-            <p className="text-[12px] text-muted max-w-xs mx-auto leading-relaxed">
-              Soyez le premier à partager une actualité ou une opportunité de collaboration !
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {filteredPosts.map((post) => {
-              const liked = isLikedByCurrentUser(post);
-              const isExpanded = !!expandedComments[post.id];
-              const roleBadge = getRoleBadge(post.author.role);
-              
-              return (
-                <article
-                  key={post.id}
-                  className="bg-white/90 backdrop-blur-sm border border-gc-border/30 rounded-2xl shadow-sm overflow-hidden hover:shadow-md hover:shadow-primary/5 transition-all duration-300 border-l-2 border-l-accent/30"
-                >
-                  <div className="p-5 sm:p-6">
-                    {/* Header */}
-                    <div className="flex items-start gap-3.5 mb-4">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent/15 to-indigo-400/15 flex items-center justify-center text-accent text-xs font-bold flex-shrink-0 ring-2 ring-white shadow-sm">
-                        {post.author.firstName[0]}{post.author.lastName[0]}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="font-semibold text-foreground text-[13px]">
-                            {post.author.firstName} {post.author.lastName}
-                          </h3>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${roleBadge.bg} ${roleBadge.border} ${roleBadge.text}`}>
-                            {roleBadge.label}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted mt-0.5 flex items-center gap-1">
-                          <Globe size={10} className="opacity-50" />
-                          {formatTimeAgo(post.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="mb-4">
-                      <p className="text-foreground/90 leading-relaxed text-[13px]">
-                        {post.content}
-                      </p>
-                    </div>
-
-                    {/* Optional Image */}
-                    {post.imageUrl && (
-                      <div className="mb-4 -mx-5 sm:-mx-6 border-y border-gc-border/20 bg-gc-bg/30 max-h-96 overflow-hidden">
-                        <img
-                          src={post.imageUrl}
-                          alt="Post attachment"
-                          className="w-full h-auto object-contain max-h-96"
-                        />
-                      </div>
-                    )}
-
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-[11px] text-muted pt-3 border-t border-gc-border/20">
-                      <div className="flex gap-5">
-                        <span className="flex items-center gap-1">
-                          <Heart size={11} className={liked ? 'text-red-400 fill-red-400' : 'text-muted/50'} />
-                          {post.likes.length} j&apos;aime
-                        </span>
-                        <span 
-                          className="cursor-pointer hover:text-accent transition-colors duration-200"
-                          onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !isExpanded }))}
-                        >
-                          {post.comments.length} commentaire{post.comments.length > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Bar */}
-                  <div className="px-5 sm:px-6 py-2.5 border-t border-b border-gc-border/15 bg-gc-bg/30 flex justify-between items-center gap-2">
-                    <button
-                      onClick={() => handleToggleLike(post.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-bold transition-all duration-200 hover:scale-105 active:scale-95 ${
-                        liked
-                          ? 'text-red-500 bg-red-50/80 hover:bg-red-100/80'
-                          : 'text-muted hover:text-red-500 hover:bg-red-50/50'
-                      }`}
-                    >
-                      <Heart size={15} fill={liked ? 'currentColor' : 'none'} className="transition-transform duration-200" />
-                      <span>J&apos;aime</span>
-                    </button>
-                    <button
-                      onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !isExpanded }))}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-muted hover:text-accent hover:bg-accent-light/40 text-[12px] font-bold transition-all duration-200 hover:scale-105 active:scale-95"
-                    >
-                      <MessageCircle size={15} />
-                      <span>Commenter</span>
-                    </button>
-                  </div>
-
-                  {/* Expanded Comments */}
-                  {isExpanded && (
-                    <div className="p-5 sm:p-6 bg-gc-bg/70 backdrop-blur-sm border-t border-gc-border/10 space-y-4">
-                      {/* Comments List */}
-                      {post.comments.length > 0 && (
-                        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                          {post.comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-2.5 items-start group/comment">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent/10 to-indigo-400/10 flex items-center justify-center text-accent text-[10px] font-bold flex-shrink-0 ring-1 ring-white">
-                                {comment.author.firstName[0]}{comment.author.lastName[0]}
-                              </div>
-                              <div className="flex-1 bg-white/80 backdrop-blur-sm p-3 rounded-2xl border border-gc-border/20 shadow-sm text-[12px] group-hover/comment:shadow-md transition-shadow duration-200">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="font-semibold text-foreground">{comment.author.firstName} {comment.author.lastName}</span>
-                                  <span className="text-[9px] text-muted/60">{formatTimeAgo(comment.createdAt)}</span>
-                                </div>
-                                <p className="text-foreground/80 leading-relaxed">{comment.content}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Add Comment Input Form */}
-                      <div className="flex gap-2.5">
-                        <input
-                          type="text"
-                          placeholder="Ajouter un commentaire..."
-                          value={postCommentsInputs[post.id] || ''}
-                          onChange={(e) => setPostCommentsInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                          onKeyPress={(e) => e.key === 'Enter' && handleAddComment(post.id)}
-                          className="flex-1 px-4 py-2.5 border border-gc-border/30 rounded-xl text-xs focus:ring-2 focus:ring-accent/20 focus:border-accent/30 outline-none bg-white/80 backdrop-blur-sm placeholder-muted/50 transition-all duration-200"
-                        />
-                        <button
-                          onClick={() => handleAddComment(post.id)}
-                          disabled={!postCommentsInputs[post.id]?.trim()}
-                          className="px-4 py-2.5 bg-gradient-to-r from-accent to-indigo-500 text-white rounded-xl hover:from-accent/90 hover:to-indigo-600 disabled:opacity-40 text-[11px] font-bold shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
-                        >
-                          <Send size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

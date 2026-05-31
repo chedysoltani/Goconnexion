@@ -47,6 +47,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
+const client_1 = require("@prisma/client");
 let AuthService = class AuthService {
     prisma;
     jwtService;
@@ -73,15 +74,12 @@ let AuthService = class AuthService {
                     role,
                 },
             });
-            if (role === 'FREELANCER') {
+            if (role === client_1.UserRole.FREELANCER) {
                 await tx.freelancerProfile.create({
-                    data: {
-                        userId: user.id,
-                        skills: [],
-                    },
+                    data: { userId: user.id, skills: [] },
                 });
             }
-            else if (role === 'ENTREPRENEUR') {
+            else if (role === client_1.UserRole.ENTREPRENEUR) {
                 await tx.entrepreneurProfile.create({
                     data: {
                         userId: user.id,
@@ -124,6 +122,31 @@ let AuthService = class AuthService {
             },
             ...tokens,
         };
+    }
+    async refresh(refreshToken) {
+        try {
+            const payload = await this.jwtService.verifyAsync(refreshToken);
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+            });
+            if (!user) {
+                throw new common_1.UnauthorizedException('User not found');
+            }
+            const tokens = await this.generateTokens(user.id, user.email, user.role);
+            return {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
+                },
+                ...tokens,
+            };
+        }
+        catch {
+            throw new common_1.UnauthorizedException('Refresh token invalide ou expiré');
+        }
     }
     async generateTokens(userId, email, role) {
         const payload = { sub: userId, email, role };

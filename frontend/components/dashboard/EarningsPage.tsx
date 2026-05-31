@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { User } from '@/types/auth';
-import { Search, TrendingUp, DollarSign, Calendar, Download, MoreHorizontal } from 'lucide-react';
+import { Search, TrendingUp, DollarSign, Calendar, MoreHorizontal, ArrowUpRight } from 'lucide-react';
 
 interface EarningsPageProps {
   user: User | null;
@@ -14,301 +14,374 @@ interface Earning {
   amount: number;
   date: Date;
   status: 'paid' | 'pending' | 'overdue';
-  client: {
-    name: string;
-    company: string;
-  };
+  client: { name: string; company: string };
   project?: string;
   invoice?: string;
 }
 
+const STATUS_CONFIG = {
+  paid:    { label: 'Payé',       color: '#10b981', bg: 'rgba(16,185,129,0.1)',  dot: '#10b981' },
+  pending: { label: 'En attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  dot: '#f59e0b' },
+  overdue: { label: 'En retard',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   dot: '#ef4444' },
+};
+
+const STAT_CARDS = (total: number, pending: number, fmt: (n: number) => string) => [
+  {
+    label: 'Revenus encaissés',
+    value: fmt(total),
+    sub: '+12.5% ce mois',
+    subPositive: true,
+    icon: <DollarSign size={20} color="#10b981" />,
+    iconBg: 'rgba(16,185,129,0.12)',
+    accent: '#10b981',
+    gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))',
+  },
+  {
+    label: 'En attente de paiement',
+    value: fmt(pending),
+    sub: '2 factures actives',
+    subPositive: false,
+    icon: <Calendar size={20} color="#f59e0b" />,
+    iconBg: 'rgba(245,158,11,0.12)',
+    accent: '#f59e0b',
+    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))',
+  },
+  {
+    label: 'Croissance mensuelle',
+    value: '+12.5%',
+    sub: 'vs mois dernier',
+    subPositive: true,
+    icon: <TrendingUp size={20} color="#4a90d9" />,
+    iconBg: 'rgba(74,144,217,0.12)',
+    accent: '#4a90d9',
+    gradient: 'linear-gradient(135deg, rgba(74,144,217,0.08), rgba(74,144,217,0.02))',
+  },
+];
+
 export default function EarningsPage({ user }: EarningsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'paid' | 'pending'>('all');
-  const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'quarter' | 'year'>('month');
 
   const earnings: Earning[] = [
     {
-      id: '1',
-      source: 'Projet E-commerce',
-      amount: 8500,
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      status: 'paid',
-      client: {
-        name: 'Marie Laurent',
-        company: 'FinTech Solutions'
-      },
-      project: 'Plateforme E-commerce Fintech',
-      invoice: 'INV-2024-001'
+      id: '1', source: 'Projet E-commerce', amount: 8500,
+      date: new Date(Date.now() - 5 * 86400000), status: 'paid',
+      client: { name: 'Marie Laurent', company: 'FinTech Solutions' },
+      project: 'Plateforme E-commerce Fintech', invoice: 'INV-2024-001',
     },
     {
-      id: '2',
-      source: 'Application Mobile',
-      amount: 6200,
-      date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-      status: 'paid',
-      client: {
-        name: 'David Chen',
-        company: 'HealthTech Inc'
-      },
-      project: 'Application Mobile Santé',
-      invoice: 'INV-2024-002'
+      id: '2', source: 'Application Mobile', amount: 6200,
+      date: new Date(Date.now() - 12 * 86400000), status: 'paid',
+      client: { name: 'David Chen', company: 'HealthTech Inc' },
+      project: 'Application Mobile Santé', invoice: 'INV-2024-002',
     },
     {
-      id: '3',
-      source: 'Refonte Site Corporate',
-      amount: 4500,
-      date: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
-      status: 'pending',
-      client: {
-        name: 'Sophie Martin',
-        company: 'Design Studio Pro'
-      },
-      project: 'Refonte Site Corporate',
-      invoice: 'INV-2024-003'
+      id: '3', source: 'Refonte Site Corporate', amount: 4500,
+      date: new Date(Date.now() - 18 * 86400000), status: 'pending',
+      client: { name: 'Sophie Martin', company: 'Design Studio Pro' },
+      project: 'Refonte Site Corporate', invoice: 'INV-2024-003',
     },
     {
-      id: '4',
-      source: 'Consulting SEO',
-      amount: 2800,
-      date: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-      status: 'paid',
-      client: {
-        name: 'Thomas Bernard',
-        company: 'Tech Innovations'
-      },
-      project: 'Dashboard Analytics IA',
-      invoice: 'INV-2024-004'
+      id: '4', source: 'Consulting SEO', amount: 2800,
+      date: new Date(Date.now() - 25 * 86400000), status: 'paid',
+      client: { name: 'Thomas Bernard', company: 'Tech Innovations' },
+      project: 'Dashboard Analytics IA', invoice: 'INV-2024-004',
     },
     {
-      id: '5',
-      source: 'Maintenance Web',
-      amount: 1500,
-      date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      status: 'overdue',
-      client: {
-        name: 'Alexandre Petit',
-        company: 'Marketing Agency'
-      },
-      project: 'Campagne Marketing Digital',
-      invoice: 'INV-2024-005'
-    }
+      id: '5', source: 'Maintenance Web', amount: 1500,
+      date: new Date(Date.now() - 30 * 86400000), status: 'overdue',
+      client: { name: 'Alexandre Petit', company: 'Marketing Agency' },
+      project: 'Campagne Marketing Digital', invoice: 'INV-2024-005',
+    },
   ];
 
-  const filteredEarnings = earnings.filter(earning => {
-    const matchesSearch = earning.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         earning.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         earning.project?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeFilter === 'paid') {
-      return matchesSearch && earning.status === 'paid';
-    }
-    if (activeFilter === 'pending') {
-      return matchesSearch && (earning.status === 'pending' || earning.status === 'overdue');
-    }
-    return matchesSearch;
+  const filteredEarnings = earnings.filter((e) => {
+    const q = searchTerm.toLowerCase();
+    const match =
+      e.source.toLowerCase().includes(q) ||
+      e.client.name.toLowerCase().includes(q) ||
+      (e.project?.toLowerCase().includes(q) ?? false);
+    if (activeFilter === 'paid') return match && e.status === 'paid';
+    if (activeFilter === 'pending') return match && (e.status === 'pending' || e.status === 'overdue');
+    return match;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return 'bg-green-100 text-green-700';
-      case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'overdue': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+  const formatDate = (d: Date) =>
+    new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
+  const totalEarnings = earnings.filter((e) => e.status === 'paid').reduce((s, e) => s + e.amount, 0);
+  const pendingEarnings = earnings
+    .filter((e) => e.status === 'pending' || e.status === 'overdue')
+    .reduce((s, e) => s + e.amount, 0);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    }).format(date);
-  };
-
-  const totalEarnings = earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0);
-  const pendingEarnings = earnings.filter(e => e.status === 'pending' || e.status === 'overdue').reduce((sum, e) => sum + e.amount, 0);
+  const FILTERS: { key: 'all' | 'paid' | 'pending'; label: string; accent: string }[] = [
+    { key: 'all',     label: 'Tous',       accent: '#4a90d9' },
+    { key: 'paid',    label: 'Payés',      accent: '#10b981' },
+    { key: 'pending', label: 'En attente', accent: '#f59e0b' },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900 mb-2">Revenus</h1>
-        <p className="text-sm text-slate-600">Suivez vos revenus, factures et paiements</p>
-      </div>
+    <div
+      className="min-h-full p-6 md:p-8"
+      style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}
+    >
+      <div className="max-w-6xl mx-auto space-y-6">
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <DollarSign size={20} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Total Revenus</p>
-              <p className="text-lg font-bold text-slate-900">{formatCurrency(totalEarnings)}</p>
-            </div>
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: '#1a2332' }}>Revenus</h1>
+            <p className="text-[13px] mt-1" style={{ color: '#64748b' }}>
+              Suivez vos revenus, factures et paiements en temps réel
+            </p>
           </div>
+          <button
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'linear-gradient(135deg, #4a90d9, #2563eb)',
+              boxShadow: '0 4px 12px rgba(74,144,217,0.3)',
+            }}
+          >
+            <ArrowUpRight size={14} />
+            Exporter
+          </button>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-              <Calendar size={20} className="text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">En Attente</p>
-              <p className="text-lg font-bold text-slate-900">{formatCurrency(pendingEarnings)}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <TrendingUp size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Croissance Mois</p>
-              <p className="text-lg font-bold text-green-600">+12.5%</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="text"
-                placeholder="Rechercher des revenus..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm"
+        {/* Stat Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {STAT_CARDS(totalEarnings, pendingEarnings, formatCurrency).map((card, i) => (
+            <div
+              key={i}
+              className="rounded-2xl p-5 transition-all duration-200"
+              style={{
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 12px rgba(26,35,50,0.04)',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.boxShadow = `0 8px 28px rgba(26,35,50,0.08), 0 0 0 1px ${card.accent}20`;
+                el.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.boxShadow = '0 2px 12px rgba(26,35,50,0.04)';
+                el.style.transform = 'translateY(0)';
+              }}
+            >
+              {/* Top accent line */}
+              <div
+                className="h-0.5 rounded-full mb-4"
+                style={{ background: `linear-gradient(90deg, ${card.accent}, transparent)` }}
               />
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-widest mb-2" style={{ color: '#94a3b8' }}>
+                    {card.label}
+                  </p>
+                  <p className="text-2xl font-bold" style={{ color: '#1a2332' }}>{card.value}</p>
+                  <p
+                    className="text-[11px] font-medium mt-1"
+                    style={{ color: card.subPositive ? '#10b981' : '#94a3b8' }}
+                  >
+                    {card.subPositive ? '↑ ' : ''}{card.sub}
+                  </p>
+                </div>
+                <div
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: card.iconBg }}
+                >
+                  {card.icon}
+                </div>
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* Filters + Search */}
+        <div
+          className="rounded-2xl p-4 flex flex-col sm:flex-row gap-3"
+          style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(26,35,50,0.03)' }}
+        >
+          <div className="relative flex-1">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: '#94a3b8' }}
+            />
+            <input
+              type="text"
+              placeholder="Rechercher par source, client, projet..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '0.75rem',
+                fontSize: '13px',
+                color: '#1a2332',
+                outline: 'none',
+              }}
+              className="w-full pl-9 pr-4 py-2.5 transition-all duration-200"
+              onFocus={e => {
+                e.currentTarget.style.borderColor = '#4a90d9';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)';
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
           </div>
 
-          {/* Filters */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-colors ${
-                activeFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Tous
-            </button>
-            <button
-              onClick={() => setActiveFilter('paid')}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-colors ${
-                activeFilter === 'paid'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Payés
-            </button>
-            <button
-              onClick={() => setActiveFilter('pending')}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-colors ${
-                activeFilter === 'pending'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              En attente
-            </button>
+          <div className="flex items-center gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setActiveFilter(f.key)}
+                className="px-4 py-2.5 rounded-xl text-[12px] font-semibold transition-all duration-200"
+                style={
+                  activeFilter === f.key
+                    ? {
+                        background: f.accent,
+                        color: '#fff',
+                        boxShadow: `0 4px 10px ${f.accent}40`,
+                      }
+                    : {
+                        background: '#f8fafc',
+                        color: '#64748b',
+                        border: '1.5px solid #e2e8f0',
+                      }
+                }
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Earnings Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Source</th>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Client</th>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Montant</th>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Date</th>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Statut</th>
-                <th className="text-left p-3 font-medium text-slate-700 text-xs">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEarnings.map((earning) => (
-                <tr key={earning.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="p-3">
+        {/* Earnings Table */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(26,35,50,0.04)' }}
+        >
+          {/* Table Header */}
+          <div
+            className="grid grid-cols-[2fr_2fr_1.2fr_1.2fr_1fr_auto] gap-4 px-5 py-3.5"
+            style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}
+          >
+            {['Source / Projet', 'Client', 'Montant', 'Date', 'Statut', 'Facture'].map((h) => (
+              <span key={h} className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>
+                {h}
+              </span>
+            ))}
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y divide-slate-50">
+            {filteredEarnings.length === 0 ? (
+              <div className="p-12 text-center">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ background: 'rgba(74,144,217,0.08)' }}
+                >
+                  <Search size={22} style={{ color: '#4a90d9' }} />
+                </div>
+                <p className="text-[14px] font-semibold mb-1" style={{ color: '#1a2332' }}>
+                  Aucun résultat
+                </p>
+                <p className="text-[12px]" style={{ color: '#94a3b8' }}>
+                  Modifiez vos filtres pour afficher des revenus.
+                </p>
+              </div>
+            ) : (
+              filteredEarnings.map((earning) => {
+                const st = STATUS_CONFIG[earning.status];
+                return (
+                  <div
+                    key={earning.id}
+                    className="grid grid-cols-[2fr_2fr_1.2fr_1.2fr_1fr_auto] gap-4 items-center px-5 py-4 transition-colors"
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                  >
+                    {/* Source */}
                     <div>
-                      <p className="font-medium text-slate-900 text-sm">{earning.source}</p>
+                      <p className="text-[13px] font-semibold" style={{ color: '#1a2332' }}>
+                        {earning.source}
+                      </p>
                       {earning.project && (
-                        <p className="text-xs text-slate-500">{earning.project}</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: '#94a3b8' }}>
+                          {earning.project}
+                        </p>
                       )}
                     </div>
-                  </td>
-                  <td className="p-3">
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{earning.client.name}</p>
-                      <p className="text-xs text-slate-500">{earning.client.company}</p>
+
+                    {/* Client */}
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                        style={{ background: 'rgba(74,144,217,0.1)', color: '#4a90d9' }}
+                      >
+                        {earning.client.name[0]}
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-medium" style={{ color: '#1a2332' }}>
+                          {earning.client.name}
+                        </p>
+                        <p className="text-[11px]" style={{ color: '#94a3b8' }}>
+                          {earning.client.company}
+                        </p>
+                      </div>
                     </div>
-                  </td>
-                  <td className="p-3">
-                    <p className="font-semibold text-slate-900 text-sm">{formatCurrency(earning.amount)}</p>
-                  </td>
-                  <td className="p-3">
-                    <p className="text-sm text-slate-600">{formatDate(earning.date)}</p>
-                  </td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(earning.status)}`}>
-                      {earning.status === 'paid' ? 'Payé' :
-                       earning.status === 'pending' ? 'En attente' : 'En retard'}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
+
+                    {/* Amount */}
+                    <p className="text-[14px] font-bold" style={{ color: '#1a2332' }}>
+                      {formatCurrency(earning.amount)}
+                    </p>
+
+                    {/* Date */}
+                    <p className="text-[12px]" style={{ color: '#64748b' }}>
+                      {formatDate(earning.date)}
+                    </p>
+
+                    {/* Status */}
+                    <div
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold w-fit"
+                      style={{ background: st.bg, color: st.color }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: st.dot }} />
+                      {st.label}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
                       {earning.invoice && (
-                        <button className="text-blue-600 hover:text-blue-700 text-xs font-medium">
+                        <button
+                          className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors"
+                          style={{ color: '#4a90d9', background: 'rgba(74,144,217,0.08)' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(74,144,217,0.15)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(74,144,217,0.08)'; }}
+                        >
                           {earning.invoice}
                         </button>
                       )}
-                      <button className="text-slate-400 hover:text-slate-600">
-                        <MoreHorizontal size={16} />
+                      <button
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                        style={{ color: '#94a3b8' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = '#1a2332'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; }}
+                      >
+                        <MoreHorizontal size={15} />
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Empty State */}
-        {filteredEarnings.length === 0 && (
-          <div className="p-8 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="text-slate-400" size={32} />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Aucun revenu trouvé</h3>
-              <p className="text-slate-600">
-                Essayez de modifier votre recherche pour trouver des revenus.
-              </p>
-            </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

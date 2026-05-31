@@ -38,6 +38,16 @@ interface Conversation {
   updatedAt: string;
 }
 
+const ROLE_AVATAR: Record<string, { bg: string; color: string }> = {
+  FREELANCER:   { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
+  ENTREPRENEUR: { bg: 'rgba(139,92,246,0.15)',  color: '#8b5cf6' },
+  USER:         { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
+};
+
+function getRoleAvatar(role: string) {
+  return ROLE_AVATAR[(role || 'USER').toUpperCase()] || ROLE_AVATAR.USER;
+}
+
 export default function MessagesPage({ user }: MessagesPageProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -50,7 +60,6 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Fetch Conversations from backend
   const fetchConversations = async () => {
     try {
       const data = await api.messaging.conversations();
@@ -60,15 +69,10 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     }
   };
 
-  // 2. Fetch Users available to start conversation
   const fetchUsers = async () => {
     try {
-      // Fetch users list from backend
-      const data = await api.freelancers.list(); // Can list profiles
-      // Map and filter out the current user
-      const users = data
-        .map((p: any) => p.user)
-        .filter((u: any) => u.id !== user?.id);
+      const data = await api.freelancers.list();
+      const users = data.map((p: any) => p.user).filter((u: any) => u.id !== user?.id);
       setAvailableUsers(users);
     } catch (error) {
       console.error('Error fetching available users:', error);
@@ -80,12 +84,10 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     fetchUsers();
   }, [user]);
 
-  // 3. Connect to WebSocket Gateway
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    // Connect to NestJS WebSocket Gateway (runs on port 3001 by default)
     const socket = io('http://localhost:3001', {
       auth: { token },
       transports: ['websocket'],
@@ -93,38 +95,22 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      console.log('Connected to real-time messaging WebSocket gateway');
-    });
-
-    // Listen to incoming messages in real-time
     socket.on('newMessage', (msg: Message) => {
-      // Append message if it belongs to selected conversation
       setMessages((prev) => {
-        // Avoid duplicate messages
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-
-      // Refetch conversations list to update previews
       fetchConversations();
     });
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => { socket.disconnect(); };
   }, []);
 
-  // 4. Handle Joining Room on conversation select
   useEffect(() => {
     if (!socketRef.current || !selectedConversationId) return;
-
     const socket = socketRef.current;
-    
-    // Join conversation room
     socket.emit('joinConversation', { conversationId: selectedConversationId });
 
-    // Load active conversation messages from database
     const loadMessages = async () => {
       try {
         const data = await api.messaging.messages(selectedConversationId);
@@ -133,26 +119,19 @@ export default function MessagesPage({ user }: MessagesPageProps) {
         console.error('Error loading messages:', error);
       }
     };
-
     loadMessages();
 
-    return () => {
-      socket.emit('leaveConversation', { conversationId: selectedConversationId });
-    };
+    return () => { socket.emit('leaveConversation', { conversationId: selectedConversationId }); };
   }, [selectedConversationId]);
 
-  // 5. Scroll to bottom of message list
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 6. Send Message logic
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !selectedConversationId) return;
-
     try {
-      // Post to REST API (this registers in DB and triggers socket broadcast on server)
       await api.messaging.sendMessage(selectedConversationId, newMessage);
       setNewMessage('');
     } catch (error) {
@@ -160,10 +139,8 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     }
   };
 
-  // 7. Start conversation with a new user
   const handleStartNewConversation = async (targetUserId: string) => {
     try {
-      // Initiate a conversation between current user and target user
       const conversation = await api.messaging.startConversation(targetUserId);
       await fetchConversations();
       setSelectedConversationId(conversation.id);
@@ -173,15 +150,10 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     }
   };
 
-  // Helpers
-  const getSelectedConv = () => {
-    return conversations.find((c) => c.id === selectedConversationId);
-  };
-
+  const getSelectedConv = () => conversations.find((c) => c.id === selectedConversationId);
   const getParticipantInfo = (conv: Conversation) => {
-    // Find the participant who is not the current user
     const participant = conv.participants.find((p) => p.user.id !== user?.id);
-    return participant?.user || { id: '', firstName: 'Inconnu', lastName: '', role: 'FREELANCER' };
+    return participant?.user || { id: '', firstName: 'Inconnu', lastName: '', role: 'USER' };
   };
 
   const selectedConv = getSelectedConv();
@@ -189,36 +161,73 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
   const filteredConversations = conversations.filter((conv) => {
     const p = getParticipantInfo(conv);
-    const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase());
+    return `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
-    <div className="flex h-full bg-white relative">
-      {/* Conversations List */}
-      <div className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} md:w-96 flex-col border-r border-slate-200`}>
-        {/* Header */}
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex justify-between items-center mb-3">
-            <h1 className="text-xl font-bold text-slate-900">Messages</h1>
+    <div className="flex h-full relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}>
+
+      {/* Conversations Sidebar */}
+      <div
+        className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} md:w-[340px] flex-col flex-shrink-0`}
+        style={{
+          background: '#fff',
+          borderRight: '1px solid #e2e8f0',
+          boxShadow: '2px 0 12px rgba(26,35,50,0.04)',
+        }}
+      >
+        {/* Sidebar Header */}
+        <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-lg font-bold" style={{ color: '#1a2332' }}>Messages</h1>
+              <p className="text-[11px] mt-0.5" style={{ color: '#64748b' }}>
+                {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
+              </p>
+            </div>
             <button
               onClick={() => setShowNewChatModal(true)}
-              className="p-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors"
               title="Nouvelle conversation"
+              style={{
+                background: 'linear-gradient(135deg, #4a90d9, #2563eb)',
+                boxShadow: '0 4px 12px rgba(74,144,217,0.35)',
+              }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
             >
-              <UserPlus size={18} />
+              <UserPlus size={16} color="#fff" />
             </button>
           </div>
-          
+
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: '#94a3b8' }}
+            />
             <input
               type="text"
               placeholder="Rechercher une discussion..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-colors text-xs"
+              style={{
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '0.75rem',
+                fontSize: '12px',
+                color: '#1a2332',
+                outline: 'none',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+              }}
+              className="w-full pl-9 pr-4 py-2.5 focus:border-accent"
+              onFocus={e => {
+                e.currentTarget.style.borderColor = '#4a90d9';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)';
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
           </div>
         </div>
@@ -227,14 +236,23 @@ export default function MessagesPage({ user }: MessagesPageProps) {
         <div className="flex-1 overflow-y-auto">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center">
-              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <MessageSquare className="text-slate-400" size={24} />
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(74,144,217,0.08)', border: '1px solid rgba(74,144,217,0.15)' }}
+              >
+                <MessageSquare size={24} style={{ color: '#4a90d9' }} />
               </div>
-              <h3 className="text-xs font-semibold text-slate-900 mb-1">Aucune discussion</h3>
-              <p className="text-[10px] text-muted mb-4">Commencez à échanger avec des professionnels de GoConnexions !</p>
+              <h3 className="text-sm font-bold mb-1" style={{ color: '#1a2332' }}>Aucune discussion</h3>
+              <p className="text-[11px] mb-4 leading-relaxed" style={{ color: '#64748b' }}>
+                Commencez à échanger avec des professionnels de GoConnexions
+              </p>
               <button
                 onClick={() => setShowNewChatModal(true)}
-                className="px-3 py-1.5 bg-accent text-white rounded-lg text-[10px] font-semibold hover:bg-indigo-600 transition-colors"
+                className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #4a90d9, #2563eb)',
+                  boxShadow: '0 4px 12px rgba(74,144,217,0.3)',
+                }}
               >
                 Nouvelle Discussion
               </button>
@@ -242,36 +260,51 @@ export default function MessagesPage({ user }: MessagesPageProps) {
           ) : (
             filteredConversations.map((conv) => {
               const p = getParticipantInfo(conv);
-              const lastMsg = conv.messages && conv.messages.length > 0 
-                ? conv.messages[conv.messages.length - 1] 
-                : null;
-              
+              const ra = getRoleAvatar(p.role);
+              const lastMsg = conv.messages?.length > 0 ? conv.messages[conv.messages.length - 1] : null;
+              const isActive = selectedConversationId === conv.id;
+
               return (
                 <div
                   key={conv.id}
                   onClick={() => setSelectedConversationId(conv.id)}
-                  className={`flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 ${
-                    selectedConversationId === conv.id ? 'bg-indigo-50/50 border-l-4 border-l-accent' : ''
-                  }`}
+                  className="flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all duration-150"
+                  style={{
+                    background: isActive ? 'rgba(74,144,217,0.06)' : 'transparent',
+                    borderLeft: isActive ? '3px solid #4a90d9' : '3px solid transparent',
+                    borderBottom: '1px solid #f1f5f9',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) e.currentTarget.style.background = '#f8fafc';
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) e.currentTarget.style.background = 'transparent';
+                  }}
                 >
-                  <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold relative flex-shrink-0">
-                    {p.firstName[0]}{p.lastName[0]}
-                    <Circle className="absolute bottom-0 right-0 w-2.5 h-2.5 text-green-500 fill-current" size={10} />
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div
+                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-[13px] font-bold"
+                      style={{ background: ra.bg, color: ra.color }}
+                    >
+                      {p.firstName[0]}{p.lastName[0]}
+                    </div>
+                    <div
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
+                      style={{ background: '#10b981', border: '2px solid #fff' }}
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <h3 className="font-semibold text-slate-900 truncate text-xs">
+                      <span className="text-[13px] font-semibold truncate" style={{ color: '#1a2332' }}>
                         {p.firstName} {p.lastName}
-                      </h3>
-                      <span className="text-[9px] text-muted">
-                        {new Date(conv.updatedAt).toLocaleDateString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      </span>
+                      <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: '#94a3b8' }}>
+                        {new Date(conv.updatedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 truncate">
+                    <p className="text-[11px] truncate" style={{ color: '#64748b' }}>
                       {lastMsg ? lastMsg.content : 'Aucun message'}
                     </p>
                   </div>
@@ -284,61 +317,101 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
       {/* Chat Area */}
       {selectedConv && activeParticipant ? (
-        <div className="flex-1 flex flex-col bg-slate-50">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Chat Header */}
-          <div className="p-3 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm">
+          <div
+            className="px-5 py-3.5 flex justify-between items-center flex-shrink-0"
+            style={{
+              background: 'rgba(255,255,255,0.97)',
+              backdropFilter: 'blur(24px)',
+              borderBottom: '1px solid #e2e8f0',
+              boxShadow: '0 1px 8px rgba(26,35,50,0.04)',
+            }}
+          >
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedConversationId(null)}
-                className="md:hidden p-2 hover:bg-slate-100 rounded-lg text-xs"
+                className="md:hidden px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                style={{ color: '#64748b', background: '#f1f5f9' }}
               >
                 ← Retour
               </button>
-              <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold">
-                {activeParticipant.firstName[0]}{activeParticipant.lastName[0]}
-              </div>
+              {(() => {
+                const ra = getRoleAvatar(activeParticipant.role);
+                return (
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold"
+                    style={{ background: ra.bg, color: ra.color }}
+                  >
+                    {activeParticipant.firstName[0]}{activeParticipant.lastName[0]}
+                  </div>
+                );
+              })()}
               <div>
-                <h3 className="font-semibold text-slate-900 text-xs">{activeParticipant.firstName} {activeParticipant.lastName}</h3>
-                <p className="text-[10px] text-slate-500 capitalize">{(activeParticipant.role || 'FREELANCER').toLowerCase()}</p>
+                <h3 className="text-[14px] font-semibold" style={{ color: '#1a2332' }}>
+                  {activeParticipant.firstName} {activeParticipant.lastName}
+                </h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+                  <span className="text-[10px] capitalize" style={{ color: '#64748b' }}>
+                    En ligne · {(activeParticipant.role || 'USER').toLowerCase()}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <Phone size={16} className="text-slate-600" />
-              </button>
-              <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <Video size={16} className="text-slate-600" />
-              </button>
-              <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <MoreHorizontal size={16} className="text-slate-600" />
-              </button>
+
+            <div className="flex items-center gap-1">
+              {[
+                { icon: <Phone size={15} />, title: 'Appel vocal' },
+                { icon: <Video size={15} />, title: 'Appel vidéo' },
+                { icon: <MoreHorizontal size={15} />, title: 'Plus d\'options' },
+              ].map((action, i) => (
+                <button
+                  key={i}
+                  title={action.title}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150"
+                  style={{ color: '#64748b' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#1a2332'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
+                >
+                  {action.icon}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Messages List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Messages */}
+          <div
+            className="flex-1 overflow-y-auto px-5 py-5 space-y-3"
+            style={{
+              background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)',
+              backgroundImage: 'radial-gradient(circle, rgba(74,144,217,0.03) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          >
             {messages.map((message) => {
               const isOwn = message.senderId === user?.id;
               return (
-                <div
-                  key={message.id}
-                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                >
+                <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-xs lg:max-w-md px-3.5 py-2 rounded-2xl shadow-sm text-xs leading-relaxed ${
-                      isOwn
-                        ? 'bg-accent text-white rounded-tr-none'
-                        : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
-                    }`}
+                    className="max-w-xs lg:max-w-md px-4 py-2.5 text-[13px] leading-relaxed"
+                    style={{
+                      borderRadius: isOwn ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                      background: isOwn
+                        ? 'linear-gradient(135deg, #4a90d9, #2563eb)'
+                        : '#fff',
+                      color: isOwn ? '#fff' : '#1a2332',
+                      boxShadow: isOwn
+                        ? '0 4px 12px rgba(74,144,217,0.3)'
+                        : '0 2px 8px rgba(26,35,50,0.06), 0 0 0 1px #e2e8f0',
+                    }}
                   >
                     <p>{message.content}</p>
-                    <p className={`text-[8px] mt-1 text-right ${
-                      isOwn ? 'text-white/80' : 'text-slate-400'
-                    }`}>
-                      {new Date(message.createdAt).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                    <p
+                      className="text-[10px] mt-1 text-right"
+                      style={{ color: isOwn ? 'rgba(255,255,255,0.7)' : '#94a3b8' }}
+                    >
+                      {new Date(message.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -347,74 +420,169 @@ export default function MessagesPage({ user }: MessagesPageProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input form */}
-          <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200 bg-white">
-            <div className="flex items-center gap-2">
+          {/* Message Input */}
+          <form
+            onSubmit={handleSendMessage}
+            className="px-4 py-3.5 flex-shrink-0"
+            style={{
+              background: 'rgba(255,255,255,0.97)',
+              backdropFilter: 'blur(24px)',
+              borderTop: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200"
+              style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0' }}
+              onFocusCapture={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = '#4a90d9';
+                el.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)';
+              }}
+              onBlurCapture={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = '#e2e8f0';
+                el.style.boxShadow = 'none';
+              }}
+            >
               <input
                 type="text"
                 placeholder="Écrire un message en temps réel..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 px-3.5 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-xs bg-slate-50"
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '13px',
+                  color: '#1a2332',
+                }}
+                className="placeholder:text-slate-400"
               />
               <button
                 type="submit"
                 disabled={!newMessage.trim()}
-                className="p-2.5 bg-accent text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 transition-colors shadow-sm"
+                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200"
+                style={{
+                  background: newMessage.trim()
+                    ? 'linear-gradient(135deg, #4a90d9, #2563eb)'
+                    : '#e2e8f0',
+                  boxShadow: newMessage.trim() ? '0 4px 10px rgba(74,144,217,0.35)' : 'none',
+                  cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
+                }}
               >
-                <Send size={14} />
+                <Send size={13} color={newMessage.trim() ? '#fff' : '#94a3b8'} />
               </button>
             </div>
           </form>
         </div>
       ) : (
         /* Empty Chat State */
-        <div className="hidden md:flex flex-1 items-center justify-center bg-slate-50">
+        <div className="hidden md:flex flex-1 items-center justify-center">
           <div className="text-center p-8">
-            <div className="w-16 h-16 bg-white shadow-sm border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="text-accent" size={32} />
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
+              style={{
+                background: 'rgba(74,144,217,0.08)',
+                border: '1px solid rgba(74,144,217,0.15)',
+                boxShadow: '0 8px 24px rgba(74,144,217,0.12)',
+              }}
+            >
+              <MessageSquare size={32} style={{ color: '#4a90d9' }} />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 mb-1">Sélectionnez une discussion</h3>
-            <p className="text-xs text-slate-500 max-w-sm">
-              Choisissez un professionnel dans la barre latérale ou démarrez une nouvelle conversation pour collaborer instantanément.
+            <h3 className="text-base font-bold mb-2" style={{ color: '#1a2332' }}>
+              Sélectionnez une discussion
+            </h3>
+            <p className="text-[13px] leading-relaxed max-w-xs mx-auto" style={{ color: '#64748b' }}>
+              Choisissez une conversation dans la barre latérale ou démarrez un nouvel échange.
             </p>
+            <button
+              onClick={() => setShowNewChatModal(true)}
+              className="mt-5 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #4a90d9, #2563eb)',
+                boxShadow: '0 4px 12px rgba(74,144,217,0.3)',
+              }}
+            >
+              Nouvelle conversation
+            </button>
           </div>
         </div>
       )}
 
       {/* New Chat Modal */}
       {showNewChatModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gc-border">
-            <div className="bg-gradient-to-r from-accent to-indigo-600 px-4 py-3 text-white flex justify-between items-center">
-              <h3 className="font-bold text-xs">Démarrer une conversation</h3>
-              <button 
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(8,15,26,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div
+            className="w-full max-w-md overflow-hidden"
+            style={{
+              background: '#fff',
+              borderRadius: '1.5rem',
+              boxShadow: '0 24px 80px rgba(8,15,26,0.25)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="px-5 py-4 flex justify-between items-center"
+              style={{ background: 'linear-gradient(135deg, #080f1a, #0a1628)', borderBottom: '1px solid rgba(74,144,217,0.2)' }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(74,144,217,0.2)' }}
+                >
+                  <UserPlus size={15} color="#4a90d9" />
+                </div>
+                <h3 className="text-[14px] font-bold text-white">Démarrer une conversation</h3>
+              </div>
+              <button
                 onClick={() => setShowNewChatModal(false)}
-                className="text-white/80 hover:text-white text-xs font-semibold"
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.08)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
               >
-                Fermer
+                ✕
               </button>
             </div>
 
             <div className="p-4 max-h-96 overflow-y-auto space-y-2">
               {availableUsers.length === 0 ? (
-                <p className="text-xs text-muted text-center py-8">Aucun autre utilisateur disponible</p>
+                <p className="text-[13px] text-center py-8" style={{ color: '#64748b' }}>
+                  Aucun autre utilisateur disponible
+                </p>
               ) : (
-                availableUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    onClick={() => handleStartNewConversation(u.id)}
-                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer border border-slate-100 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold">
-                      {u.firstName[0]}{u.lastName[0]}
+                availableUsers.map((u) => {
+                  const ra = getRoleAvatar(u.role);
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => handleStartNewConversation(u.id)}
+                      className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150"
+                      style={{ border: '1px solid #e2e8f0' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#4a90d9'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0"
+                        style={{ background: ra.bg, color: ra.color }}
+                      >
+                        {u.firstName[0]}{u.lastName[0]}
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold" style={{ color: '#1a2332' }}>
+                          {u.firstName} {u.lastName}
+                        </p>
+                        <p className="text-[11px] capitalize" style={{ color: '#64748b' }}>
+                          {(u.role || 'USER').toLowerCase()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">{u.firstName} {u.lastName}</p>
-                      <p className="text-[10px] text-slate-500 capitalize">{(u.role || 'FREELANCER').toLowerCase()}</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

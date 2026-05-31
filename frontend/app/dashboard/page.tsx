@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import ActivityFeed from '@/components/dashboard/EnhancedActivityFeed';
 import UserProfileCard from '@/components/dashboard/UserProfileCard';
@@ -11,20 +12,124 @@ import MessagesPage from '@/components/dashboard/MessagesPage';
 import ProjectsPage from '@/components/dashboard/ProjectsPage';
 import EarningsPage from '@/components/dashboard/EarningsPage';
 import AnalyticsPage from '@/components/dashboard/AnalyticsPage';
+import IncubatorPage from '@/components/dashboard/IncubatorPage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
-import IncubatorPage from '@/components/dashboard/IncubatorPage';
+
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator';
+
+const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: string; description: string }> = {
+  feed: {
+    label: "Fil d'activité",
+    description: 'Actualités de votre réseau',
+    color: '#3b82f6',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+      </svg>
+    ),
+  },
+  connections: {
+    label: 'Connexions',
+    description: 'Votre réseau professionnel',
+    color: '#10b981',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+  },
+  messages: {
+    label: 'Messages',
+    description: 'Conversations en cours',
+    color: '#8b5cf6',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
+  projects: {
+    label: 'Projets',
+    description: 'Vos projets en cours',
+    color: '#f59e0b',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  earnings: {
+    label: 'Revenus',
+    description: 'Suivi financier',
+    color: '#10b981',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  analytics: {
+    label: 'Analytiques',
+    description: 'Statistiques et performances',
+    color: '#3b82f6',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  incubator: {
+    label: 'Incubateur',
+    description: 'Projets en incubation',
+    color: '#ec4899',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    ),
+  },
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  freelancer: 'Freelancer',
+  entrepreneur: 'Entrepreneur',
+  user: 'Explorateur',
+  admin: 'Admin',
+};
+
+const ROLE_COLOR: Record<string, string> = {
+  freelancer: '#3b82f6',
+  entrepreneur: '#8b5cf6',
+  user: '#10b981',
+  admin: '#f59e0b',
+};
+
+const pageVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
+  exit:    { opacity: 0, y: -6, transition: { duration: 0.18, ease: 'easeIn' as const } },
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator'>('feed');
+  const [activeTab, setActiveTab] = useState<Tab>('feed');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [greeting, setGreeting] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    if (h < 12) setGreeting('Bonjour');
+    else if (h < 18) setGreeting('Bon après-midi');
+    else setGreeting('Bonsoir');
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const currentUser = await api.auth.me();
-        
         const mappedUser = {
           id: currentUser.id,
           email: currentUser.email,
@@ -33,10 +138,10 @@ export default function DashboardPage() {
           role: currentUser.role.toLowerCase() as any,
           createdAt: new Date(currentUser.createdAt),
           updatedAt: new Date(),
-          profile: currentUser.freelancerProfile 
+          profile: currentUser.freelancerProfile
             ? {
                 skills: currentUser.freelancerProfile.skills || [],
-                experience: currentUser.freelancerProfile.bio || 'Aucune description fournie',
+                experience: currentUser.freelancerProfile.bio || '',
                 hourlyRate: currentUser.freelancerProfile.hourlyRate,
                 portfolio: currentUser.freelancerProfile.portfolioUrl,
                 bio: currentUser.freelancerProfile.bio || '',
@@ -50,82 +155,118 @@ export default function DashboardPage() {
                 website: currentUser.entrepreneurProfile.website,
                 bio: currentUser.entrepreneurProfile.bio || '',
               }
-            : {
-                interests: [],
-                goals: '',
-                bio: '',
-              }
+            : { interests: [], goals: '', bio: '' },
         } as any;
-
         setUser(mappedUser);
-      } catch (err) {
-        console.error('Error fetching user:', err);
+      } catch {
         api.auth.logout();
         router.push('/auth/login');
       }
     };
-
     fetchUser();
   }, [router]);
 
-  const getRoleDisplay = () => {
-    if (!user) return '';
-    switch (user.role) {
-      case 'freelancer': return 'Freelancer';
-      case 'entrepreneur': return 'Entrepreneur';
-      case 'user': return 'Utilisateur';
-      default: return 'Utilisateur';
-    }
-  };
-
-  const getTabTitle = () => {
-    switch (activeTab) {
-      case 'feed': return 'Fil d\'activité';
-      case 'connections': return 'Connexions';
-      case 'messages': return 'Messages';
-      case 'projects': return 'Projets';
-      case 'earnings': return 'Revenus';
-      case 'analytics': return 'Analytiques';
-      case 'incubator': return 'Incubateur Virtuel';
-      default: return 'Tableau de bord';
-    }
-  };
+  const meta = TAB_META[activeTab];
+  const roleLabel = ROLE_LABEL[user?.role ?? 'user'] ?? 'Utilisateur';
+  const roleColor = ROLE_COLOR[user?.role ?? 'user'] ?? '#3b82f6';
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f8fafc' }}>
       <DashboardSidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gc-border px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-lg font-semibold text-foreground">
-                {getTabTitle()} - {getRoleDisplay()}
-              </h1>
-              <span className="px-2 py-1 bg-accent/10 text-accent text-xs font-medium rounded-full">
-                {user?.role?.toUpperCase()}
-              </span>
+
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Topbar */}
+        <header className="topbar-glass flex-shrink-0 px-5 py-3 z-30">
+          <div className="flex items-center justify-between gap-4">
+
+            {/* Left: breadcrumb + greeting */}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-3 min-w-0"
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                style={{ background: `${meta.color}16`, color: meta.color }}
+              >
+                {meta.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-[14px] font-bold leading-none truncate" style={{ color: '#0f172a' }}>
+                    {meta.label}
+                  </h1>
+                  <span
+                    className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex-shrink-0"
+                    style={{ background: `${roleColor}14`, color: roleColor }}
+                  >
+                    {roleLabel}
+                  </span>
+                </div>
+                {user && (
+                  <p className="text-[11px] mt-0.5 font-medium" style={{ color: '#94a3b8' }}>
+                    {greeting}, {user.firstName}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Center: Search */}
+            <div className="hidden md:flex flex-1 max-w-xs relative">
+              <motion.div
+                animate={{ scale: searchFocused ? 1.01 : 1 }}
+                transition={{ duration: 0.2 }}
+                className="w-full relative"
+              >
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#94a3b8' }}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  className="search-bar"
+                />
+              </motion.div>
             </div>
-            
-            <div className="flex items-center gap-3">
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <NotificationCenter />
               <UserProfileCard user={user} />
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-hidden">
-          {activeTab === 'feed' && <div className="h-full overflow-y-auto"><ActivityFeed user={user} /></div>}
-          {activeTab === 'connections' && <div className="h-full overflow-y-auto"><ConnectionsPage user={user} setActiveTab={setActiveTab} /></div>}
-          {activeTab === 'messages' && <div className="h-full overflow-y-auto"><MessagesPage user={user} /></div>}
-          {activeTab === 'projects' && <div className="h-full overflow-y-auto"><ProjectsPage user={user} /></div>}
-          {activeTab === 'earnings' && <div className="h-full overflow-y-auto"><EarningsPage user={user} /></div>}
-          {activeTab === 'analytics' && <div className="h-full overflow-y-auto"><AnalyticsPage user={user} /></div>}
-          {activeTab === 'incubator' && <div className="h-full overflow-y-auto"><IncubatorPage user={user} /></div>}
+        {/* Content */}
+        <main className="flex-1 overflow-hidden" style={{ background: 'linear-gradient(160deg, #f0f4f8 0%, #f8fafc 60%)' }}>
+          <div className="h-full overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="h-full"
+              >
+                {activeTab === 'feed'        && <ActivityFeed user={user} />}
+                {activeTab === 'connections' && <ConnectionsPage user={user} setActiveTab={setActiveTab} />}
+                {activeTab === 'messages'    && <MessagesPage user={user} />}
+                {activeTab === 'projects'    && <ProjectsPage user={user} />}
+                {activeTab === 'earnings'    && <EarningsPage user={user} />}
+                {activeTab === 'analytics'   && <AnalyticsPage user={user} />}
+                {activeTab === 'incubator'   && <IncubatorPage user={user} />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

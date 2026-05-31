@@ -175,9 +175,21 @@ export class ProjectsService {
     return this.prisma.projectApplication.findMany({
       where: { projectId },
       include: {
-        // Find freelancer user data
-        // For simplicity, we query freelancer profile and its user
+        freelancer: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

@@ -149,7 +149,22 @@ let ProjectsService = class ProjectsService {
         }
         return this.prisma.projectApplication.findMany({
             where: { projectId },
-            include: {},
+            include: {
+                freelancer: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                avatarUrl: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async updateApplicationStatus(applicationId, userId, status) {

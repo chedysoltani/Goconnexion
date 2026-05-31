@@ -20,14 +20,19 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             passport_1.PassportModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'goconnexions-super-secret-key-12345!',
-                signOptions: { expiresIn: '1d' },
+            jwt_1.JwtModule.registerAsync({
+                useFactory: () => {
+                    const secret = process.env.JWT_SECRET;
+                    if (!secret) {
+                        throw new Error('JWT_SECRET environment variable is required but not set.');
+                    }
+                    return { secret, signOptions: { expiresIn: '1d' } };
+                },
             }),
         ],
         controllers: [auth_controller_1.AuthController],
         providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
-        exports: [auth_service_1.AuthService],
+        exports: [auth_service_1.AuthService, jwt_1.JwtModule],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

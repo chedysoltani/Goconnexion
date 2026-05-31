@@ -8,13 +8,18 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'goconnexions-super-secret-key-12345!',
-      signOptions: { expiresIn: '1d' },
+    JwtModule.registerAsync({
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required but not set.');
+        }
+        return { secret, signOptions: { expiresIn: '1d' } };
+      },
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

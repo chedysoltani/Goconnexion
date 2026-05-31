@@ -3,18 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
-import {
-  Search,
-  UserPlus,
-  MessageCircle,
-  MoreHorizontal,
-  Compass,
-  Sparkles,
-  Check,
-  X,
-  Clock,
-  UserX,
-} from 'lucide-react';
+import { ConnectionCardSkeleton } from '@/components/ui/skeleton';
+import { Search, UserPlus, MessageCircle, Compass, Sparkles, Check, X, Clock, UserX } from 'lucide-react';
 
 interface ConnectionsPageProps {
   user: User | null;
@@ -32,6 +22,25 @@ interface Connection {
   requestId?: string;
 }
 
+const ROLE_AVATAR: Record<string, { bg: string; color: string }> = {
+  freelancer: { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
+  entrepreneur: { bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
+  user: { bg: 'rgba(16,185,129,0.15)',         color: '#10b981' },
+};
+const getRoleAvatar = (role: string) => ROLE_AVATAR[role?.toLowerCase()] ?? { bg: 'rgba(74,144,217,0.15)', color: '#4a90d9' };
+
+const FilterBtn = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    className="px-4 py-2 rounded-xl text-[12px] font-semibold transition-all duration-200"
+    style={active
+      ? { background: 'linear-gradient(135deg, #4a90d9, #2563eb)', color: '#fff', boxShadow: '0 4px 12px rgba(74,144,217,0.3)' }
+      : { background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0' }}
+  >
+    {children}
+  </button>
+);
+
 export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'friends' | 'suggested'>('all');
@@ -42,53 +51,33 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
   const fetchConnectionsData = async (searchStr?: string) => {
     setIsLoading(true);
     try {
-      // 1. Get all active friends
       const friends = await api.connections.friends();
-      // 2. Get sent requests
       const sentRequests = await api.connections.sent();
-      // 3. Get pending received requests
       const receivedRequests = await api.connections.pending();
       setPendingRequests(receivedRequests);
 
-      // 4. Get intelligent suggestions or search profiles
       let rawProfiles = [];
       const trimmedSearch = searchStr ? searchStr.trim() : '';
       if (trimmedSearch) {
         const res = await api.freelancers.list({ search: trimmedSearch });
-        rawProfiles = res.map((p: any) => ({
-          user: p.user,
-          title: p.title,
-        }));
+        rawProfiles = res.map((p: any) => ({ user: p.user, title: p.title }));
       } else {
         const res = await api.users.suggestions();
-        rawProfiles = res.map((u: any) => ({
-          user: u,
-          title: u.freelancerProfile?.title || u.entrepreneurProfile?.companyName,
-        }));
+        rawProfiles = res.map((u: any) => ({ user: u, title: u.freelancerProfile?.title || u.entrepreneurProfile?.companyName }));
       }
 
-      // Create maps for super fast checks
       const friendsMap = new Map(friends.map((f: any) => [f.id, f]));
       const sentMap = new Map(sentRequests.map((r: any) => [r.receiverId, r]));
       const receivedMap = new Map(receivedRequests.map((r: any) => [r.senderId, r]));
 
-      // Map profiles
       const mapped: Connection[] = rawProfiles
         .map((p: any) => {
           const profileUserId = p.user.id;
           let status: Connection['status'] = 'suggested';
-          let requestId: string | undefined = undefined;
-
-          if (friendsMap.has(profileUserId)) {
-            status = 'connected';
-          } else if (sentMap.has(profileUserId)) {
-            status = 'pending_sent';
-            requestId = (sentMap.get(profileUserId) as any).id;
-          } else if (receivedMap.has(profileUserId)) {
-            status = 'pending_received';
-            requestId = (receivedMap.get(profileUserId) as any).id;
-          }
-
+          let requestId: string | undefined;
+          if (friendsMap.has(profileUserId)) { status = 'connected'; }
+          else if (sentMap.has(profileUserId)) { status = 'pending_sent'; requestId = (sentMap.get(profileUserId) as any).id; }
+          else if (receivedMap.has(profileUserId)) { status = 'pending_received'; requestId = (receivedMap.get(profileUserId) as any).id; }
           return {
             id: profileUserId,
             name: `${p.user.firstName} ${p.user.lastName}`,
@@ -111,308 +100,274 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
   };
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchConnectionsData(searchTerm);
-    }, 400);
-
+    const handler = setTimeout(() => { fetchConnectionsData(searchTerm); }, 400);
     return () => clearTimeout(handler);
   }, [searchTerm, user]);
 
   const handleConnect = async (receiverId: string) => {
-    try {
-      await api.connections.sendRequest(receiverId);
-      await fetchConnectionsData();
-    } catch (error) {
-      console.error('Error sending connection request:', error);
-    }
+    try { await api.connections.sendRequest(receiverId); await fetchConnectionsData(); } catch {}
   };
-
   const handleAcceptRequest = async (requestId: string) => {
-    try {
-      await api.connections.acceptRequest(requestId);
-      await fetchConnectionsData();
-    } catch (error) {
-      console.error('Error accepting request:', error);
-    }
+    try { await api.connections.acceptRequest(requestId); await fetchConnectionsData(); } catch {}
   };
-
   const handleDeclineRequest = async (requestId: string) => {
-    try {
-      await api.connections.declineRequest(requestId);
-      await fetchConnectionsData();
-    } catch (error) {
-      console.error('Error declining request:', error);
-    }
+    try { await api.connections.declineRequest(requestId); await fetchConnectionsData(); } catch {}
   };
-
   const handleRemoveConnection = async (friendId: string) => {
-    if (!confirm('Voulez-vous vraiment retirer ce membre de vos connexions ?')) return;
-    try {
-      await api.connections.remove(friendId);
-      await fetchConnectionsData();
-    } catch (error) {
-      console.error('Error removing connection:', error);
-    }
+    if (!confirm('Retirer ce membre de vos connexions ?')) return;
+    try { await api.connections.remove(friendId); await fetchConnectionsData(); } catch {}
   };
-
   const handleMessage = async (targetUserId: string) => {
-    try {
-      await api.messaging.startConversation(targetUserId);
-      if (setActiveTab) {
-        setActiveTab('messages');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-    }
+    try { await api.messaging.startConversation(targetUserId); setActiveTab?.('messages'); } catch {}
   };
 
-  const filteredConnections = connections.filter(connection => {
-    const matchesSearch =
-      connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      connection.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      connection.company?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    if (activeFilter === 'friends') {
-      return matchesSearch && connection.status === 'connected';
-    }
-    if (activeFilter === 'suggested') {
-      return matchesSearch && connection.status === 'suggested';
-    }
-    return matchesSearch;
+  const filteredConnections = connections.filter(c => {
+    const q = searchTerm.toLowerCase();
+    const match = c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q);
+    if (activeFilter === 'friends') return match && c.status === 'connected';
+    if (activeFilter === 'suggested') return match && c.status === 'suggested';
+    return match;
   });
 
-  return (
-    <div className="max-w-6xl mx-auto p-6 flex flex-col h-full bg-slate-50">
-      {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <h1 className="text-xl font-bold text-slate-900 mb-1">Réseau GoConnexions</h1>
-        <p className="text-xs text-slate-500">
-          Découvrez des entrepreneurs inspirants, recrutez des freelancers qualifiés et élargissez votre cercle professionnel.
-        </p>
-      </div>
+  const connectedCount = connections.filter(c => c.status === 'connected').length;
+  const suggestedCount = connections.filter(c => c.status === 'suggested').length;
 
-      {/* Pending Requests Banner */}
-      {pendingRequests.length > 0 && (
-        <div className="mb-6 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex-shrink-0">
-          <h2 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-1.5">
-            <Clock size={14} className="text-accent animate-pulse" />
-            <span>Demandes de connexion en attente ({pendingRequests.length})</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {pendingRequests.map((req) => (
-              <div
-                key={req.id}
-                className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-accent text-[10px] font-bold">
-                    {req.sender.firstName[0]}{req.sender.lastName[0]}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-950 truncate">
-                      {req.sender.firstName} {req.sender.lastName}
-                    </p>
-                    <p className="text-[9px] text-slate-500 capitalize truncate">
-                      {req.sender.role.toLowerCase()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleAcceptRequest(req.id)}
-                    className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors flex items-center justify-center"
-                    title="Accepter"
-                  >
-                    <Check size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleDeclineRequest(req.id)}
-                    className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center"
-                    title="Refuser"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+  return (
+    <div className="min-h-full p-6" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}>
+      <div className="max-w-6xl mx-auto">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-[22px] font-bold text-foreground mb-1">Réseau GoConnexions</h1>
+            <p className="text-[13px]" style={{ color: '#64748b' }}>
+              Découvrez des professionnels, élargissez votre cercle.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {[
+              { label: 'Connexions', value: connectedCount, color: '#10b981' },
+              { label: 'Suggestions', value: suggestedCount, color: '#4a90d9' },
+            ].map(s => (
+              <div key={s.label} className="text-center px-4 py-2.5 rounded-xl"
+                style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(26,35,50,0.05)' }}>
+                <p className="text-[18px] font-black" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>{s.label}</p>
               </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Control Bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex-shrink-0">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-              <input
-                type="text"
-                placeholder="Rechercher des profils (ex: React, designer...)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-colors text-xs bg-slate-50"
-              />
+        {/* Pending requests */}
+        {pendingRequests.length > 0 && (
+          <div className="mb-6 rounded-2xl overflow-hidden"
+            style={{ background: '#fff', border: '1px solid rgba(74,144,217,0.2)', boxShadow: '0 4px 20px rgba(74,144,217,0.08)' }}>
+            <div className="px-5 py-3.5 flex items-center gap-2.5"
+              style={{ background: 'rgba(74,144,217,0.06)', borderBottom: '1px solid rgba(74,144,217,0.12)' }}>
+              <div className="relative flex-shrink-0">
+                <Clock size={15} style={{ color: '#4a90d9' }} />
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] font-black flex items-center justify-center">
+                  {pendingRequests.length}
+                </span>
+              </div>
+              <h2 className="text-[13px] font-bold text-foreground">
+                Demandes de connexion en attente
+              </h2>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {pendingRequests.map((req) => {
+                const ra = getRoleAvatar(req.sender.role);
+                return (
+                  <div key={req.id} className="flex items-center justify-between p-3.5 rounded-xl transition-all duration-200 hover:shadow-sm"
+                    style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-[11px] font-bold"
+                        style={{ background: ra.bg, color: ra.color }}>
+                        {req.sender.firstName[0]}{req.sender.lastName[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-semibold text-foreground truncate">
+                          {req.sender.firstName} {req.sender.lastName}
+                        </p>
+                        <p className="text-[11px] capitalize" style={{ color: '#94a3b8' }}>
+                          {req.sender.role?.toLowerCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-3">
+                      <button onClick={() => handleAcceptRequest(req.id)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => handleDeclineRequest(req.id)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
+        )}
 
-          {/* Filters */}
+        {/* Search + Filters bar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex-1 relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#94a3b8' }}>
+              <Search size={15} />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher par nom, compétence, rôle..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-[13px] font-medium outline-none transition-all duration-200"
+              style={{ background: '#fff', border: '1.5px solid #e2e8f0', color: '#1a2332' }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#4a90d9'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; }}
+            />
+          </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`px-3 py-2 rounded-lg font-semibold text-xs transition-colors ${
-                activeFilter === 'all'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
+            <FilterBtn active={activeFilter === 'all'} onClick={() => setActiveFilter('all')}>
               Tous ({connections.length})
-            </button>
-            <button
-              onClick={() => setActiveFilter('friends')}
-              className={`px-3 py-2 rounded-lg font-semibold text-xs transition-colors ${
-                activeFilter === 'friends'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Mes Connexions ({connections.filter(c => c.status === 'connected').length})
-            </button>
-            <button
-              onClick={() => setActiveFilter('suggested')}
-              className={`px-3 py-2 rounded-lg font-semibold text-xs transition-colors ${
-                activeFilter === 'suggested'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Suggestions ({connections.filter(c => c.status === 'suggested').length})
-            </button>
+            </FilterBtn>
+            <FilterBtn active={activeFilter === 'friends'} onClick={() => setActiveFilter('friends')}>
+              Mes connexions ({connectedCount})
+            </FilterBtn>
+            <FilterBtn active={activeFilter === 'suggested'} onClick={() => setActiveFilter('suggested')}>
+              Suggestions ({suggestedCount})
+            </FilterBtn>
           </div>
         </div>
-      </div>
 
-      {/* Connections Grid */}
-      <div className="flex-1 overflow-y-auto pr-1">
+        {/* Grid */}
         {isLoading ? (
-          <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
-            <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs text-muted">Mise à jour du réseau...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1,2,3,4,5,6].map(i => <ConnectionCardSkeleton key={i} />)}
           </div>
         ) : filteredConnections.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Compass className="text-slate-400" size={32} />
+          <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
+            style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+            <div className="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center"
+              style={{ background: 'rgba(74,144,217,0.08)' }}>
+              <Compass size={24} style={{ color: '#4a90d9' }} />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 mb-1">Aucun profil trouvé</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Essayez de modifier votre recherche ou vos filtres pour explorer d'autres connexions.
+            <p className="text-[14px] font-bold text-foreground mb-1">Aucun profil trouvé</p>
+            <p className="text-[12px] text-center max-w-xs" style={{ color: '#94a3b8' }}>
+              Modifiez votre recherche ou vos filtres.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
-            {filteredConnections.map((connection) => (
-              <div
-                key={connection.id}
-                className="bg-white rounded-2xl border border-slate-200 flex flex-col justify-between hover:shadow-md transition-shadow"
-              >
-                <div className="p-5">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-accent text-xs font-bold ring-2 ring-slate-100 flex-shrink-0">
-                        {connection.name[0]}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-slate-900 text-xs truncate">{connection.name}</h3>
-                        <p className="text-[10px] text-slate-500 truncate">{connection.role}</p>
-                      </div>
-                    </div>
-                    <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredConnections.map((conn, idx) => {
+              const ra = getRoleAvatar(conn.company ?? '');
+              return (
+                <div key={conn.id}
+                  className="rounded-2xl overflow-hidden flex flex-col transition-all duration-300 group"
+                  style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(26,35,50,0.05)',
+                    animationDelay: `${idx * 0.05}s` }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 32px rgba(26,35,50,0.1)`;
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(26,35,50,0.05)';
+                    (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                  }}
+                >
+                  {/* Card top banner */}
+                  <div className="h-2 w-full" style={{ background: `linear-gradient(90deg, ${ra.color}, ${ra.color}66)` }} />
 
-                  {/* Company and Location */}
-                  <div className="mb-4 bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-[10px] leading-relaxed text-slate-600">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-bold text-slate-800">Rôle :</span>
-                      <span className="capitalize">{connection.company}</span>
+                  <div className="p-5 flex flex-col flex-1">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+                          style={{ background: ra.bg, color: ra.color }}>
+                          {conn.name[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-[13px] font-semibold text-foreground truncate">{conn.name}</h3>
+                          <p className="text-[11px] truncate mt-0.5" style={{ color: '#94a3b8' }}>{conn.role}</p>
+                        </div>
+                      </div>
+                      {conn.status === 'connected' && (
+                        <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                          style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                          <Sparkles size={9} /> Connecté
+                        </span>
+                      )}
                     </div>
-                    {connection.location && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-800">Localisation :</span>
-                        <span>{connection.location}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Connection badge status */}
-                  {connection.status === 'connected' && (
-                    <div className="mb-4 text-[9px] text-slate-400 flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md border border-emerald-100 self-start">
-                      <Sparkles size={10} className="text-emerald-500" />
-                      <span>Connecté</span>
+                    {/* Info row */}
+                    <div className="flex items-center gap-4 mb-4 py-3 rounded-xl px-3"
+                      style={{ background: '#f8fafc' }}>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: '#94a3b8' }}>Rôle</p>
+                        <p className="text-[12px] font-semibold text-foreground capitalize">{conn.company}</p>
+                      </div>
+                      {conn.location && (
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: '#94a3b8' }}>Lieu</p>
+                          <p className="text-[12px] font-semibold text-foreground">{conn.location}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  {/* Actions */}
-                  <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
-                    {connection.status === 'connected' ? (
-                      <>
-                        <button
-                          onClick={() => handleMessage(connection.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-accent text-white rounded-lg hover:bg-indigo-600 transition-colors font-bold text-[10px]"
-                        >
-                          <MessageCircle size={12} />
-                          <span>Message</span>
-                        </button>
-                        <button
-                          onClick={() => handleRemoveConnection(connection.id)}
-                          className="px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-[10px] font-bold flex items-center justify-center gap-1"
-                          title="Retirer la connexion"
-                        >
-                          <UserX size={12} />
-                          <span>Retirer</span>
-                        </button>
-                      </>
-                    ) : connection.status === 'pending_sent' ? (
-                      <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-[10px] font-bold">
-                        <Clock size={12} />
-                        <span>En attente...</span>
-                      </div>
-                    ) : connection.status === 'pending_received' ? (
-                      <div className="flex-1 flex gap-2">
-                        <button
-                          onClick={() => handleAcceptRequest(connection.requestId!)}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-bold text-[10px]"
-                        >
-                          Accepter
-                        </button>
-                        <button
-                          onClick={() => handleDeclineRequest(connection.requestId!)}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-bold text-[10px]"
-                        >
-                          Refuser
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleConnect(connection.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-accent text-white rounded-lg hover:bg-indigo-600 transition-colors font-bold text-[10px]"
-                        >
-                          <UserPlus size={12} />
-                          <span>Se Connecter</span>
-                        </button>
-                        <button className="px-3 py-2 border border-slate-200 text-slate-500 rounded-lg hover:bg-slate-100 transition-colors text-[10px] font-semibold">
-                          Ignorer
-                        </button>
-                      </>
-                    )}
+                    {/* Actions */}
+                    <div className="mt-auto pt-3" style={{ borderTop: '1px solid #f1f5f9' }}>
+                      {conn.status === 'connected' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleMessage(conn.id)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
+                            style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 3px 10px rgba(74,144,217,0.25)' }}>
+                            <MessageCircle size={13} /> Message
+                          </button>
+                          <button onClick={() => handleRemoveConnection(conn.id)}
+                            className="px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-200 hover:scale-105"
+                            style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)' }}>
+                            <UserX size={13} />
+                          </button>
+                        </div>
+                      ) : conn.status === 'pending_sent' ? (
+                        <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
+                          style={{ background: '#f8fafc', color: '#94a3b8', border: '1px solid #e2e8f0' }}>
+                          <Clock size={13} /> En attente...
+                        </div>
+                      ) : conn.status === 'pending_received' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleAcceptRequest(conn.requestId!)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                            <Check size={13} /> Accepter
+                          </button>
+                          <button onClick={() => handleDeclineRequest(conn.requestId!)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                            style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}>
+                            <X size={13} /> Refuser
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleConnect(conn.id)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
+                            style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 3px 10px rgba(74,144,217,0.25)' }}>
+                            <UserPlus size={13} /> Se connecter
+                          </button>
+                          <button className="px-4 py-2.5 rounded-xl text-[12px] font-semibold transition-all duration-200 hover:bg-gray-100"
+                            style={{ background: '#f8fafc', color: '#94a3b8', border: '1px solid #e2e8f0' }}>
+                            Ignorer
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

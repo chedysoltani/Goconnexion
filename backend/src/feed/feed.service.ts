@@ -95,22 +95,32 @@ export class FeedService {
         },
       });
 
-      // Create notification for post author
+      // Notification with 10-min cooldown per post to avoid spam
       try {
         const post = await this.prisma.feedPost.findUnique({ where: { id: postId } });
         if (post && post.authorId !== userId) {
-          const sender = await this.prisma.user.findUnique({ where: { id: userId } });
-          if (sender) {
-            const notif = await this.prisma.notification.create({
-              data: {
-                userId: post.authorId,
-                title: 'Nouveau j\'aime sur votre publication',
-                content: `${sender.firstName} ${sender.lastName} a aimé votre publication.`,
-                type: 'LIKE',
-              },
-            });
-            const { MessagingGateway } = require('../messaging/messaging.gateway');
-            MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+          const cooldownMs = 10 * 60 * 1000;
+          const recent = await this.prisma.notification.findFirst({
+            where: {
+              userId: post.authorId,
+              type: 'LIKE',
+              createdAt: { gte: new Date(Date.now() - cooldownMs) },
+            },
+          });
+          if (!recent) {
+            const sender = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (sender) {
+              const notif = await this.prisma.notification.create({
+                data: {
+                  userId: post.authorId,
+                  title: 'Nouveau j\'aime sur votre publication',
+                  content: `${sender.firstName} ${sender.lastName} a aimé votre publication.`,
+                  type: 'LIKE',
+                },
+              });
+              const { MessagingGateway } = require('../messaging/messaging.gateway');
+              MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+            }
           }
         }
       } catch (err) {
@@ -146,19 +156,29 @@ export class FeedService {
       },
     });
 
-    // Create notification for post author
+    // Notification with 5-min cooldown per post for comments
     try {
       if (post.authorId !== userId) {
-        const notif = await this.prisma.notification.create({
-          data: {
+        const cooldownMs = 5 * 60 * 1000;
+        const recent = await this.prisma.notification.findFirst({
+          where: {
             userId: post.authorId,
-            title: 'Nouveau commentaire sur votre publication',
-            content: `${comment.author.firstName} ${comment.author.lastName} a commenté : "${content.length > 40 ? content.substring(0, 40) + '...' : content}"`,
             type: 'COMMENT',
+            createdAt: { gte: new Date(Date.now() - cooldownMs) },
           },
         });
-        const { MessagingGateway } = require('../messaging/messaging.gateway');
-        MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+        if (!recent) {
+          const notif = await this.prisma.notification.create({
+            data: {
+              userId: post.authorId,
+              title: 'Nouveau commentaire sur votre publication',
+              content: `${comment.author.firstName} ${comment.author.lastName} a commenté : "${content.length > 40 ? content.substring(0, 40) + '...' : content}"`,
+              type: 'COMMENT',
+            },
+          });
+          const { MessagingGateway } = require('../messaging/messaging.gateway');
+          MessagingGateway.emitToUser(post.authorId, 'notification', notif);
+        }
       }
     } catch (err) {
       console.error('Error creating post comment notification:', err);

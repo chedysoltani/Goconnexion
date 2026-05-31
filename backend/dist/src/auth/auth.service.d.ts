@@ -27,5 +27,16 @@ export declare class AuthService {
             role: import("@prisma/client").$Enums.UserRole;
         };
     }>;
+    refresh(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            role: import("@prisma/client").$Enums.UserRole;
+        };
+    }>;
     private generateTokens;
 }

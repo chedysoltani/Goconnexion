@@ -6,510 +6,427 @@ import Link from 'next/link';
 import { UserRole, SignupData } from '@/types/auth';
 import { api } from '@/lib/api';
 
-interface FormErrors {
-  email?: string;
-  password?: string;
-  firstName?: string;
-  lastName?: string;
-  bio?: string;
-  // Freelancer errors
-  skills?: string;
-  experience?: string;
-  // Entrepreneur errors
-  company?: string;
-  position?: string;
-  industry?: string;
-  // User errors
-  interests?: string;
-  goals?: string;
+type Step = 1 | 2 | 3 | 4;
+
+const STEPS = [
+  { n: 1, label: 'Compte' },
+  { n: 2, label: 'Identité' },
+  { n: 3, label: 'Profil' },
+  { n: 4, label: 'Recap' },
+];
+
+const ROLE_META: Record<string, { emoji: string; label: string; color: string }> = {
+  freelancer: { emoji: '💻', label: 'Freelancer', color: '#3b82f6' },
+  entrepreneur: { emoji: '🚀', label: 'Entrepreneur', color: '#8b5cf6' },
+  user: { emoji: '🌱', label: 'Explorateur', color: '#10b981' },
+};
+
+interface Errs {
+  email?: string; password?: string; firstName?: string; lastName?: string;
+  bio?: string; skills?: string; experience?: string;
+  company?: string; position?: string; industry?: string; interests?: string;
 }
 
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [role, setRole] = useState<UserRole>('user');
+  const [step, setStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<Errs>({});
+  const [globalError, setGlobalError] = useState('');
 
-  const [formData, setFormData] = useState<SignupData>({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    role: 'user',
-    profile: {
-      bio: '',
-    },
+  const [form, setForm] = useState<SignupData>({
+    email: '', password: '', firstName: '', lastName: '',
+    role: 'user', profile: { bio: '' },
   });
 
   useEffect(() => {
-    const roleParam = searchParams.get('role') as UserRole;
-    if (roleParam && ['freelancer', 'entrepreneur', 'user'].includes(roleParam)) {
-      setRole(roleParam);
-      setFormData(prev => ({ ...prev, role: roleParam }));
+    const r = searchParams.get('role') as UserRole;
+    if (r && ['freelancer', 'entrepreneur', 'user'].includes(r)) {
+      setRole(r);
+      setForm((p) => ({ ...p, role: r }));
     }
   }, [searchParams]);
 
-  const updateFormData = (field: string, value: any) => {
+  const upd = (field: string, value: any) => {
     if (field.startsWith('profile.')) {
-      const profileField = field.replace('profile.', '');
-      setFormData(prev => ({
-        ...prev,
-        profile: {
-          ...prev.profile,
-          [profileField]: value,
-        },
-      }));
+      const k = field.slice(8);
+      setForm((p) => ({ ...p, profile: { ...p.profile, [k]: value } }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
+      setForm((p) => ({ ...p, [field]: value }));
     }
-    // Clear error for this field
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
+    const key = field.replace('profile.', '') as keyof Errs;
+    setErrors((p) => ({ ...p, [key]: undefined }));
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    // Basic validation
-    if (!formData.email) newErrors.email = 'Email requis';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
-
-    if (!formData.password) newErrors.password = 'Mot de passe requis';
-    else if (formData.password.length < 8) newErrors.password = 'Minimum 8 caractères';
-
-    if (!formData.firstName) newErrors.firstName = 'Prénom requis';
-    if (!formData.lastName) newErrors.lastName = 'Nom requis';
-
-    if (!formData.profile.bio) newErrors.bio = 'Bio requise';
-    else if (formData.profile.bio.length < 20) newErrors.bio = 'Minimum 20 caractères';
-
-    // Role-specific validation
-    if (role === 'freelancer') {
-      if (!formData.profile.skills || formData.profile.skills.length === 0) {
-        newErrors.skills = 'Au moins une compétence requise';
+  const validate = (): boolean => {
+    const e: Errs = {};
+    if (step === 1) {
+      if (!form.email) e.email = 'Email requis';
+      else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Email invalide';
+      if (!form.password) e.password = 'Mot de passe requis';
+      else if (form.password.length < 8) e.password = 'Minimum 8 caractères';
+    }
+    if (step === 2) {
+      if (!form.firstName) e.firstName = 'Prénom requis';
+      if (!form.lastName) e.lastName = 'Nom requis';
+      if (!form.profile.bio || form.profile.bio.length < 10) e.bio = 'Bio requise (min. 10 car.)';
+    }
+    if (step === 3) {
+      if (role === 'freelancer') {
+        if (!form.profile.skills?.length) e.skills = 'Au moins une compétence';
+        if (!form.profile.experience) e.experience = 'Expérience requise';
       }
-      if (!formData.profile.experience) newErrors.experience = 'Expérience requise';
-    }
-
-    if (role === 'entrepreneur') {
-      if (!formData.profile.company) newErrors.company = 'Entreprise requise';
-      if (!formData.profile.position) newErrors.position = 'Poste requis';
-      if (!formData.profile.industry) newErrors.industry = 'Secteur requis';
-    }
-
-    if (role === 'user') {
-      if (!formData.profile.interests || formData.profile.interests.length === 0) {
-        newErrors.interests = 'Au moins un intérêt requis';
+      if (role === 'entrepreneur') {
+        if (!form.profile.company) e.company = 'Entreprise requise';
+        if (!form.profile.position) e.position = 'Poste requis';
+        if (!form.profile.industry) e.industry = 'Secteur requis';
       }
-      if (!formData.profile.goals) newErrors.goals = 'Objectifs requis';
+      if (role === 'user') {
+        if (!form.profile.interests?.length) e.interests = 'Au moins un intérêt';
+      }
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return !Object.keys(e).length;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+  const next = () => { if (validate()) setStep((s) => Math.min(s + 1, 4) as Step); };
+  const prev = () => setStep((s) => Math.max(s - 1, 1) as Step);
 
+  const submit = async () => {
     setIsLoading(true);
-    
+    setGlobalError('');
     try {
-      await api.auth.register(formData);
-      router.push('/auth/login?message=signup-success');
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      setErrors({ email: error.message || 'Une erreur est survenue' });
+      await api.auth.register(form);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setGlobalError(err.message || 'Une erreur est survenue.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderRoleSpecificFields = () => {
-    switch (role) {
-      case 'freelancer':
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Compétences *
-              </label>
-              <input
-                type="text"
-                placeholder="Ex: Développement web, Design, Marketing..."
-                value={formData.profile.skills?.join(', ') || ''}
-                onChange={(e) => updateFormData('profile.skills', e.target.value.split(',').map(s => s.trim()))}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                  errors.skills ? 'border-red-500' : 'border-gc-border'
-                }`}
-              />
-              {errors.skills && <p className="text-red-500 text-sm mt-1">{errors.skills}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Expérience *
-              </label>
-              <textarea
-                placeholder="Décrivez votre expérience professionnelle..."
-                rows={4}
-                value={formData.profile.experience || ''}
-                onChange={(e) => updateFormData('profile.experience', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                  errors.experience ? 'border-red-500' : 'border-gc-border'
-                }`}
-              />
-              {errors.experience && <p className="text-red-500 text-sm mt-1">{errors.experience}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Taux horaire (€)
-                </label>
-                <input
-                  type="number"
-                  placeholder="50"
-                  value={formData.profile.hourlyRate || ''}
-                  onChange={(e) => updateFormData('profile.hourlyRate', parseInt(e.target.value) || undefined)}
-                  className="w-full px-4 py-3 border border-gc-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Portfolio
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.profile.portfolio || ''}
-                  onChange={(e) => updateFormData('profile.portfolio', e.target.value)}
-                  className="w-full px-4 py-3 border border-gc-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'entrepreneur':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Entreprise *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nom de votre entreprise"
-                  value={formData.profile.company || ''}
-                  onChange={(e) => updateFormData('profile.company', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                    errors.company ? 'border-red-500' : 'border-gc-border'
-                  }`}
-                />
-                {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Poste *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Votre poste"
-                  value={formData.profile.position || ''}
-                  onChange={(e) => updateFormData('profile.position', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                    errors.position ? 'border-red-500' : 'border-gc-border'
-                  }`}
-                />
-                {errors.position && <p className="text-red-500 text-sm mt-1">{errors.position}</p>}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Secteur d'activité *
-              </label>
-              <select
-                value={formData.profile.industry || ''}
-                onChange={(e) => updateFormData('profile.industry', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                  errors.industry ? 'border-red-500' : 'border-gc-border'
-                }`}
-              >
-                <option value="">Sélectionnez un secteur</option>
-                <option value="tech">Technologie</option>
-                <option value="finance">Finance</option>
-                <option value="health">Santé</option>
-                <option value="education">Éducation</option>
-                <option value="retail">Commerce</option>
-                <option value="other">Autre</option>
-              </select>
-              {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Taille de l'entreprise
-                </label>
-                <select
-                  value={formData.profile.companySize || ''}
-                  onChange={(e) => updateFormData('profile.companySize', e.target.value)}
-                  className="w-full px-4 py-3 border border-gc-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                >
-                  <option value="">Sélectionnez</option>
-                  <option value="1-10">1-10 employés</option>
-                  <option value="11-50">11-50 employés</option>
-                  <option value="51-200">51-200 employés</option>
-                  <option value="200+">200+ employés</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Site web
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.profile.website || ''}
-                  onChange={(e) => updateFormData('profile.website', e.target.value)}
-                  className="w-full px-4 py-3 border border-gc-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'user':
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Centres d'intérêt *
-              </label>
-              <input
-                type="text"
-                placeholder="Ex: Tech, Marketing, Design..."
-                value={formData.profile.interests?.join(', ') || ''}
-                onChange={(e) => updateFormData('profile.interests', e.target.value.split(',').map(s => s.trim()))}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                  errors.interests ? 'border-red-500' : 'border-gc-border'
-                }`}
-              />
-              {errors.interests && <p className="text-red-500 text-sm mt-1">{errors.interests}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Objectifs professionnels *
-              </label>
-              <textarea
-                placeholder="Que cherchez-vous à accomplir ?"
-                rows={4}
-                value={formData.profile.goals || ''}
-                onChange={(e) => updateFormData('profile.goals', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                  errors.goals ? 'border-red-500' : 'border-gc-border'
-                }`}
-              />
-              {errors.goals && <p className="text-red-500 text-sm mt-1">{errors.goals}</p>}
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const getRoleTitle = () => {
-    switch (role) {
-      case 'freelancer': return 'Freelancer';
-      case 'entrepreneur': return 'Entrepreneur';
-      case 'user': return 'Utilisateur';
-      default: return 'Utilisateur';
-    }
-  };
+  const meta = ROLE_META[role] ?? ROLE_META.user;
+  const progress = ((step - 1) / 3) * 100;
 
   return (
-    <div className="min-h-screen bg-gc-bg flex flex-col">
+    <div className="auth-bg min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gc-border">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-              <span className="text-white font-bold text-sm">GC</span>
-            </div>
-            <span className="font-sans font-semibold text-foreground">GoConnexions</span>
-          </Link>
-          <Link href="/auth/login" className="text-sm text-muted hover:text-foreground transition-colors">
-            Déjà un compte ? Se connecter
-          </Link>
-        </div>
+      <header className="relative z-10 px-6 py-5 flex items-center justify-between max-w-7xl mx-auto w-full">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shadow-lg shadow-accent/30 group-hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-sm">GC</span>
+          </div>
+          <span className="font-semibold text-white/90 text-[15px]">GoConnexions</span>
+        </Link>
+        <Link href="/auth/login" className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Déjà un compte ?{' '}
+          <span className="text-accent font-medium hover:underline">Se connecter</span>
+        </Link>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 py-12 px-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Créer un compte {getRoleTitle()}
-            </h1>
-            <p className="text-muted">
-              Rejoignez la communauté et développez votre réseau professionnel
-            </p>
+      <main className="relative z-10 flex-1 flex items-start justify-center px-6 py-8 overflow-y-auto">
+        <div className="w-full max-w-[480px]">
+          {/* Role badge */}
+          <div className="flex justify-center mb-6 slide-up">
+            <span
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold"
+              style={{
+                background: `${meta.color}18`,
+                border: `1px solid ${meta.color}40`,
+                color: meta.color,
+              }}
+            >
+              {meta.emoji} {meta.label}
+            </span>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 shadow-sm">
-            {/* Basic Information */}
-            <div className="space-y-6 mb-8">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Prénom *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Jean"
-                    value={formData.firstName}
-                    onChange={(e) => updateFormData('firstName', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                      errors.firstName ? 'border-red-500' : 'border-gc-border'
-                    }`}
-                  />
-                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+          {/* Progress bar */}
+          <div className="mb-7 slide-up slide-up-1">
+            {/* Steps labels */}
+            <div className="flex items-center mb-3">
+              {STEPS.map((s, i) => (
+                <React.Fragment key={s.n}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`step-dot ${step > s.n ? 'done' : step === s.n ? 'active' : 'pending'}`}>
+                      {step > s.n ? '✓' : s.n}
+                    </div>
+                    <span className="text-[10px] font-medium" style={{ color: step >= s.n ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)' }}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div className="flex-1 h-px mx-2 mb-5 transition-all duration-500"
+                      style={{ background: step > s.n ? '#4a90d9' : 'rgba(255,255,255,0.1)' }} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            {/* Progress bar */}
+            <div className="h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #4a90d9, #2563eb)' }}
+              />
+            </div>
+          </div>
+
+          {/* Card */}
+          <div className="auth-card p-8 slide-up slide-up-2">
+            {/* Step 1 */}
+            {step === 1 && (
+              <div className="space-y-5">
+                <div className="mb-2">
+                  <h2 className="text-2xl font-bold text-white mb-1">Créez votre compte</h2>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Vos informations de connexion sécurisées.</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Nom *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Dupont"
-                    value={formData.lastName}
-                    onChange={(e) => updateFormData('lastName', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                      errors.lastName ? 'border-red-500' : 'border-gc-border'
-                    }`}
-                  />
-                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                <DarkField label="Email" error={errors.email}>
+                  <input type="email" placeholder="votre@email.com" value={form.email}
+                    onChange={(e) => upd('email', e.target.value)}
+                    className={`input-dark ${errors.email ? 'error' : ''}`} />
+                </DarkField>
+                <DarkField label="Mot de passe" error={errors.password}>
+                  <input type="password" placeholder="Minimum 8 caractères" value={form.password}
+                    onChange={(e) => upd('password', e.target.value)}
+                    className={`input-dark ${errors.password ? 'error' : ''}`} />
+                </DarkField>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {step === 2 && (
+              <div className="space-y-5">
+                <div className="mb-2">
+                  <h2 className="text-2xl font-bold text-white mb-1">Qui êtes-vous ?</h2>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Votre identité visible par la communauté.</p>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <DarkField label="Prénom" error={errors.firstName}>
+                    <input type="text" placeholder="Jean" value={form.firstName}
+                      onChange={(e) => upd('firstName', e.target.value)}
+                      className={`input-dark ${errors.firstName ? 'error' : ''}`} />
+                  </DarkField>
+                  <DarkField label="Nom" error={errors.lastName}>
+                    <input type="text" placeholder="Dupont" value={form.lastName}
+                      onChange={(e) => upd('lastName', e.target.value)}
+                      className={`input-dark ${errors.lastName ? 'error' : ''}`} />
+                  </DarkField>
+                </div>
+                <DarkField label="Bio" error={errors.bio}>
+                  <textarea placeholder="Présentez-vous en quelques mots..." rows={3}
+                    value={form.profile.bio}
+                    onChange={(e) => upd('profile.bio', e.target.value)}
+                    className={`input-dark resize-none ${errors.bio ? 'error' : ''}`} />
+                </DarkField>
+                <DarkField label="LinkedIn (optionnel)">
+                  <input type="url" placeholder="https://linkedin.com/in/..."
+                    value={form.profile.linkedin || ''}
+                    onChange={(e) => upd('profile.linkedin', e.target.value)}
+                    className="input-dark" />
+                </DarkField>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  placeholder="jean.dupont@example.com"
-                  value={formData.email}
-                  onChange={(e) => updateFormData('email', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                    errors.email ? 'border-red-500' : 'border-gc-border'
-                  }`}
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            {/* Step 3 — role specific */}
+            {step === 3 && (
+              <div className="space-y-5">
+                <div className="mb-2">
+                  <h2 className="text-2xl font-bold text-white mb-1">Votre profil {meta.emoji}</h2>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Personnalisez votre expérience GoConnexions.</p>
+                </div>
+
+                {role === 'freelancer' && (
+                  <>
+                    <DarkField label="Compétences *" error={errors.skills}>
+                      <input type="text" placeholder="React, Node.js, Design..." value={form.profile.skills?.join(', ') || ''}
+                        onChange={(e) => upd('profile.skills', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                        className={`input-dark ${errors.skills ? 'error' : ''}`} />
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Séparez par des virgules</p>
+                    </DarkField>
+                    <DarkField label="Expérience *" error={errors.experience}>
+                      <textarea rows={3} placeholder="Décrivez votre parcours..."
+                        value={form.profile.experience || ''}
+                        onChange={(e) => upd('profile.experience', e.target.value)}
+                        className={`input-dark resize-none ${errors.experience ? 'error' : ''}`} />
+                    </DarkField>
+                    <div className="grid grid-cols-2 gap-4">
+                      <DarkField label="Taux horaire (€)">
+                        <input type="number" placeholder="50" value={form.profile.hourlyRate || ''}
+                          onChange={(e) => upd('profile.hourlyRate', parseInt(e.target.value) || undefined)}
+                          className="input-dark" />
+                      </DarkField>
+                      <DarkField label="Portfolio">
+                        <input type="url" placeholder="https://..." value={form.profile.portfolio || ''}
+                          onChange={(e) => upd('profile.portfolio', e.target.value)}
+                          className="input-dark" />
+                      </DarkField>
+                    </div>
+                  </>
+                )}
+
+                {role === 'entrepreneur' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <DarkField label="Entreprise *" error={errors.company}>
+                        <input type="text" placeholder="Nom de l'entreprise" value={form.profile.company || ''}
+                          onChange={(e) => upd('profile.company', e.target.value)}
+                          className={`input-dark ${errors.company ? 'error' : ''}`} />
+                      </DarkField>
+                      <DarkField label="Poste *" error={errors.position}>
+                        <input type="text" placeholder="CEO, Fondateur..." value={form.profile.position || ''}
+                          onChange={(e) => upd('profile.position', e.target.value)}
+                          className={`input-dark ${errors.position ? 'error' : ''}`} />
+                      </DarkField>
+                    </div>
+                    <DarkField label="Secteur *" error={errors.industry}>
+                      <select value={form.profile.industry || ''}
+                        onChange={(e) => upd('profile.industry', e.target.value)}
+                        className={`input-dark ${errors.industry ? 'error' : ''}`}>
+                        <option value="">Sélectionnez un secteur</option>
+                        {['Technologie','Finance','Santé','Éducation','Commerce','Autre'].map((s) => (
+                          <option key={s} value={s.toLowerCase()}>{s}</option>
+                        ))}
+                      </select>
+                    </DarkField>
+                    <div className="grid grid-cols-2 gap-4">
+                      <DarkField label="Taille">
+                        <select value={form.profile.companySize || ''}
+                          onChange={(e) => upd('profile.companySize', e.target.value)}
+                          className="input-dark">
+                          <option value="">Sélectionnez</option>
+                          {['1-10','11-50','51-200','200+'].map((s) => (
+                            <option key={s} value={s}>{s} employés</option>
+                          ))}
+                        </select>
+                      </DarkField>
+                      <DarkField label="Site web">
+                        <input type="url" placeholder="https://..." value={form.profile.website || ''}
+                          onChange={(e) => upd('profile.website', e.target.value)}
+                          className="input-dark" />
+                      </DarkField>
+                    </div>
+                  </>
+                )}
+
+                {role === 'user' && (
+                  <>
+                    <DarkField label="Centres d'intérêt *" error={errors.interests}>
+                      <input type="text" placeholder="Tech, Marketing, Design..."
+                        value={form.profile.interests?.join(', ') || ''}
+                        onChange={(e) => upd('profile.interests', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                        className={`input-dark ${errors.interests ? 'error' : ''}`} />
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Séparez par des virgules</p>
+                    </DarkField>
+                    <DarkField label="Objectifs professionnels">
+                      <textarea rows={3} placeholder="Que cherchez-vous à accomplir ?"
+                        value={form.profile.goals || ''}
+                        onChange={(e) => upd('profile.goals', e.target.value)}
+                        className="input-dark resize-none" />
+                    </DarkField>
+                  </>
+                )}
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Mot de passe *
-                </label>
-                <input
-                  type="password"
-                  placeholder="Minimum 8 caractères"
-                  value={formData.password}
-                  onChange={(e) => updateFormData('password', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                    errors.password ? 'border-red-500' : 'border-gc-border'
-                  }`}
-                />
-                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            {/* Step 4 — Summary */}
+            {step === 4 && (
+              <div className="space-y-6">
+                <div className="mb-2">
+                  <h2 className="text-2xl font-bold text-white mb-1">Tout est prêt ! 🎉</h2>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Vérifiez vos informations avant de valider.</p>
+                </div>
+                <div className="space-y-3 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <SumRow label="Email" value={form.email} />
+                  <SumRow label="Nom" value={`${form.firstName} ${form.lastName}`} />
+                  <SumRow label="Profil" value={`${meta.emoji} ${meta.label}`} color={meta.color} />
+                  {role === 'freelancer' && form.profile.skills?.length && (
+                    <SumRow label="Compétences" value={form.profile.skills.slice(0, 4).join(', ')} />
+                  )}
+                  {role === 'entrepreneur' && form.profile.company && (
+                    <SumRow label="Entreprise" value={form.profile.company} />
+                  )}
+                </div>
+                {globalError && (
+                  <div className="px-4 py-3 rounded-xl text-sm"
+                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+                    {globalError}
+                  </div>
+                )}
+                <button
+                  onClick={submit}
+                  disabled={isLoading}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, #4a90d9 0%, #2563eb 100%)',
+                    boxShadow: '0 8px 24px rgba(74,144,217,0.35)',
+                  }}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Création du compte...
+                    </span>
+                  ) : 'Créer mon compte →'}
+                </button>
+                <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  En créant un compte vous acceptez nos{' '}
+                  <Link href="/terms" className="text-accent hover:underline">conditions</Link>
+                  {' '}et notre{' '}
+                  <Link href="/privacy" className="text-accent hover:underline">politique de confidentialité</Link>.
+                </p>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Bio *
-                </label>
-                <textarea
-                  placeholder="Présentez-vous en quelques mots..."
-                  rows={3}
-                  value={formData.profile.bio}
-                  onChange={(e) => updateFormData('profile.bio', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent ${
-                    errors.bio ? 'border-red-500' : 'border-gc-border'
-                  }`}
-                />
-                {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+            {/* Nav buttons */}
+            {step < 4 && (
+              <div className={`flex gap-3 mt-8 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
+                {step > 1 && (
+                  <button onClick={prev}
+                    className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>
+                    ← Retour
+                  </button>
+                )}
+                <button onClick={next}
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                  style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 16px rgba(74,144,217,0.3)' }}>
+                  Continuer →
+                </button>
               </div>
+            )}
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  LinkedIn
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://linkedin.com/in/..."
-                  value={formData.profile.linkedin || ''}
-                  onChange={(e) => updateFormData('profile.linkedin', e.target.value)}
-                  className="w-full px-4 py-3 border border-gc-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Role-specific fields */}
-            <div className="border-t border-gc-border pt-8 mb-8">
-              <h3 className="text-lg font-semibold text-foreground mb-6">
-                Informations {getRoleTitle()}
-              </h3>
-              {renderRoleSpecificFields()}
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex flex-col gap-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-accent text-white py-3 rounded-lg font-semibold hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Création du compte...' : 'Créer mon compte'}
-              </button>
-
-              <p className="text-center text-sm text-muted">
-                En créant un compte, vous acceptez nos{' '}
-                <Link href="/terms" className="text-accent hover:underline">
-                  conditions d'utilisation
-                </Link>{' '}
-                et notre{' '}
-                <Link href="/privacy" className="text-accent hover:underline">
-                  politique de confidentialité
-                </Link>
-              </p>
-            </div>
-          </form>
-
-          {/* Back to role selection */}
-          <div className="text-center mt-8">
-            <Link
-              href="/auth/select-role"
-              className="text-sm text-muted hover:text-foreground transition-colors"
-            >
+          <div className="text-center mt-5 slide-up slide-up-3">
+            <Link href="/auth/select-role" className="text-xs hover:underline"
+              style={{ color: 'rgba(255,255,255,0.3)' }}>
               ← Changer de type de compte
             </Link>
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function DarkField({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="label-dark">{label}</label>
+      {children}
+      {error && <p className="mt-1.5 text-xs" style={{ color: '#fca5a5' }}>{error}</p>}
+    </div>
+  );
+}
+
+function SumRow({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="flex justify-between items-center py-1">
+      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
+      <span className="text-sm font-medium" style={{ color: color ?? 'rgba(255,255,255,0.85)' }}>{value}</span>
     </div>
   );
 }
