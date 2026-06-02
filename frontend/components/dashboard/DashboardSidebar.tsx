@@ -11,6 +11,7 @@ interface DashboardSidebarProps {
   user: User | null;
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  onUpgradeClick?: () => void;
 }
 
 interface NavItem {
@@ -91,7 +92,7 @@ const labelVariants = {
   hide: { opacity: 0, x: -8, transition: { duration: 0.15, ease: 'easeIn' as const } },
 };
 
-export default function DashboardSidebar({ user, activeTab, setActiveTab }: DashboardSidebarProps) {
+export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgradeClick }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const role = user?.role?.toLowerCase() ?? 'user';
@@ -401,6 +402,31 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab }: Dash
         )}
       </nav>
 
+      {/* ── Upgrade Banner ────────────────── */}
+      {!collapsed && user && (!user.plan || user.plan === 'FREE') && (
+        <div className="relative z-10 px-2.5 mb-2 flex-shrink-0">
+          <motion.button
+            onClick={onUpgradeClick}
+            whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
+            whileTap={{ scale: 0.97 }}
+            className="w-full px-4 py-3 rounded-2xl text-left relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb)' }}
+          >
+            <div className="absolute top-0 right-0 w-16 h-16 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.06)', transform: 'translate(25%,-25%)' }} />
+            <p className="text-[11px] font-bold text-white flex items-center gap-1.5 mb-0.5">
+              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Passer à Pro
+            </p>
+            <p className="text-[10px] text-blue-200 leading-tight">
+              Connexions illimitées, analytics, contrats...
+            </p>
+          </motion.button>
+        </div>
+      )}
+
       {/* ── Bottom area ───────────────────── */}
       <div className="relative z-10 px-2 py-3 flex-shrink-0">
         <div
@@ -410,6 +436,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab }: Dash
 
         {[
           { href: '/dashboard/profile', icon: <IconProfile />, label: 'Mon profil' },
+          { href: '/pricing', icon: <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>, label: 'Forfaits' },
           { href: '/dashboard/settings', icon: <IconSettings />, label: 'Paramètres' },
         ].map((item) => (
           <motion.div key={item.href} whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}>

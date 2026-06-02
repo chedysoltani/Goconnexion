@@ -269,6 +269,23 @@ export const api = {
     },
   },
 
+  subscription: {
+    get: () => request('/subscription'),
+    plans: () => request('/subscription/plans'),
+    checkout: (plan: 'PRO' | 'BUSINESS', interval: 'monthly' | 'yearly' = 'monthly') =>
+      request('/subscription/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan, interval }),
+      }),
+    upgrade: (plan: 'PRO' | 'BUSINESS') =>
+      request('/subscription/upgrade', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
+    portal: () => request('/subscription/portal', { method: 'POST' }),
+    cancel: () => request('/subscription/cancel', { method: 'DELETE' }),
+  },
+
   connections: {
     sendRequest: (receiverId: string, options?: { message?: string; isCoffee?: boolean }) =>
       request('/connections/request', {

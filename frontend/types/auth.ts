@@ -1,4 +1,5 @@
 export type UserRole = 'freelancer' | 'entrepreneur' | 'user';
+export type PlanType = 'FREE' | 'PRO' | 'BUSINESS';
 
 export interface BaseUser {
   id: string;
@@ -6,6 +7,7 @@ export interface BaseUser {
   firstName: string;
   lastName: string;
   role: UserRole;
+  plan?: PlanType;
   avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;

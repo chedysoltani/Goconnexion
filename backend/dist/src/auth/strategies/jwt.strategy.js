@@ -37,7 +37,19 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 firstName: true,
                 lastName: true,
                 role: true,
+                plan: true,
+                avatarUrl: true,
                 isEmailVerified: true,
+                freelancerProfile: true,
+                entrepreneurProfile: true,
+                subscription: {
+                    select: {
+                        plan: true,
+                        status: true,
+                        currentPeriodEnd: true,
+                        cancelAtPeriodEnd: true,
+                    },
+                },
             },
         });
         if (!user) {

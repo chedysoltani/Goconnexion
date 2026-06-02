@@ -9,11 +9,14 @@ import { join } from 'path';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
+  const app = await NestFactory.create(AppModule, {
+    // Stripe webhooks nécessitent le raw body
+    rawBody: true,
+  });
+
   // Security headers
   app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
   // Enforce validation globally
@@ -26,13 +29,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    credentials: true,
+  });
 
   // Serve static files from public/uploads folder
   app.use('/uploads', express.static(join(process.cwd(), 'public', 'uploads')));
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`GoConnexions Backend is running on: http://localhost:${port}/api`);
+  console.log(`GoConnexions Backend running on: http://localhost:${port}/api`);
 }
 bootstrap();

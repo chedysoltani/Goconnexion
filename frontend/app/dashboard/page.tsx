@@ -15,6 +15,8 @@ import AnalyticsPage from '@/components/dashboard/AnalyticsPage';
 import IncubatorPage from '@/components/dashboard/IncubatorPage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
+import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import PlanBadge from '@/components/ui/PlanBadge';
 
 type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator';
 
@@ -118,6 +120,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [greeting, setGreeting] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -172,7 +175,18 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#f8fafc' }}>
-      <DashboardSidebar user={user} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        currentPlan={user?.plan ?? 'FREE'}
+        trigger="Débloquez toutes les fonctionnalités premium de GoConnexion."
+      />
+      <DashboardSidebar
+        user={user}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onUpgradeClick={() => setUpgradeOpen(true)}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
@@ -239,6 +253,23 @@ export default function DashboardPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
+              {user && (!user.plan || user.plan === 'FREE') && (
+                <motion.button
+                  onClick={() => setUpgradeOpen(true)}
+                  whileHover={{ scale: 1.03, boxShadow: '0 8px 24px rgba(59,130,246,0.3)' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg,#3b82f6,#2563eb)' }}
+                >
+                  <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Passer Pro
+                </motion.button>
+              )}
+              {user && user.plan && user.plan !== 'FREE' && (
+                <PlanBadge plan={user.plan} size="sm" />
+              )}
               <NotificationCenter />
               <UserProfileCard user={user} />
             </div>

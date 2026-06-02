@@ -15,6 +15,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { FeedModule } from './feed/feed.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConnectionsModule } from './connections/connections.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -42,6 +43,7 @@ import { LastActiveInterceptor } from './auth/interceptors/last-active.intercept
     PrismaModule,
     FeedModule,
     ConnectionsModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [

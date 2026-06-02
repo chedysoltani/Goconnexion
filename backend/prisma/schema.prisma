@@ -16,6 +16,19 @@ enum UserRole {
   COLLABORATOR
 }
 
+enum PlanType {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum PlanStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
 model User {
   id                   String               @id @default(uuid())
   email                String               @unique
@@ -26,10 +39,14 @@ model User {
   role                 UserRole             @default(FREELANCER)
   isEmailVerified      Boolean              @default(false)
   birthDate            DateTime?
+  plan                 PlanType             @default(FREE)
   lastActiveAt         DateTime             @default(now())
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
-  
+
+  // Subscription
+  subscription         Subscription?
+
   // Profile relations
   freelancerProfile    FreelancerProfile?
   entrepreneurProfile  EntrepreneurProfile?
@@ -273,4 +290,19 @@ model UserRelation {
   createdAt   DateTime @default(now())
 
   @@unique([userId, friendId])
+}
+
+model Subscription {
+  id                String     @id @default(uuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              PlanType   @default(FREE)
+  status            PlanStatus @default(ACTIVE)
+  stripeCustomerId  String?
+  stripeSubId       String?
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean    @default(false)
+  trialEndsAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 }

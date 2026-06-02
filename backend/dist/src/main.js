@@ -45,20 +45,25 @@ const express_1 = __importDefault(require("express"));
 const path_1 = require("path");
 const helmet_1 = __importDefault(require("helmet"));
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        rawBody: true,
+    });
     app.use((0, helmet_1.default)({
-        crossOriginResourcePolicy: { policy: "cross-origin" }
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
     }));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,
     }));
     app.setGlobalPrefix('api');
-    app.enableCors();
+    app.enableCors({
+        origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+        credentials: true,
+    });
     app.use('/uploads', express_1.default.static((0, path_1.join)(process.cwd(), 'public', 'uploads')));
-    const port = process.env.PORT || 3001;
+    const port = process.env.PORT ?? 3001;
     await app.listen(port);
-    console.log(`GoConnexions Backend is running on: http://localhost:${port}/api`);
+    console.log(`GoConnexions Backend running on: http://localhost:${port}/api`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
