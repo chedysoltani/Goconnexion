@@ -24,6 +24,7 @@ export declare class SubscriptionController {
                 readonly canBoostProfile: false;
                 readonly canAccessVideoCall: false;
                 readonly canAccessApiAccess: false;
+                readonly canAccessExclusiveEvents: false;
                 readonly badge: null;
             };
             features: string[];
@@ -46,6 +47,7 @@ export declare class SubscriptionController {
                 readonly canBoostProfile: true;
                 readonly canAccessVideoCall: true;
                 readonly canAccessApiAccess: false;
+                readonly canAccessExclusiveEvents: true;
                 readonly badge: "PRO";
             };
             popular: boolean;
@@ -68,6 +70,7 @@ export declare class SubscriptionController {
                 readonly canBoostProfile: true;
                 readonly canAccessVideoCall: true;
                 readonly canAccessApiAccess: true;
+                readonly canAccessExclusiveEvents: true;
                 readonly badge: "BUSINESS";
             };
             features: string[];
@@ -89,6 +92,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: false;
             readonly canAccessVideoCall: false;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: false;
             readonly badge: null;
         } | {
             readonly maxProjects: 5;
@@ -101,6 +105,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "PRO";
         } | {
             readonly maxProjects: -1;
@@ -113,7 +118,47 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "BUSINESS";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "ENTREPRENEUR";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "FREELANCER";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "INCUBATEUR";
         };
         prices: {
             readonly FREE: {
@@ -127,6 +172,18 @@ export declare class SubscriptionController {
             readonly BUSINESS: {
                 readonly monthly: 49;
                 readonly yearly: 399;
+            };
+            readonly PREMIUM_ENTREPRENEUR: {
+                readonly monthly: 29;
+                readonly yearly: 249;
+            };
+            readonly PREMIUM_FREELANCER: {
+                readonly monthly: 25;
+                readonly yearly: 199;
+            };
+            readonly PREMIUM_INCUBATEUR: {
+                readonly monthly: 99;
+                readonly yearly: 890;
             };
         };
         stripeConfigured: boolean;
@@ -156,6 +213,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: false;
             readonly canAccessVideoCall: false;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: false;
             readonly badge: null;
         } | {
             readonly maxProjects: 5;
@@ -168,6 +226,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "PRO";
         } | {
             readonly maxProjects: -1;
@@ -180,7 +239,47 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "BUSINESS";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "ENTREPRENEUR";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "FREELANCER";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "INCUBATEUR";
         };
     } | {
         checkoutUrl: string;
@@ -202,6 +301,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: false;
             readonly canAccessVideoCall: false;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: false;
             readonly badge: null;
         } | {
             readonly maxProjects: 5;
@@ -214,6 +314,7 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "PRO";
         } | {
             readonly maxProjects: -1;
@@ -226,7 +327,47 @@ export declare class SubscriptionController {
             readonly canBoostProfile: true;
             readonly canAccessVideoCall: true;
             readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
             readonly badge: "BUSINESS";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "ENTREPRENEUR";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: false;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "FREELANCER";
+        } | {
+            readonly maxProjects: -1;
+            readonly maxApplications: -1;
+            readonly maxConnections: -1;
+            readonly maxMessagesPerMonth: -1;
+            readonly maxIncubatorPosts: -1;
+            readonly canAccessAnalytics: true;
+            readonly canAccessContracts: true;
+            readonly canBoostProfile: true;
+            readonly canAccessVideoCall: true;
+            readonly canAccessApiAccess: true;
+            readonly canAccessExclusiveEvents: true;
+            readonly badge: "INCUBATEUR";
         };
     } | {
         checkoutUrl: string;

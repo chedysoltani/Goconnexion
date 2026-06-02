@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@/types/auth';
 
-type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator';
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral';
 
 interface DashboardSidebarProps {
   user: User | null;
@@ -76,6 +76,25 @@ const IconSettings = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
+const IconEvents = () => (
+  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" />
+    <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" />
+    <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" />
+  </svg>
+);
+const IconCard = () => (
+  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="1" y1="10" x2="23" y2="10" strokeLinecap="round" />
+  </svg>
+);
+const IconReferral = () => (
+  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+  </svg>
+);
 const IconChevron = ({ collapsed }: { collapsed: boolean }) => (
   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d={collapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
@@ -102,13 +121,16 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
     : 'GC';
 
   const baseItems: NavItem[] = [
-    { id: 'feed',        label: "Fil d'activité", icon: <IconFeed /> },
-    { id: 'connections', label: 'Connexions',      icon: <IconConnections /> },
-    { id: 'messages',    label: 'Messages',        icon: <IconMessages /> },
-    { id: 'projects',    label: 'Projets',         icon: <IconProjects /> },
-    { id: 'earnings',    label: 'Revenus',         icon: <IconEarnings /> },
-    { id: 'analytics',   label: 'Analytiques',     icon: <IconAnalytics /> },
-    { id: 'incubator',   label: 'Incubateur',      icon: <IconIncubator /> },
+    { id: 'feed',           label: "Fil d'activité",  icon: <IconFeed /> },
+    { id: 'connections',    label: 'Connexions',       icon: <IconConnections /> },
+    { id: 'messages',       label: 'Messages',         icon: <IconMessages /> },
+    { id: 'events',         label: 'Événements',       icon: <IconEvents /> },
+    { id: 'projects',       label: 'Projets',          icon: <IconProjects /> },
+    { id: 'incubator',      label: 'Incubateur',       icon: <IconIncubator /> },
+    { id: 'business-cards', label: 'Cartes visite',    icon: <IconCard /> },
+    { id: 'referral',       label: 'Parrainage',       icon: <IconReferral /> },
+    { id: 'earnings',       label: 'Revenus',          icon: <IconEarnings /> },
+    { id: 'analytics',      label: 'Analytiques',      icon: <IconAnalytics /> },
   ];
 
   const roleItems: NavItem[] = role === 'entrepreneur'

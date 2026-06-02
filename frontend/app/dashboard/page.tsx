@@ -13,14 +13,52 @@ import ProjectsPage from '@/components/dashboard/ProjectsPage';
 import EarningsPage from '@/components/dashboard/EarningsPage';
 import AnalyticsPage from '@/components/dashboard/AnalyticsPage';
 import IncubatorPage from '@/components/dashboard/IncubatorPage';
+import EventsPage from '@/components/dashboard/EventsPage';
+import BusinessCardsPage from '@/components/dashboard/BusinessCardsPage';
+import ReferralPage from '@/components/dashboard/ReferralPage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import PlanBadge from '@/components/ui/PlanBadge';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
-type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator';
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral';
 
 const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: string; description: string }> = {
+  events: {
+    label: 'Événements',
+    description: 'Networking, formations et opportunités',
+    color: '#f59e0b',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" />
+        <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" />
+        <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  'business-cards': {
+    label: 'Cartes de visite',
+    description: 'Invitez de nouveaux contacts',
+    color: '#8b5cf6',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="1" y1="10" x2="23" y2="10" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  referral: {
+    label: 'Parrainage',
+    description: 'Développez la communauté',
+    color: '#ec4899',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+    ),
+  },
   feed: {
     label: "Fil d'activité",
     description: 'Actualités de votre réseau',
@@ -253,6 +291,7 @@ export default function DashboardPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
+              <LanguageSwitcher />
               {user && (!user.plan || user.plan === 'FREE') && (
                 <motion.button
                   onClick={() => setUpgradeOpen(true)}
@@ -288,13 +327,16 @@ export default function DashboardPage() {
                 exit="exit"
                 className="h-full"
               >
-                {activeTab === 'feed'        && <ActivityFeed user={user} />}
-                {activeTab === 'connections' && <ConnectionsPage user={user} setActiveTab={setActiveTab} />}
-                {activeTab === 'messages'    && <MessagesPage user={user} />}
-                {activeTab === 'projects'    && <ProjectsPage user={user} />}
-                {activeTab === 'earnings'    && <EarningsPage user={user} />}
-                {activeTab === 'analytics'   && <AnalyticsPage user={user} />}
-                {activeTab === 'incubator'   && <IncubatorPage user={user} />}
+                {activeTab === 'feed'           && <ActivityFeed user={user} />}
+                {activeTab === 'connections'    && <ConnectionsPage user={user} setActiveTab={setActiveTab} />}
+                {activeTab === 'messages'       && <MessagesPage user={user} />}
+                {activeTab === 'projects'       && <ProjectsPage user={user} />}
+                {activeTab === 'earnings'       && <EarningsPage user={user} />}
+                {activeTab === 'analytics'      && <AnalyticsPage user={user} />}
+                {activeTab === 'incubator'      && <IncubatorPage user={user} />}
+                {activeTab === 'events'         && <EventsPage user={user} />}
+                {activeTab === 'business-cards' && <BusinessCardsPage user={user} />}
+                {activeTab === 'referral'       && <ReferralPage user={user} />}
               </motion.div>
             </AnimatePresence>
           </div>

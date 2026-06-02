@@ -302,4 +302,48 @@ export const api = {
     remove: (friendId: string) =>
       request(`/connections/${friendId}`, { method: 'DELETE' }),
   },
+
+  events: {
+    list: (params: { category?: string; type?: string; upcoming?: string } = {}) => {
+      const query = new URLSearchParams();
+      if (params.category) query.set('category', params.category);
+      if (params.type) query.set('type', params.type);
+      if (params.upcoming) query.set('upcoming', params.upcoming);
+      return request(`/events?${query.toString()}`);
+    },
+    getOne: (id: string) => request(`/events/${id}`),
+    create: (data: any) => request('/events', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => request(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => request(`/events/${id}`, { method: 'DELETE' }),
+    register: (eventId: string) => request(`/events/${eventId}/register`, { method: 'POST' }),
+    cancelRegistration: (eventId: string) => request(`/events/${eventId}/register`, { method: 'DELETE' }),
+    myRegistrations: () => request('/events/my-registrations'),
+    participants: (eventId: string) => request(`/events/${eventId}/participants`),
+  },
+
+  businessCards: {
+    list: () => request('/business-cards'),
+    stats: () => request('/business-cards/stats'),
+    create: (data: any) => request('/business-cards', { method: 'POST', body: JSON.stringify(data) }),
+    delete: (id: string) => request(`/business-cards/${id}`, { method: 'DELETE' }),
+  },
+
+  referral: {
+    dashboard: () => request('/referral/dashboard'),
+    leaderboard: () => request('/referral/leaderboard'),
+    registerReferral: (code: string) => request(`/referral/register/${code}`, { method: 'POST' }),
+  },
+
+  advertisements: {
+    list: (placement?: string) => {
+      const query = placement ? `?placement=${placement}` : '';
+      return request(`/advertisements${query}`);
+    },
+    mine: () => request('/advertisements/mine'),
+    create: (data: any) => request('/advertisements', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => request(`/advertisements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    stats: (id: string) => request(`/advertisements/${id}/stats`),
+    trackImpression: (id: string) => request(`/advertisements/${id}/impression`, { method: 'POST' }),
+    trackClick: (id: string) => request(`/advertisements/${id}/click`, { method: 'POST' }),
+  },
 };

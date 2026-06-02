@@ -99,6 +99,37 @@ let CronService = CronService_1 = class CronService {
             type: 'SYSTEM',
         });
     }
+    async handleEventReminders() {
+        this.logger.log('Starting daily event reminder checks...');
+        try {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dayAfter = new Date();
+            dayAfter.setDate(dayAfter.getDate() + 2);
+            const events = (await this.prisma.$queryRaw `
+        SELECT e.id, e.title, e.type, e.location, e."virtualLink"
+        FROM "Event" e
+        WHERE e."startDate" >= ${tomorrow} AND e."startDate" <= ${dayAfter} AND e."isActive" = true
+      `);
+            for (const event of events) {
+                const registrations = (await this.prisma.$queryRaw `
+          SELECT "userId" FROM "EventRegistration" WHERE "eventId" = ${event.id} AND status = 'REGISTERED'
+        `);
+                for (const reg of registrations) {
+                    await this.notificationsService.create({
+                        userId: reg.userId,
+                        title: `Rappel : ${event.title} demain`,
+                        content: `N'oubliez pas ! "${event.title}" commence demain. ${event.type === 'PHYSICAL' ? `Lieu : ${event.location}` : `Lien : ${event.virtualLink}`}`,
+                        type: 'EVENT',
+                    });
+                }
+            }
+            this.logger.log(`Event reminders sent for ${events.length} upcoming events.`);
+        }
+        catch (error) {
+            this.logger.error('Error running event reminders cron job:', error);
+        }
+    }
     async triggerInactivityCheckForUser(userId) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -126,6 +157,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CronService.prototype, "handleInactivityCheck", null);
+__decorate([
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_DAY_AT_10AM),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CronService.prototype, "handleEventReminders", null);
 exports.CronService = CronService = CronService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

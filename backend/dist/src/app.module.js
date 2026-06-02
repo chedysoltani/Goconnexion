@@ -25,6 +25,10 @@ const feed_module_1 = require("./feed/feed.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const connections_module_1 = require("./connections/connections.module");
 const subscription_module_1 = require("./subscription/subscription.module");
+const events_module_1 = require("./events/events.module");
+const business_cards_module_1 = require("./business-cards/business-cards.module");
+const referral_module_1 = require("./referral/referral.module");
+const advertisements_module_1 = require("./advertisements/advertisements.module");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
 const schedule_1 = require("@nestjs/schedule");
@@ -55,6 +59,10 @@ exports.AppModule = AppModule = __decorate([
             feed_module_1.FeedModule,
             connections_module_1.ConnectionsModule,
             subscription_module_1.SubscriptionModule,
+            events_module_1.EventsModule,
+            business_cards_module_1.BusinessCardsModule,
+            referral_module_1.ReferralModule,
+            advertisements_module_1.AdvertisementsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

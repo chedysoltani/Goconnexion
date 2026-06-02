@@ -16,6 +16,7 @@ export declare class CronService {
         type: string;
         read: boolean;
     } | null>;
+    handleEventReminders(): Promise<void>;
     triggerInactivityCheckForUser(userId: string): Promise<{
         id: string;
         createdAt: Date;

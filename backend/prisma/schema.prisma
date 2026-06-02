@@ -20,6 +20,53 @@ enum PlanType {
   FREE
   PRO
   BUSINESS
+  PREMIUM_ENTREPRENEUR
+  PREMIUM_FREELANCER
+  PREMIUM_INCUBATEUR
+}
+
+enum EventCategory {
+  NETWORKING
+  STARTUP
+  INVESTISSEMENT
+  FORMATION
+  INCUBATEUR
+}
+
+enum EventType {
+  PHYSICAL
+  VIRTUAL
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  EXPIRED
+}
+
+enum InviteMethod {
+  EMAIL
+  SMS
+}
+
+enum AdType {
+  COMPANY
+  EVENT
+  SERVICE
+}
+
+enum AdPlacement {
+  FEED
+  SIDEBAR
+  TOP
 }
 
 enum PlanStatus {
@@ -70,6 +117,14 @@ model User {
   receivedRequests     ConnectionRequest[]  @relation("ReceivedRequests")
   relations            UserRelation[]       @relation("UserRelations")
   friendRelations      UserRelation[]       @relation("FriendRelations")
+
+  // New feature relations
+  organizedEvents      Event[]                  @relation("OrganizedEvents")
+  eventRegistrations   EventRegistration[]      @relation("EventRegistrations")
+  sentInvitations      BusinessCardInvitation[] @relation("SentInvitations")
+  referralCode         ReferralCode?            @relation("ReferralCode")
+  referredBy           Referral?                @relation("ReferredByUser")
+  advertisements       Advertisement[]          @relation("Advertisements")
 }
 
 model FreelancerProfile {
@@ -305,4 +360,101 @@ model Subscription {
   trialEndsAt       DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+}
+
+// ─── Events ────────────────────────────────────────────────────────────
+
+model Event {
+  id            String              @id @default(uuid())
+  title         String
+  description   String
+  category      EventCategory
+  type          EventType
+  startDate     DateTime
+  endDate       DateTime
+  location      String?
+  virtualLink   String?
+  capacity      Int?
+  price         Float               @default(0)
+  isFree        Boolean             @default(true)
+  imageUrl      String?
+  organizerId   String
+  organizer     User                @relation("OrganizedEvents", fields: [organizerId], references: [id])
+  registrations EventRegistration[]
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model EventRegistration {
+  id         String             @id @default(uuid())
+  eventId    String
+  event      Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User               @relation("EventRegistrations", fields: [userId], references: [id])
+  ticketCode String             @unique @default(uuid())
+  status     RegistrationStatus @default(REGISTERED)
+  createdAt  DateTime           @default(now())
+
+  @@unique([eventId, userId])
+}
+
+// ─── Business Card Invitations ─────────────────────────────────────────
+
+model BusinessCardInvitation {
+  id           String           @id @default(uuid())
+  senderId     String
+  sender       User             @relation("SentInvitations", fields: [senderId], references: [id])
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  position     String?
+  status       InvitationStatus @default(PENDING)
+  inviteMethod InviteMethod
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+// ─── Referral ──────────────────────────────────────────────────────────
+
+model ReferralCode {
+  id             String     @id @default(uuid())
+  userId         String     @unique
+  user           User       @relation("ReferralCode", fields: [userId], references: [id])
+  code           String     @unique
+  totalReferrals Int        @default(0)
+  referrals      Referral[]
+  createdAt      DateTime   @default(now())
+}
+
+model Referral {
+  id             String       @id @default(uuid())
+  referralCodeId String
+  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id])
+  referredUserId String       @unique
+  referredUser   User         @relation("ReferredByUser", fields: [referredUserId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+// ─── Advertisements ────────────────────────────────────────────────────
+
+model Advertisement {
+  id           String      @id @default(uuid())
+  title        String
+  description  String?
+  imageUrl     String?
+  targetUrl    String?
+  type         AdType
+  placement    AdPlacement
+  advertiserId String
+  advertiser   User        @relation("Advertisements", fields: [advertiserId], references: [id])
+  impressions  Int         @default(0)
+  clicks       Int         @default(0)
+  budget       Float?
+  isActive     Boolean     @default(true)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
