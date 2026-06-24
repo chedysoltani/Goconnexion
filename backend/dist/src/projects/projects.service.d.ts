@@ -14,9 +14,9 @@ export declare class ProjectsService {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     findAll(filters: {
@@ -44,9 +44,9 @@ export declare class ProjectsService {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     })[]>;
     findOne(id: string): Promise<{
@@ -57,9 +57,9 @@ export declare class ProjectsService {
                 updatedAt: Date;
                 title: string;
                 skills: string[];
+                status: import("@prisma/client").$Enums.ProjectStatus;
                 description: string;
                 budget: number | null;
-                status: import("@prisma/client").$Enums.ProjectStatus;
                 ownerId: string;
             };
         } & {
@@ -92,9 +92,9 @@ export declare class ProjectsService {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     update(id: string, userId: string, data: {
@@ -109,9 +109,9 @@ export declare class ProjectsService {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     delete(id: string, userId: string): Promise<{
@@ -120,9 +120,9 @@ export declare class ProjectsService {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     apply(projectId: string, userId: string, coverLetter?: string): Promise<{

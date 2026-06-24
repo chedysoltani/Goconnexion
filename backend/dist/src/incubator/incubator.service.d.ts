@@ -20,8 +20,8 @@ export declare class IncubatorService {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     findAll(category?: string): Promise<({
         comments: ({
@@ -55,8 +55,8 @@ export declare class IncubatorService {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     })[]>;
     findOne(id: string): Promise<{
         comments: ({
@@ -90,8 +90,8 @@ export declare class IncubatorService {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     deletePost(id: string, userId: string): Promise<{
         id: string;
@@ -99,8 +99,8 @@ export declare class IncubatorService {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     addComment(userId: string, postId: string, content: string): Promise<{
         author: {

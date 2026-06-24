@@ -23,9 +23,9 @@ export declare class ConnectionsService {
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
         message: string | null;
+        isCoffee: boolean;
         senderId: string;
         receiverId: string;
-        isCoffee: boolean;
     }>;
     acceptRequest(requestId: string, receiverId: string): Promise<{
         success: boolean;
@@ -49,9 +49,9 @@ export declare class ConnectionsService {
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
         message: string | null;
+        isCoffee: boolean;
         senderId: string;
         receiverId: string;
-        isCoffee: boolean;
     })[]>;
     getSentRequests(userId: string): Promise<({
         receiver: {
@@ -67,9 +67,9 @@ export declare class ConnectionsService {
         updatedAt: Date;
         status: import("@prisma/client").$Enums.RequestStatus;
         message: string | null;
+        isCoffee: boolean;
         senderId: string;
         receiverId: string;
-        isCoffee: boolean;
     })[]>;
     getFriends(userId: string): Promise<{
         id: string;

@@ -17,6 +17,16 @@ interface Invitation {
   createdAt: string;
 }
 
+interface ReceivedCard {
+  id: string;
+  name: string;
+  company?: string;
+  position?: string;
+  status: 'PENDING' | 'SENT' | 'ACCEPTED' | 'EXPIRED';
+  createdAt: string;
+  sender: { id: string; firstName: string; lastName: string; avatarUrl?: string; role: string };
+}
+
 interface Stats {
   total: number;
   pending: number;
@@ -36,7 +46,9 @@ interface Props {
 }
 
 export default function BusinessCardsPage({ user }: Props) {
+  const [activeTab, setActiveTab] = useState<'sent' | 'received'>('sent');
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [received, setReceived] = useState<ReceivedCard[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, sent: 0, accepted: 0 });
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,12 +61,14 @@ export default function BusinessCardsPage({ user }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [invs, s] = await Promise.all([
+      const [invs, s, recv] = await Promise.all([
         api.businessCards.list(),
         api.businessCards.stats(),
+        api.businessCards.received(),
       ]);
       setInvitations(invs);
       setStats(s);
+      setReceived(recv);
     } catch {
       // silent
     } finally {
@@ -87,6 +101,20 @@ export default function BusinessCardsPage({ user }: Props) {
     }
   };
 
+  const handleAccept = async (id: string, fromReceived = false) => {
+    try {
+      await api.businessCards.accept(id);
+      if (fromReceived) {
+        setReceived(prev => prev.map(r => r.id === id ? { ...r, status: 'ACCEPTED' as const } : r));
+      } else {
+        setInvitations(prev => prev.map(i => i.id === id ? { ...i, status: 'ACCEPTED' as const } : i));
+        setStats(prev => ({ ...prev, sent: prev.sent - 1, accepted: prev.accepted + 1 }));
+      }
+    } catch {
+      // silent
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await api.businessCards.delete(id);
@@ -116,6 +144,30 @@ export default function BusinessCardsPage({ user }: Props) {
             </svg>
             Inviter un contact
           </motion.button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 p-1 bg-slate-100 rounded-xl w-fit">
+          {(['sent', 'received'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === tab ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab === 'sent' ? 'Envoyées' : (
+                <span className="flex items-center gap-1.5">
+                  Reçues
+                  {received.filter(r => r.status === 'SENT').length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] flex items-center justify-center font-bold">
+                      {received.filter(r => r.status === 'SENT').length}
+                    </span>
+                  )}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Stats */}
@@ -222,7 +274,7 @@ export default function BusinessCardsPage({ user }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Invitations list */}
+      {/* Lists */}
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         {loading ? (
           <div className="space-y-3">
@@ -238,54 +290,124 @@ export default function BusinessCardsPage({ user }: Props) {
               </div>
             ))}
           </div>
-        ) : invitations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 text-2xl">📇</div>
-            <p className="text-slate-500 font-medium">Aucune invitation envoyée</p>
-            <p className="text-slate-400 text-sm mt-1">Commencez à inviter vos contacts !</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {invitations.map(inv => {
-              const st = STATUS_STYLE[inv.status];
-              return (
-                <motion.div
-                  key={inv.id} layout
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-4"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {inv.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-semibold text-slate-800 text-sm truncate">{inv.name}</p>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" style={{ background: st.bg, color: st.color }}>
-                        {st.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      {inv.email && <span>✉ {inv.email}</span>}
-                      {inv.phone && <span>📱 {inv.phone}</span>}
-                      {inv.company && <span>🏢 {inv.company}</span>}
-                      {inv.position && <span>· {inv.position}</span>}
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      Via {inv.inviteMethod === 'EMAIL' ? 'email' : 'SMS'} · {new Date(inv.createdAt).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(inv.id)}
-                    className="p-1.5 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"
+        ) : activeTab === 'sent' ? (
+          invitations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 text-2xl">📇</div>
+              <p className="text-slate-500 font-medium">Aucune invitation envoyée</p>
+              <p className="text-slate-400 text-sm mt-1">Commencez à inviter vos contacts !</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {invitations.map(inv => {
+                const st = STATUS_STYLE[inv.status];
+                return (
+                  <motion.div
+                    key={inv.id} layout
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-4"
                   >
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {inv.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-semibold text-slate-800 text-sm truncate">{inv.name}</p>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" style={{ background: st.bg, color: st.color }}>
+                          {st.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        {inv.email && <span>✉ {inv.email}</span>}
+                        {inv.phone && <span>📱 {inv.phone}</span>}
+                        {inv.company && <span>🏢 {inv.company}</span>}
+                        {inv.position && <span>· {inv.position}</span>}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Via {inv.inviteMethod === 'EMAIL' ? 'email' : 'SMS'} · {new Date(inv.createdAt).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {inv.status === 'SENT' && (
+                        <button
+                          onClick={() => handleAccept(inv.id, false)}
+                          title="Marquer comme acceptée"
+                          className="p-1.5 rounded-lg text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        >
+                          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(inv.id)}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                      >
+                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          /* Received tab */
+          received.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-2xl">📬</div>
+              <p className="text-slate-500 font-medium">Aucune carte reçue</p>
+              <p className="text-slate-400 text-sm mt-1">Les invitations envoyées à votre email apparaîtront ici</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {received.map(card => {
+                const st = STATUS_STYLE[card.status];
+                return (
+                  <motion.div
+                    key={card.id} layout
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-4"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {card.sender.firstName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          De {card.sender.firstName} {card.sender.lastName}
+                        </p>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" style={{ background: st.bg, color: st.color }}>
+                          {st.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        {card.company && <span>🏢 {card.company}</span>}
+                        {card.position && <span>· {card.position}</span>}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Reçue le {new Date(card.createdAt).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    {card.status === 'SENT' && (
+                      <button
+                        onClick={() => handleAccept(card.id, true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-all flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}
+                      >
+                        <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Accepter
+                      </button>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     </div>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@/types/auth';
 
-type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral';
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads';
 
 interface DashboardSidebarProps {
   user: User | null;
@@ -95,6 +95,11 @@ const IconReferral = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
   </svg>
 );
+const IconAds = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+  </svg>
+);
 const IconChevron = ({ collapsed }: { collapsed: boolean }) => (
   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d={collapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
@@ -129,6 +134,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
     { id: 'incubator',      label: 'Incubateur',       icon: <IconIncubator /> },
     { id: 'business-cards', label: 'Cartes visite',    icon: <IconCard /> },
     { id: 'referral',       label: 'Parrainage',       icon: <IconReferral /> },
+    { id: 'ads',            label: 'Publicités',       icon: <IconAds /> },
     { id: 'earnings',       label: 'Revenus',          icon: <IconEarnings /> },
     { id: 'analytics',      label: 'Analytiques',      icon: <IconAnalytics /> },
   ];
@@ -424,8 +430,44 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
         )}
       </nav>
 
+      {/* ── Admin link ────────────────────── */}
+      {role === 'admin' && (
+        <div className="relative z-10 px-2 mb-1 flex-shrink-0">
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div variants={labelVariants} initial="hide" animate="show" exit="hide"
+                className="px-2 mb-1">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                  Administration
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <Link
+            href="/admin"
+            title={collapsed ? 'Panel Admin' : undefined}
+            className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl group transition-colors duration-150 hover:bg-white/8"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' }}
+          >
+            <span className="flex-shrink-0 text-amber-400">
+              <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+              </svg>
+            </span>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span variants={labelVariants} initial="hide" animate="show" exit="hide"
+                  className="text-[13px] font-semibold text-amber-300 truncate">
+                  Panel Admin
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+      )}
+
       {/* ── Upgrade Banner ────────────────── */}
-      {!collapsed && user && (!user.plan || user.plan === 'FREE') && (
+      {!collapsed && user && role !== 'admin' && (!user.plan || user.plan === 'FREE') && (
         <div className="relative z-10 px-2.5 mb-2 flex-shrink-0">
           <motion.button
             onClick={onUpgradeClick}

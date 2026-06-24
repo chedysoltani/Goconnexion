@@ -47,6 +47,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
   const [connections, setConnections] = useState<Connection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const fetchConnectionsData = async (searchStr?: string) => {
     setIsLoading(true);
@@ -105,7 +106,22 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
   }, [searchTerm, user]);
 
   const handleConnect = async (receiverId: string) => {
-    try { await api.connections.sendRequest(receiverId); await fetchConnectionsData(); } catch {}
+    try {
+      setLimitError(null);
+      await api.connections.sendRequest(receiverId);
+      await fetchConnectionsData();
+    } catch (err: any) {
+      if (err.message?.includes('Limite atteinte')) setLimitError(err.message);
+    }
+  };
+  const handleCoffeeChat = async (receiverId: string) => {
+    try {
+      setLimitError(null);
+      await api.connections.sendRequest(receiverId, { isCoffee: true, message: "Bonjour ! J'aimerais échanger autour d'un café virtuel ☕" });
+      await fetchConnectionsData();
+    } catch (err: any) {
+      if (err.message?.includes('Limite atteinte')) setLimitError(err.message);
+    }
   };
   const handleAcceptRequest = async (requestId: string) => {
     try { await api.connections.acceptRequest(requestId); await fetchConnectionsData(); } catch {}
@@ -157,6 +173,23 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
             ))}
           </div>
         </div>
+
+        {/* Limite connexions atteinte */}
+        {limitError && (
+          <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-2xl"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '1.5px solid rgba(245,158,11,0.3)' }}>
+            <span className="text-xl flex-shrink-0">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold" style={{ color: '#92400e' }}>{limitError}</p>
+              <a href="/pricing"
+                className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl text-[12px] font-bold text-white transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+                Voir les offres →
+              </a>
+            </div>
+            <button onClick={() => setLimitError(null)} className="flex-shrink-0 text-amber-400 hover:text-amber-600 text-lg leading-none">✕</button>
+          </div>
+        )}
 
         {/* Pending requests */}
         {pendingRequests.length > 0 && (
@@ -357,9 +390,11 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
                             style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 3px 10px rgba(74,144,217,0.25)' }}>
                             <UserPlus size={13} /> Se connecter
                           </button>
-                          <button className="px-4 py-2.5 rounded-xl text-[12px] font-semibold transition-all duration-200 hover:bg-gray-100"
-                            style={{ background: '#f8fafc', color: '#94a3b8', border: '1px solid #e2e8f0' }}>
-                            Ignorer
+                          <button onClick={() => handleCoffeeChat(conn.id)}
+                            title="Proposer un café virtuel"
+                            className="px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 hover:scale-105"
+                            style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.25)' }}>
+                            ☕
                           </button>
                         </div>
                       )}

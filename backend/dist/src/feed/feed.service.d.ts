@@ -2,7 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class FeedService {
     private prisma;
     constructor(prisma: PrismaService);
-    findAll(): Promise<({
+    findAll(userId?: string): Promise<({
         comments: ({
             author: {
                 id: string;
@@ -32,8 +32,8 @@ export declare class FeedService {
         createdAt: Date;
         updatedAt: Date;
         content: string;
-        authorId: string;
         imageUrl: string | null;
+        authorId: string;
     })[]>;
     create(userId: string, data: {
         content: string;
@@ -63,8 +63,8 @@ export declare class FeedService {
         createdAt: Date;
         updatedAt: Date;
         content: string;
-        authorId: string;
         imageUrl: string | null;
+        authorId: string;
     }>;
     toggleLike(postId: string, userId: string): Promise<{
         liked: boolean;

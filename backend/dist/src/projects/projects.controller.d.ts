@@ -25,9 +25,9 @@ export declare class ProjectsController {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     })[]>;
     findOne(id: string): Promise<{
@@ -38,9 +38,9 @@ export declare class ProjectsController {
                 updatedAt: Date;
                 title: string;
                 skills: string[];
+                status: import("@prisma/client").$Enums.ProjectStatus;
                 description: string;
                 budget: number | null;
-                status: import("@prisma/client").$Enums.ProjectStatus;
                 ownerId: string;
             };
         } & {
@@ -73,9 +73,9 @@ export declare class ProjectsController {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     create(req: any, body: {
@@ -89,9 +89,9 @@ export declare class ProjectsController {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     update(id: string, req: any, body: {
@@ -106,9 +106,9 @@ export declare class ProjectsController {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     delete(id: string, req: any): Promise<{
@@ -117,9 +117,9 @@ export declare class ProjectsController {
         updatedAt: Date;
         title: string;
         skills: string[];
+        status: import("@prisma/client").$Enums.ProjectStatus;
         description: string;
         budget: number | null;
-        status: import("@prisma/client").$Enums.ProjectStatus;
         ownerId: string;
     }>;
     apply(projectId: string, req: any, coverLetter?: string): Promise<{

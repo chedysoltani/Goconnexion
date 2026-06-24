@@ -130,12 +130,22 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() || !selectedConversationId) return;
+    const content = newMessage.trim();
+    if (!content || !selectedConversationId) return;
+    setNewMessage('');
     try {
-      await api.messaging.sendMessage(selectedConversationId, newMessage);
-      setNewMessage('');
+      const saved = await api.messaging.sendMessage(selectedConversationId, content);
+      // Affichage immédiat — le socket peut arriver après, la déduplication l'ignore
+      if (saved?.id) {
+        setMessages(prev => prev.some(m => m.id === saved.id) ? prev : [...prev, saved]);
+      } else {
+        // fallback : recharger la liste
+        const data = await api.messaging.messages(selectedConversationId);
+        setMessages(data);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
+      setNewMessage(content); // remet le texte si erreur
     }
   };
 
@@ -449,7 +459,7 @@ export default function MessagesPage({ user }: MessagesPageProps) {
                 placeholder="Écrire un message en temps réel..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                 style={{
                   flex: 1,
                   background: 'transparent',

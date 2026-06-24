@@ -41,6 +41,13 @@ let BusinessCardsService = class BusinessCardsService {
             data: { status: status },
         });
     }
+    async findAllReceived(recipientEmail) {
+        return this.prisma.businessCardInvitation.findMany({
+            where: { email: recipientEmail },
+            include: { sender: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
     async getStats(senderId) {
         const [total, pending, sent, accepted] = await Promise.all([
             this.prisma.businessCardInvitation.count({ where: { senderId } }),

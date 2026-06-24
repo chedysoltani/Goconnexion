@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Pourquoi GoConnexion', href: '#problem' },
   { label: 'Fonctionnalités', href: '#features' },
   { label: 'Comment ça marche', href: '#how-it-works' },
+  { label: 'Tarifs', href: '/pricing' },
 ];
 
 export default function Header() {

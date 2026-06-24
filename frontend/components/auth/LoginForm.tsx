@@ -40,8 +40,9 @@ export default function LoginForm() {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      await api.auth.login(formData);
-      router.push('/dashboard');
+      const data = await api.auth.login(formData);
+      const role = data?.user?.role ?? '';
+      router.push(role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err: any) {
       setErrors({ general: err.message || 'Email ou mot de passe incorrect' });
     } finally {

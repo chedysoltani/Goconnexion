@@ -32,8 +32,8 @@ export declare class MessagingGateway implements OnGatewayConnection, OnGatewayD
     } & {
         id: string;
         createdAt: Date;
+        senderId: string;
         content: string;
         conversationId: string;
-        senderId: string;
     }>;
 }

@@ -241,20 +241,190 @@ function CreateEventModal({ onClose, onCreated }: { onClose: () => void; onCreat
   );
 }
 
-function EventCard({ event, currentUserId, onRegister, registered }: {
+// ── Modal détail événement ──────────────────────────────────────────────
+function EventDetailModal({ event, currentUserId, registered, onRegister, onClose }: {
+  event: Event;
+  currentUserId?: string;
+  registered: boolean;
+  onRegister: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [loadingPart, setLoadingPart] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
+
+  const catColor = CATEGORY_COLORS[event.category] || '#3b82f6';
+  const isOwner  = event.organizer.id === currentUserId;
+  const spotsLeft = event.capacity ? event.capacity - event._count.registrations : null;
+
+  const handleToggleParticipants = async () => {
+    if (showParticipants) { setShowParticipants(false); return; }
+    setLoadingPart(true);
+    setShowParticipants(true);
+    try {
+      const data = await api.events.participants(event.id);
+      setParticipants(data);
+    } catch { setParticipants([]); }
+    finally { setLoadingPart(false); }
+  };
+
+  const STATUS_COLORS: Record<string, { color: string; bg: string; label: string }> = {
+    REGISTERED:  { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  label: 'Inscrit'       },
+    WAITLISTED:  { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  label: 'Liste d\'attente' },
+    CANCELLED:   { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   label: 'Annulé'        },
+    ATTENDED:    { color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)',  label: 'Présent'       },
+  };
+
+  return (
+    <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
+      >
+        {/* Header coloré */}
+        <div className="h-2 rounded-t-2xl" style={{ background: `linear-gradient(90deg,${catColor},${catColor}80)` }} />
+        <div className="p-5">
+          {/* Top row */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide" style={{ background: `${catColor}14`, color: catColor }}>
+                {CATEGORY_LABELS[event.category]}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}>
+                {event.type === 'VIRTUAL' ? 'Virtuel' : 'Physique'}
+              </span>
+              {event.isFree
+                ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
+                : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} TND</span>
+              }
+            </div>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ color: '#94a3b8' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <h2 className="text-[17px] font-bold text-slate-800 mb-2 leading-snug">{event.title}</h2>
+          <p className="text-slate-500 text-[13px] leading-relaxed mb-4">{event.description}</p>
+
+          {/* Infos */}
+          <div className="space-y-2 mb-4 p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <div className="flex items-center gap-2 text-slate-600 text-[12px]">
+              <IconCalendar /><span>{formatDate(event.startDate)}</span>
+            </div>
+            {event.type === 'PHYSICAL' && event.location && (
+              <div className="flex items-center gap-2 text-slate-600 text-[12px]">
+                <IconMapPin /><span>{event.location}</span>
+              </div>
+            )}
+            {event.type === 'VIRTUAL' && event.virtualLink && (
+              <div className="flex items-center gap-2 text-[12px]">
+                <IconLink />
+                <a href={event.virtualLink} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline truncate">{event.virtualLink}</a>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-slate-600 text-[12px]">
+              <IconUsers />
+              <span>{event._count.registrations} inscrit{event._count.registrations > 1 ? 's' : ''}
+                {spotsLeft !== null ? ` · ${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}` : ''}
+              </span>
+            </div>
+          </div>
+
+          {/* Organisateur */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold">
+              {event.organizer.firstName[0]}{event.organizer.lastName[0]}
+            </div>
+            <span className="text-[12px] text-slate-500">Organisé par <strong className="text-slate-700">{event.organizer.firstName} {event.organizer.lastName}</strong></span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            {!isOwner && (
+              <button onClick={() => onRegister(event.id)}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:scale-[1.02]"
+                style={registered
+                  ? { background: '#f1f5f9', color: '#94a3b8' }
+                  : { background: `linear-gradient(135deg,${catColor},${catColor}cc)`, color: '#fff', boxShadow: `0 4px 12px ${catColor}40` }
+                }
+              >
+                {registered ? 'Inscrit ✓' : "S'inscrire"}
+              </button>
+            )}
+            {isOwner && (
+              <button onClick={handleToggleParticipants}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:scale-[1.02]"
+                style={{ background: showParticipants ? '#f1f5f9' : `linear-gradient(135deg,${catColor},${catColor}cc)`, color: showParticipants ? '#64748b' : '#fff', boxShadow: showParticipants ? 'none' : `0 4px 12px ${catColor}40` }}
+              >
+                {showParticipants ? 'Masquer participants' : `Voir les participants (${event._count.registrations})`}
+              </button>
+            )}
+          </div>
+
+          {/* Liste participants (organisateur) */}
+          {showParticipants && (
+            <div className="mt-4 space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Participants inscrits</p>
+              {loadingPart ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                </div>
+              ) : participants.length === 0 ? (
+                <p className="text-center text-[12px] py-4" style={{ color: '#94a3b8' }}>Aucun participant pour l'instant</p>
+              ) : (
+                participants.map((reg: any) => {
+                  const u = reg.user;
+                  const sc = STATUS_COLORS[reg.status] ?? STATUS_COLORS.REGISTERED;
+                  return (
+                    <div key={reg.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ border: '1px solid #e2e8f0' }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold" style={{ background: '#4a90d918', color: '#4a90d9' }}>
+                          {u?.firstName?.[0]}{u?.lastName?.[0]}
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-semibold" style={{ color: '#1a2332' }}>{u?.firstName} {u?.lastName}</p>
+                          <p className="text-[10px]" style={{ color: '#94a3b8' }}>{u?.email}</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: sc.bg, color: sc.color }}>
+                        {sc.label}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Carte événement ─────────────────────────────────────────────────────
+function EventCard({ event, currentUserId, onRegister, registered, onOpen }: {
   event: Event;
   currentUserId?: string;
   onRegister: (id: string) => void;
   registered: boolean;
+  onOpen: () => void;
 }) {
   const catColor = CATEGORY_COLORS[event.category] || '#3b82f6';
-  const isOwner = event.organizer.id === currentUserId;
+  const isOwner  = event.organizer.id === currentUserId;
   const spotsLeft = event.capacity ? event.capacity - event._count.registrations : null;
 
   return (
     <motion.div
       layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+      onClick={onOpen}
+      className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer"
+      whileHover={{ y: -2 }}
     >
       {event.imageUrl && (
         <div className="h-36 overflow-hidden">
@@ -263,24 +433,18 @@ function EventCard({ event, currentUserId, onRegister, registered }: {
       )}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
-            style={{ background: `${catColor}14`, color: catColor }}
-          >
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide" style={{ background: `${catColor}14`, color: catColor }}>
             {CATEGORY_LABELS[event.category]}
           </span>
           <div className="flex items-center gap-1.5">
-            <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
-              style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}
-            >
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+              style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}>
               {event.type === 'VIRTUAL' ? 'Virtuel' : 'Physique'}
             </span>
-            {event.isFree ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} TND</span>
-            )}
+            {event.isFree
+              ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
+              : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} TND</span>
+            }
           </div>
         </div>
 
@@ -288,21 +452,12 @@ function EventCard({ event, currentUserId, onRegister, registered }: {
         <p className="text-slate-500 text-xs leading-relaxed mb-3 line-clamp-2">{event.description}</p>
 
         <div className="space-y-1.5 mb-3">
-          <div className="flex items-center gap-2 text-slate-500 text-xs">
-            <IconCalendar />
-            <span>{formatDate(event.startDate)}</span>
-          </div>
+          <div className="flex items-center gap-2 text-slate-500 text-xs"><IconCalendar /><span>{formatDate(event.startDate)}</span></div>
           {event.type === 'PHYSICAL' && event.location && (
-            <div className="flex items-center gap-2 text-slate-500 text-xs">
-              <IconMapPin />
-              <span className="truncate">{event.location}</span>
-            </div>
+            <div className="flex items-center gap-2 text-slate-500 text-xs"><IconMapPin /><span className="truncate">{event.location}</span></div>
           )}
           {event.type === 'VIRTUAL' && (
-            <div className="flex items-center gap-2 text-slate-500 text-xs">
-              <IconLink />
-              <span>Événement en ligne</span>
-            </div>
+            <div className="flex items-center gap-2 text-slate-500 text-xs"><IconLink /><span>Événement en ligne</span></div>
           )}
           <div className="flex items-center gap-2 text-slate-500 text-xs">
             <IconUsers />
@@ -317,18 +472,15 @@ function EventCard({ event, currentUserId, onRegister, registered }: {
             </div>
             <span className="text-xs text-slate-500">{event.organizer.firstName} {event.organizer.lastName}</span>
           </div>
-
           {!isOwner && (
-            <button
-              onClick={() => onRegister(event.id)}
+            <button onClick={e => { e.stopPropagation(); onRegister(event.id); }}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              style={registered
-                ? { background: '#f1f5f9', color: '#94a3b8' }
-                : { background: `${catColor}16`, color: catColor }
-              }
-            >
+              style={registered ? { background: '#f1f5f9', color: '#94a3b8' } : { background: `${catColor}16`, color: catColor }}>
               {registered ? 'Inscrit ✓' : "S'inscrire"}
             </button>
+          )}
+          {isOwner && (
+            <span className="text-[11px] font-semibold" style={{ color: catColor }}>Votre événement →</span>
           )}
         </div>
       </div>
@@ -343,6 +495,7 @@ export default function EventsPage({ user }: Props) {
   const [upcomingOnly, setUpcomingOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -382,6 +535,15 @@ export default function EventsPage({ user }: Props) {
       <AnimatePresence>
         {showCreate && (
           <CreateEventModal onClose={() => setShowCreate(false)} onCreated={load} />
+        )}
+        {selectedEvent && (
+          <EventDetailModal
+            event={selectedEvent}
+            currentUserId={user?.id}
+            registered={myRegistrations.includes(selectedEvent.id)}
+            onRegister={handleRegister}
+            onClose={() => setSelectedEvent(null)}
+          />
         )}
       </AnimatePresence>
 
@@ -464,6 +626,7 @@ export default function EventsPage({ user }: Props) {
                 currentUserId={user?.id}
                 onRegister={handleRegister}
                 registered={myRegistrations.includes(event.id)}
+                onOpen={() => setSelectedEvent(event)}
               />
             ))}
           </div>

@@ -10,9 +10,6 @@ export declare class EventsService {
         type?: string;
         upcoming?: boolean;
     }): Promise<({
-        _count: {
-            registrations: number;
-        };
         organizer: {
             id: string;
             firstName: string;
@@ -20,14 +17,17 @@ export declare class EventsService {
             avatarUrl: string | null;
             role: import("@prisma/client").$Enums.UserRole;
         };
+        _count: {
+            registrations: number;
+        };
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
         title: string;
         description: string;
-        category: import("@prisma/client").$Enums.EventCategory;
         imageUrl: string | null;
+        category: import("@prisma/client").$Enums.EventCategory;
         type: import("@prisma/client").$Enums.EventType;
         startDate: Date;
         endDate: Date;
@@ -40,9 +40,6 @@ export declare class EventsService {
         organizerId: string;
     })[]>;
     findOne(id: string): Promise<{
-        _count: {
-            registrations: number;
-        };
         organizer: {
             id: string;
             firstName: string;
@@ -60,19 +57,22 @@ export declare class EventsService {
         } & {
             id: string;
             createdAt: Date;
-            userId: string;
             status: import("@prisma/client").$Enums.RegistrationStatus;
+            userId: string;
             ticketCode: string;
             eventId: string;
         })[];
+        _count: {
+            registrations: number;
+        };
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
         title: string;
         description: string;
-        category: import("@prisma/client").$Enums.EventCategory;
         imageUrl: string | null;
+        category: import("@prisma/client").$Enums.EventCategory;
         type: import("@prisma/client").$Enums.EventType;
         startDate: Date;
         endDate: Date;
@@ -97,8 +97,8 @@ export declare class EventsService {
         updatedAt: Date;
         title: string;
         description: string;
-        category: import("@prisma/client").$Enums.EventCategory;
         imageUrl: string | null;
+        category: import("@prisma/client").$Enums.EventCategory;
         type: import("@prisma/client").$Enums.EventType;
         startDate: Date;
         endDate: Date;
@@ -116,8 +116,8 @@ export declare class EventsService {
         updatedAt: Date;
         title: string;
         description: string;
-        category: import("@prisma/client").$Enums.EventCategory;
         imageUrl: string | null;
+        category: import("@prisma/client").$Enums.EventCategory;
         type: import("@prisma/client").$Enums.EventType;
         startDate: Date;
         endDate: Date;
@@ -135,28 +135,28 @@ export declare class EventsService {
     register(eventId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
+        userId: string;
         ticketCode: string;
         eventId: string;
     }>;
     cancelRegistration(eventId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
+        userId: string;
         ticketCode: string;
         eventId: string;
     }>;
     getMyRegistrations(userId: string): Promise<({
         event: {
-            _count: {
-                registrations: number;
-            };
             organizer: {
                 id: string;
                 firstName: string;
                 lastName: string;
+            };
+            _count: {
+                registrations: number;
             };
         } & {
             id: string;
@@ -164,8 +164,8 @@ export declare class EventsService {
             updatedAt: Date;
             title: string;
             description: string;
-            category: import("@prisma/client").$Enums.EventCategory;
             imageUrl: string | null;
+            category: import("@prisma/client").$Enums.EventCategory;
             type: import("@prisma/client").$Enums.EventType;
             startDate: Date;
             endDate: Date;
@@ -180,8 +180,8 @@ export declare class EventsService {
     } & {
         id: string;
         createdAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
+        userId: string;
         ticketCode: string;
         eventId: string;
     })[]>;
@@ -196,8 +196,8 @@ export declare class EventsService {
     } & {
         id: string;
         createdAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.RegistrationStatus;
+        userId: string;
         ticketCode: string;
         eventId: string;
     })[]>;

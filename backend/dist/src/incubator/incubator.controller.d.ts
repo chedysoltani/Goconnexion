@@ -34,8 +34,8 @@ export declare class IncubatorController {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     })[]>;
     findOne(id: string): Promise<{
         comments: ({
@@ -69,8 +69,8 @@ export declare class IncubatorController {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     createPost(req: any, body: {
         title: string;
@@ -90,8 +90,8 @@ export declare class IncubatorController {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     deletePost(id: string, req: any): Promise<{
         id: string;
@@ -99,8 +99,8 @@ export declare class IncubatorController {
         updatedAt: Date;
         title: string;
         content: string;
-        category: string;
         authorId: string;
+        category: string;
     }>;
     addComment(postId: string, req: any, content: string): Promise<{
         author: {

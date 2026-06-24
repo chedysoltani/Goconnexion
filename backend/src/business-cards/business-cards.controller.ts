@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { BusinessCardsService } from './business-cards.service';
 import { CreateBusinessCardInvitationDto } from './dto/business-card.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,9 +18,19 @@ export class BusinessCardsController {
     return this.businessCardsService.findAllBySender(req.user.id);
   }
 
+  @Get('received')
+  findReceived(@Request() req: any) {
+    return this.businessCardsService.findAllReceived(req.user.email);
+  }
+
   @Get('stats')
   getStats(@Request() req: any) {
     return this.businessCardsService.getStats(req.user.id);
+  }
+
+  @Patch(':id/accept')
+  accept(@Param('id') id: string, @Request() req: any) {
+    return this.businessCardsService.updateStatus(id, req.user.id, 'ACCEPTED');
   }
 
   @Delete(':id')

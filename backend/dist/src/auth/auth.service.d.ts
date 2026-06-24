@@ -25,6 +25,8 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             role: import("@prisma/client").$Enums.UserRole;
+            plan: import("@prisma/client").$Enums.PlanType;
+            avatarUrl: string | null;
         };
     }>;
     refresh(refreshToken: string): Promise<{
@@ -36,6 +38,8 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             role: import("@prisma/client").$Enums.UserRole;
+            plan: import("@prisma/client").$Enums.PlanType;
+            avatarUrl: string | null;
         };
     }>;
     private generateTokens;

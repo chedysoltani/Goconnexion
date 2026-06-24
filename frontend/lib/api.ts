@@ -26,8 +26,8 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
     headers,
   });
 
-  // Token expired — try to refresh once
-  if (response.status === 401 && retry && typeof window !== 'undefined') {
+  // Token expired — try to refresh once (skip for auth endpoints to surface real errors)
+  if (response.status === 401 && retry && typeof window !== 'undefined' && !endpoint.startsWith('/auth/')) {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
@@ -323,8 +323,10 @@ export const api = {
 
   businessCards: {
     list: () => request('/business-cards'),
+    received: () => request('/business-cards/received'),
     stats: () => request('/business-cards/stats'),
     create: (data: any) => request('/business-cards', { method: 'POST', body: JSON.stringify(data) }),
+    accept: (id: string) => request(`/business-cards/${id}/accept`, { method: 'PATCH' }),
     delete: (id: string) => request(`/business-cards/${id}`, { method: 'DELETE' }),
   },
 

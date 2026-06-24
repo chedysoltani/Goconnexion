@@ -24,9 +24,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     })[]>;
     findMyAds(userId: string): Promise<{
         id: string;
@@ -42,9 +42,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }[]>;
     create(userId: string, dto: CreateAdvertisementDto): Promise<{
         id: string;
@@ -60,9 +60,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }>;
     update(id: string, userId: string, dto: UpdateAdvertisementDto): Promise<{
         id: string;
@@ -78,9 +78,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }>;
     trackImpression(id: string): Promise<{
         id: string;
@@ -96,9 +96,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }>;
     trackClick(id: string): Promise<{
         id: string;
@@ -114,9 +114,9 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }>;
     getStats(id: string, userId: string): Promise<{
         ctr: string;
@@ -133,8 +133,8 @@ export declare class AdvertisementsService {
         isActive: boolean;
         targetUrl: string | null;
         placement: import("@prisma/client").$Enums.AdPlacement;
-        advertiserId: string;
         impressions: number;
         clicks: number;
+        advertiserId: string;
     }>;
 }

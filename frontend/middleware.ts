@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('gc_token')?.value;
   const { pathname } = request.nextUrl;
 
-  const isProtected = pathname.startsWith('/dashboard');
+  const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
   const isAuthPage =
     pathname.startsWith('/auth/login') ||
     pathname.startsWith('/auth/signup') ||
@@ -28,5 +28,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/login', '/auth/signup', '/auth/select-role'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/admin', '/auth/login', '/auth/signup', '/auth/select-role'],
 };

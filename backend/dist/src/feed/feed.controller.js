@@ -21,8 +21,8 @@ let FeedController = class FeedController {
     constructor(feedService) {
         this.feedService = feedService;
     }
-    async getFeed() {
-        return this.feedService.findAll();
+    async getFeed(req) {
+        return this.feedService.findAll(req.user.id);
     }
     async createPost(req, body) {
         const userId = req.user.id;
@@ -40,8 +40,9 @@ let FeedController = class FeedController {
 exports.FeedController = FeedController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], FeedController.prototype, "getFeed", null);
 __decorate([

@@ -13,6 +13,7 @@ exports.ConnectionsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
+const subscription_service_1 = require("../subscription/subscription.service");
 let ConnectionsService = class ConnectionsService {
     prisma;
     constructor(prisma) {
@@ -21,6 +22,18 @@ let ConnectionsService = class ConnectionsService {
     async sendRequest(senderId, receiverId, message, isCoffee) {
         if (senderId === receiverId) {
             throw new common_1.BadRequestException('Vous ne pouvez pas vous connecter avec vous-même.');
+        }
+        const sender = await this.prisma.user.findUnique({
+            where: { id: senderId },
+            include: { subscription: true },
+        });
+        const plan = sender?.subscription?.plan ?? 'FREE';
+        const limit = subscription_service_1.PLAN_LIMITS[plan]?.maxConnections ?? 10;
+        if (limit !== -1) {
+            const connectionCount = await this.prisma.userRelation.count({ where: { userId: senderId } });
+            if (connectionCount >= limit) {
+                throw new common_1.ForbiddenException(`Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} connexions maximum. Passez à un plan supérieur pour continuer.`);
+            }
         }
         const relationExists = await this.prisma.userRelation.findFirst({
             where: {
@@ -77,7 +90,6 @@ let ConnectionsService = class ConnectionsService {
             }
         });
         try {
-            const sender = await this.prisma.user.findUnique({ where: { id: senderId } });
             if (sender) {
                 const notif = await this.prisma.notification.create({
                     data: {

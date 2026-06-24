@@ -776,17 +776,84 @@ function RightSidebar({ user }: { user: User | null }) {
   );
 }
 
+// ── Ad Card ────────────────────────────────────────────────────
+interface FeedAd {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  targetUrl?: string;
+  placement: string;
+  advertiser: { firstName: string; lastName: string };
+}
+
+function AdCard({ ad }: { ad: FeedAd }) {
+  const adRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(adRef, { once: true });
+
+  useEffect(() => {
+    if (inView) { api.advertisements.trackImpression(ad.id).catch(() => {}); }
+  }, [inView, ad.id]);
+
+  const handleClick = () => {
+    api.advertisements.trackClick(ad.id).catch(() => {});
+    if (ad.targetUrl) {
+      const url = ad.targetUrl.startsWith('http') ? ad.targetUrl : `https://${ad.targetUrl}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <motion.div
+      ref={adRef}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden"
+      style={{ background: '#fff', border: '1.5px solid rgba(245,158,11,0.25)', boxShadow: '0 2px 16px rgba(245,158,11,0.08)' }}
+    >
+      {ad.imageUrl && (
+        <div className="h-40 overflow-hidden">
+          <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+            style={{ background: 'rgba(245,158,11,0.12)', color: '#d97706' }}>
+            ✦ Sponsorisé
+          </span>
+          <span className="text-[10px] text-slate-400">{ad.advertiser.firstName} {ad.advertiser.lastName}</span>
+        </div>
+        <h3 className="font-bold text-slate-800 text-[14px] mb-1">{ad.title}</h3>
+        {ad.description && <p className="text-slate-500 text-xs leading-relaxed mb-3 line-clamp-2">{ad.description}</p>}
+        {ad.targetUrl && (
+          <button onClick={handleClick}
+            className="w-full py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+            En savoir plus →
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────
 export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [ads, setAds] = useState<FeedAd[]>([]);
   const [activeFilter, setActiveFilter] = useState<'public' | 'profile'>('public');
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchFeed = async () => {
     setIsLoading(true);
     try {
-      const data = await api.feed.list();
+      const [data, adsData] = await Promise.all([
+        api.feed.list(),
+        api.advertisements.list('FEED').catch(() => []),
+      ]);
       setPosts(data);
+      setAds(adsData);
     } catch {
       console.error('Feed fetch error');
     } finally {
@@ -835,16 +902,24 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
             ) : (
               <div className="space-y-4">
                 <AnimatePresence>
-                  {filtered.map((post, i) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      currentUserId={user?.id}
-                      onToggleLike={handleToggleLike}
-                      onAddComment={handleAddComment}
-                      index={i}
-                    />
-                  ))}
+                  {filtered.reduce<React.ReactNode[]>((acc, post, i) => {
+                    acc.push(
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={user?.id}
+                        onToggleLike={handleToggleLike}
+                        onAddComment={handleAddComment}
+                        index={i}
+                      />
+                    );
+                    // inject one ad after every 3rd post
+                    if ((i + 1) % 3 === 0 && ads.length > 0) {
+                      const ad = ads[Math.floor((i + 1) / 3 - 1) % ads.length];
+                      acc.push(<AdCard key={`ad-${ad.id}-${i}`} ad={ad} />);
+                    }
+                    return acc;
+                  }, [])}
                 </AnimatePresence>
               </div>
             )}

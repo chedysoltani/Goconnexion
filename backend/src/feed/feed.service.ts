@@ -5,8 +5,20 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FeedService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(userId?: string) {
+    let whereClause: any = {};
+
+    if (userId) {
+      const relations = await this.prisma.userRelation.findMany({
+        where: { userId },
+        select: { friendId: true },
+      });
+      const friendIds = relations.map(r => r.friendId);
+      whereClause = { authorId: { in: [...friendIds, userId] } };
+    }
+
     return this.prisma.feedPost.findMany({
+      where: whereClause,
       include: {
         author: {
           select: {

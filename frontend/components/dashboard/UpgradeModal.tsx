@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Zap, Building2, Check, Sparkles,
-  ArrowRight, Loader2, ExternalLink,
+  ArrowRight, Loader2, CreditCard,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -80,22 +80,18 @@ export default function UpgradeModal({
     setLoading(planId);
     try {
       if (stripeConfigured) {
-        // Mode Stripe — redirige vers Stripe Checkout
         const data = await api.subscription.checkout(planId, billing);
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
           return;
         }
       }
-
-      // Mode sandbox (Stripe non configuré) — upgrade direct
-      await api.subscription.upgrade(planId);
-      setSuccess(planId);
-      setTimeout(() => {
-        onUpgraded?.(planId);
-        onClose();
-        window.location.reload();
-      }, 1400);
+      // Mode sandbox — redirige vers page checkout simulée
+      const plan = PLANS.find(p => p.id === planId)!;
+      const price = billing === 'yearly'
+        ? Math.round(plan.price.yearly / 12)
+        : plan.price.monthly;
+      window.location.href = `/billing/checkout?plan=${planId}&interval=${billing}&price=${price}`;
     } catch (e: any) {
       alert(e?.message ?? 'Erreur lors de la mise à niveau');
     } finally {
@@ -314,10 +310,8 @@ export default function UpgradeModal({
                           <><Check size={14} /> Activé !</>
                         ) : isCurrent ? (
                           'Plan actuel'
-                        ) : stripeConfigured ? (
-                          <><ExternalLink size={13} /> Payer avec Stripe</>
                         ) : (
-                          <>Activer {plan.name} <ArrowRight size={13} /></>
+                          <><CreditCard size={13} /> Payer {displayPrice}€/mois <ArrowRight size={13} /></>
                         )}
                       </motion.button>
                     </motion.div>
@@ -327,13 +321,7 @@ export default function UpgradeModal({
 
               {/* Footer */}
               <div className="px-6 pb-6 text-center space-y-2">
-                {!stripeConfigured && (
-                  <p className="text-[11px] px-4 py-2 rounded-xl inline-block"
-                    style={{ background: 'rgba(245,158,11,0.08)', color: '#92400e', border: '1px solid rgba(245,158,11,0.2)' }}>
-                    ⚠️ Mode sandbox — paiement simulé (Stripe non configuré)
-                  </p>
-                )}
-                <p className="text-[11px]" style={{ color: '#94a3b8' }}>
+                  <p className="text-[11px]" style={{ color: '#94a3b8' }}>
                   Annulation à tout moment · Paiement sécurisé SSL · Sans engagement
                 </p>
               </div>

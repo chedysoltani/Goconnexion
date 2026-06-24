@@ -28,8 +28,14 @@ let BusinessCardsController = class BusinessCardsController {
     findAll(req) {
         return this.businessCardsService.findAllBySender(req.user.id);
     }
+    findReceived(req) {
+        return this.businessCardsService.findAllReceived(req.user.email);
+    }
     getStats(req) {
         return this.businessCardsService.getStats(req.user.id);
+    }
+    accept(id, req) {
+        return this.businessCardsService.updateStatus(id, req.user.id, 'ACCEPTED');
     }
     remove(id, req) {
         return this.businessCardsService.remove(id, req.user.id);
@@ -52,12 +58,27 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], BusinessCardsController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.Get)('received'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], BusinessCardsController.prototype, "findReceived", null);
+__decorate([
     (0, common_1.Get)('stats'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], BusinessCardsController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Patch)(':id/accept'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], BusinessCardsController.prototype, "accept", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),

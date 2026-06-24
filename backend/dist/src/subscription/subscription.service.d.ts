@@ -229,13 +229,13 @@ export declare class SubscriptionService {
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.PlanStatus;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
+        userId: string;
     }>;
     getUserPlan(userId: string): Promise<PlanType>;
     getPlanLimits(plan: PlanType): {
@@ -413,13 +413,13 @@ export declare class SubscriptionService {
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.PlanStatus;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
+        userId: string;
     }>;
     getPlansInfo(): {
         stripeConfigured: boolean;

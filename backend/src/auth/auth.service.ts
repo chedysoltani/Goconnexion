@@ -90,6 +90,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        plan: user.plan ?? 'FREE',
+        avatarUrl: user.avatarUrl,
       },
       ...tokens,
     };
@@ -112,6 +114,8 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          plan: user.plan ?? 'FREE',
+          avatarUrl: user.avatarUrl,
         },
         ...tokens,
       };

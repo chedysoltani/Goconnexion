@@ -28,9 +28,9 @@ export declare class MessagingService {
         messages: {
             id: string;
             createdAt: Date;
+            senderId: string;
             content: string;
             conversationId: string;
-            senderId: string;
         }[];
         participants: ({
             user: {
@@ -63,9 +63,9 @@ export declare class MessagingService {
     } & {
         id: string;
         createdAt: Date;
+        senderId: string;
         content: string;
         conversationId: string;
-        senderId: string;
     })[]>;
     sendMessage(conversationId: string, senderId: string, content: string): Promise<{
         sender: {
@@ -77,8 +77,8 @@ export declare class MessagingService {
     } & {
         id: string;
         createdAt: Date;
+        senderId: string;
         content: string;
         conversationId: string;
-        senderId: string;
     }>;
 }

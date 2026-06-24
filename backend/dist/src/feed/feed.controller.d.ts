@@ -2,7 +2,7 @@ import { FeedService } from './feed.service';
 export declare class FeedController {
     private readonly feedService;
     constructor(feedService: FeedService);
-    getFeed(): Promise<({
+    getFeed(req: any): Promise<({
         comments: ({
             author: {
                 id: string;
@@ -32,8 +32,8 @@ export declare class FeedController {
         createdAt: Date;
         updatedAt: Date;
         content: string;
-        authorId: string;
         imageUrl: string | null;
+        authorId: string;
     })[]>;
     createPost(req: any, body: {
         content: string;
@@ -63,8 +63,8 @@ export declare class FeedController {
         createdAt: Date;
         updatedAt: Date;
         content: string;
-        authorId: string;
         imageUrl: string | null;
+        authorId: string;
     }>;
     toggleLike(req: any, id: string): Promise<{
         liked: boolean;

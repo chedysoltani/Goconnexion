@@ -16,9 +16,9 @@ export declare class EntrepreneursService {
             updatedAt: Date;
             title: string;
             skills: string[];
+            status: import("@prisma/client").$Enums.ProjectStatus;
             description: string;
             budget: number | null;
-            status: import("@prisma/client").$Enums.ProjectStatus;
             ownerId: string;
         }[];
     } & {

@@ -191,13 +191,13 @@ export declare class SubscriptionController {
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.PlanStatus;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
+        userId: string;
     }>;
     createCheckout(req: any, dto: CreateCheckoutDto): Promise<{
         upgraded: boolean;
@@ -377,12 +377,12 @@ export declare class SubscriptionController {
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         status: import("@prisma/client").$Enums.PlanStatus;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
+        userId: string;
     }>;
 }

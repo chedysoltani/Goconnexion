@@ -201,6 +201,19 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
     }
   };
 
+  if (user?.plan !== 'PREMIUM_INCUBATEUR') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-20 text-center px-6">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 text-4xl" style={{background:'rgba(139,92,246,0.1)'}}>🔒</div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Espace Incubateur</h2>
+        <p className="text-slate-500 text-sm max-w-xs mb-6">Cet espace est réservé aux membres du plan <strong>PREMIUM Incubateur</strong>. Rejoignez-nous pour accéder aux ressources exclusives.</p>
+        <a href="/pricing" className="px-6 py-3 rounded-2xl text-sm font-bold text-white" style={{background:'linear-gradient(135deg,#8b5cf6,#7c3aed)',boxShadow:'0 4px 16px rgba(139,92,246,0.4)'}}>
+          Découvrir les offres →
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 h-full flex flex-col">
       {/* Header Banner */}
