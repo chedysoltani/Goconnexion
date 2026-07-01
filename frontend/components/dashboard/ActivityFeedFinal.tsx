@@ -36,7 +36,7 @@ export default function ActivityFeed({ user }: ActivityFeedProps) {
     const diffD = Math.floor(diffH / 24);
     if (diffD > 0) return `il y a ${diffD} jour${diffD > 1 ? 's' : ''}`;
     if (diffH > 0) return `il y a ${diffH} heure${diffH > 1 ? 's' : ''}`;
-    return 'à l'instant';
+    return "à l'instant";
   };
 
   const handlePostSubmit = async (e: React.FormEvent) => {
