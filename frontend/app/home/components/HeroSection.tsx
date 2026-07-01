@@ -11,11 +11,17 @@ export default function HeroSection() {
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Parallax on hero image
+    let ticking = false;
     const handleScroll = () => {
-      if (heroImgRef?.current) {
-        const y = window.scrollY;
-        heroImgRef.current.style.transform = `translateY(${y * 0.28}px) scale(1.08)`;
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (heroImgRef.current) {
+            const y = window.scrollY;
+            heroImgRef.current.style.transform = `translateY(${y * 0.28}px) scale(1.08)`;
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });

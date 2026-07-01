@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,300;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap');
+/* Fonts are loaded via next/font/google in layout.tsx — no @import needed */
 
 /* ─── Design Tokens ─────────────────────────────────────────────── */
 :root {
@@ -61,7 +61,7 @@ html {
 }
 
 body {
-  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
   background-color: var(--bg);
   color: var(--foreground);
   overflow-x: hidden;
@@ -72,7 +72,7 @@ body {
 }
 
 .font-serif {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
 }
 
 /* ─── Typography ────────────────────────────────────────────────── */
@@ -658,4 +658,25 @@ body {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 1.25rem;
+}
+
+/* ─── Respect reduced-motion preference (perf + accessibility) ──── */
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  .animated-gradient,
+  .float-anim,
+  .orbit,
+  .cursor-blink,
+  .notif-pulse::before,
+  .auth-bg::before,
+  .auth-bg::after {
+    animation: none !important;
+  }
+  .clip-reveal {
+    clip-path: none !important;
+    transition: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
