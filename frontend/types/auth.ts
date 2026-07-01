@@ -1,5 +1,5 @@
 export type UserRole = 'freelancer' | 'entrepreneur' | 'user';
-export type PlanType = 'FREE' | 'PRO' | 'BUSINESS';
+export type PlanType = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_ENTREPRENEUR' | 'PREMIUM_FREELANCER' | 'PREMIUM_INCUBATEUR';
 
 export interface BaseUser {
   id: string;
