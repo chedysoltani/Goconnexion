@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import HeroSection from './home/components/HeroSection';
 import ProblemSection from './home/components/ProblemSection';
 import FeaturesSection from './home/components/FeaturesSection';
+import VideoSection from './home/components/VideoSection';
 import HowItWorksSection from './home/components/HowItWorksSection';
 import HumanAspectSection from './home/components/HumanAspectSection';
 
@@ -15,6 +16,7 @@ export default function HomePage() {
         <HeroSection />
         <ProblemSection />
         <FeaturesSection />
+        <VideoSection />
         <HowItWorksSection />
         <HumanAspectSection />
       </main>
