@@ -12,9 +12,19 @@ import { JwtService } from '@nestjs/jwt';
 import { MessagingService } from './messaging.service';
 import { UnauthorizedException } from '@nestjs/common';
 
+// Extrait gc_access depuis le header Cookie de la connexion WebSocket
+function extractCookieToken(cookieHeader: string): string | null {
+  for (const part of cookieHeader.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === 'gc_access') return rest.join('=');
+  }
+  return null;
+}
+
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    credentials: true,
   },
 })
 export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -38,12 +48,18 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   async handleConnection(client: Socket) {
     try {
-      const authHeader = client.handshake.auth?.token || client.handshake.query?.token;
-      if (!authHeader) {
+      // Priorité : cookie httpOnly gc_access → auth.token (legacy) → query.token
+      const cookieHeader = client.handshake.headers.cookie ?? '';
+      const rawToken =
+        extractCookieToken(cookieHeader) ||
+        client.handshake.auth?.token ||
+        client.handshake.query?.token;
+
+      if (!rawToken) {
         throw new UnauthorizedException('No token provided');
       }
 
-      const token = authHeader.replace('Bearer ', '');
+      const token = String(rawToken).replace('Bearer ', '');
       const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET || 'goconnexions-super-secret-key-12345!',
       });

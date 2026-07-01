@@ -1,7 +1,10 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService, BillingInterval } from './stripe.service';
-import { PlanType, PlanStatus } from '@prisma/client';
+import { WiseService, WiseCreditEvent } from './wise.service';
+import { MailService } from '../mail/mail.service';
+import { PlanType, PlanStatus, PaymentProvider } from '@prisma/client';
 
 export const PLAN_LIMITS = {
   FREE: {
@@ -106,6 +109,8 @@ export class SubscriptionService {
   constructor(
     private prisma: PrismaService,
     private stripeService: StripeService,
+    private wiseService: WiseService,
+    private mailService: MailService,
   ) {}
 
   // ── Status ─────────────────────────────────────────────────────
@@ -122,6 +127,7 @@ export class SubscriptionService {
       limits: PLAN_LIMITS[sub.plan],
       prices: PLAN_PRICES,
       stripeConfigured: this.stripeService.isConfigured(),
+      wiseConfigured: this.wiseService.isConfigured(),
     };
   }
 
@@ -143,7 +149,12 @@ export class SubscriptionService {
     userId: string,
     plan: 'PRO' | 'BUSINESS',
     interval: BillingInterval,
+    provider: 'stripe' | 'wise' = 'stripe',
   ) {
+    if (provider === 'wise') {
+      return this.createWisePaymentSession(userId, plan as PlanType, interval);
+    }
+
     if (!this.stripeService.isConfigured()) {
       // Mode sandbox : upgrade direct sans Stripe
       return this.upgradeDirect(userId, plan as PlanType);
@@ -190,6 +201,181 @@ export class SubscriptionService {
     return { checkoutUrl };
   }
 
+  // ── Wise payment session ───────────────────────────────────────
+
+  async createWisePaymentSession(
+    userId: string,
+    plan: PlanType,
+    interval: BillingInterval,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true },
+    });
+    if (!user) throw new BadRequestException('Utilisateur introuvable');
+
+    const reference = this.wiseService.generateReference(userId);
+    const prices = PLAN_PRICES[plan];
+    const amount = interval === 'yearly' ? prices.yearly : prices.monthly;
+    const currency = 'CAD';
+
+    await this.prisma.subscription.upsert({
+      where: { userId },
+      create: {
+        userId,
+        plan: PlanType.FREE,
+        status: PlanStatus.ACTIVE,
+        paymentProvider: PaymentProvider.WISE,
+        wiseReference: reference,
+        pendingAmount: amount,
+        pendingCurrency: currency,
+      },
+      update: {
+        paymentProvider: PaymentProvider.WISE,
+        wiseReference: reference,
+        pendingAmount: amount,
+        pendingCurrency: currency,
+      },
+    });
+
+    const accountDetails = await this.wiseService.getAccountDetails(currency);
+    const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+
+    return {
+      provider: 'wise',
+      wiseInstructions: true,
+      reference,
+      amount,
+      currency,
+      accountDetails,
+      plan,
+      interval,
+      redirectUrl: `${baseUrl}/billing/wise?ref=${reference}&plan=${plan}&interval=${interval}&amount=${amount}&currency=${currency}`,
+    };
+  }
+
+  // ── Wise webhook handler ───────────────────────────────────────
+
+  async handleWiseWebhook(payload: Buffer, signature: string) {
+    if (!this.wiseService.verifyWebhookSignature(payload, signature)) {
+      throw new BadRequestException('Signature Wise invalide');
+    }
+
+    let event: WiseCreditEvent;
+    try {
+      event = JSON.parse(payload.toString()) as WiseCreditEvent;
+    } catch {
+      throw new BadRequestException('Payload Wise invalide');
+    }
+
+    if (event.event_type !== 'balances#credit') {
+      return { received: true, ignored: true };
+    }
+
+    const reference = this.wiseService.extractReferenceFromEvent(event);
+    if (!reference) {
+      this.logger.warn('Wise webhook: aucune référence dans le paiement');
+      return { received: true };
+    }
+
+    const sub = await this.prisma.subscription.findFirst({
+      where: { wiseReference: reference },
+    });
+
+    if (!sub) {
+      this.logger.warn(`Wise webhook: référence inconnue "${reference}"`);
+      return { received: true };
+    }
+
+    const payment = this.wiseService.extractAmountFromEvent(event);
+
+    if (payment && sub.pendingAmount && Math.abs(payment.amount - sub.pendingAmount) > 0.5) {
+      this.logger.warn(
+        `Wise webhook: montant reçu ${payment.amount} ${payment.currency} ` +
+        `≠ attendu ${sub.pendingAmount} ${sub.pendingCurrency} pour ref ${reference}`,
+      );
+    }
+
+    const intervalMonths = sub.pendingAmount && PLAN_PRICES[sub.plan]?.yearly === sub.pendingAmount ? 12 : 1;
+    const periodEnd = new Date();
+    periodEnd.setMonth(periodEnd.getMonth() + intervalMonths);
+
+    const activatedPlan = sub.plan !== PlanType.FREE ? sub.plan : PlanType.PRO;
+
+    await this.prisma.$transaction([
+      this.prisma.subscription.update({
+        where: { id: sub.id },
+        data: {
+          plan: activatedPlan,
+          status: PlanStatus.ACTIVE,
+          currentPeriodEnd: periodEnd,
+          cancelAtPeriodEnd: false,
+          lastPaymentDate: new Date(),
+          wiseReference: this.wiseService.generateReference(sub.userId),
+        },
+      }),
+      this.prisma.user.update({
+        where: { id: sub.userId },
+        data: { plan: activatedPlan },
+      }),
+    ]);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: sub.userId },
+      select: { email: true, firstName: true },
+    });
+    if (user) {
+      this.mailService.sendSubscriptionActivated(user, activatedPlan, periodEnd);
+    }
+
+    this.logger.log(`Abonnement Wise activé pour userId=${sub.userId}, ref=${reference}`);
+    return { received: true, activated: true };
+  }
+
+  // Cron J-7 : rappels de renouvellement Wise
+  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  async sendWiseRenewalReminders() {
+    const in7Days = new Date();
+    in7Days.setDate(in7Days.getDate() + 7);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 6);
+
+    const expiringWiseSubs = await this.prisma.subscription.findMany({
+      where: {
+        paymentProvider: PaymentProvider.WISE,
+        status: PlanStatus.ACTIVE,
+        plan: { not: PlanType.FREE },
+        currentPeriodEnd: { gte: tomorrow, lte: in7Days },
+      },
+      include: { user: { select: { email: true, firstName: true } } },
+    });
+
+    for (const sub of expiringWiseSubs) {
+      const newRef = this.wiseService.generateReference(sub.userId);
+      await this.prisma.subscription.update({
+        where: { id: sub.id },
+        data: { wiseReference: newRef },
+      });
+
+      const accountDetails = await this.wiseService.getAccountDetails(sub.pendingCurrency ?? 'CAD');
+      this.logger.log(
+        `[Wise Reminder] ${sub.user.email} — expire le ${sub.currentPeriodEnd?.toLocaleDateString('fr-CA')} — ` +
+        `nouvelle ref: ${newRef} — montant: ${sub.pendingAmount} ${sub.pendingCurrency}`,
+      );
+
+      await this.mailService.sendWiseRenewalReminder(
+        sub.user,
+        sub.pendingAmount ?? 0,
+        sub.pendingCurrency ?? 'CAD',
+        newRef,
+        sub.currentPeriodEnd!,
+        accountDetails,
+      );
+    }
+
+    this.logger.log(`Rappels Wise envoyés: ${expiringWiseSubs.length} abonnements`);
+  }
+
   // ── Customer Portal ────────────────────────────────────────────
 
   async createPortalSession(userId: string) {
@@ -221,9 +407,14 @@ export class SubscriptionService {
 
       case 'checkout.session.completed': {
         const session = event.data.object as any;
-        const { userId, plan } = session.metadata ?? {};
+        const { userId, plan, interval } = session.metadata ?? {};
         if (userId && plan) {
-          await this.activatePlan(userId, plan as PlanType, session.subscription);
+          await this.activatePlan(
+            userId,
+            plan as PlanType,
+            session.subscription,
+            (interval as 'monthly' | 'yearly') ?? 'monthly',
+          );
         }
         break;
       }
@@ -257,6 +448,11 @@ export class SubscriptionService {
         const sub = event.data.object as any;
         const userId = sub.metadata?.userId;
         if (userId) {
+          const cancelledPlan = sub.metadata?.plan as PlanType ?? PlanType.PRO;
+          const periodEnd = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000)
+            : new Date();
+
           await this.prisma.subscription.update({
             where: { userId },
             data: { plan: PlanType.FREE, status: PlanStatus.CANCELLED },
@@ -265,6 +461,14 @@ export class SubscriptionService {
             where: { id: userId },
             data: { plan: PlanType.FREE },
           });
+
+          const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, firstName: true },
+          });
+          if (user) {
+            this.mailService.sendSubscriptionCancelled(user, cancelledPlan, periodEnd);
+          }
         }
         break;
       }
@@ -274,12 +478,14 @@ export class SubscriptionService {
         const customerId = invoice.customer;
         const sub = await this.prisma.subscription.findFirst({
           where: { stripeCustomerId: customerId },
+          include: { user: { select: { email: true, firstName: true } } },
         });
         if (sub) {
           await this.prisma.subscription.update({
             where: { id: sub.id },
             data: { status: PlanStatus.EXPIRED },
           });
+          this.mailService.sendPaymentFailed(sub.user, sub.plan);
         }
         break;
       }
@@ -294,6 +500,14 @@ export class SubscriptionService {
     const sub = await this.prisma.subscription.findUnique({ where: { userId } });
     if (!sub || sub.plan === PlanType.FREE) {
       throw new BadRequestException('Aucun abonnement payant actif');
+    }
+
+    if (sub.paymentProvider === PaymentProvider.WISE) {
+      // Wise : on marque simplement cancelAtPeriodEnd, le client n'enverra plus de virement
+      return this.prisma.subscription.update({
+        where: { userId },
+        data: { cancelAtPeriodEnd: true, wiseReference: null },
+      });
     }
 
     if (sub.stripeSubId && this.stripeService.isConfigured()) {
@@ -366,9 +580,18 @@ export class SubscriptionService {
 
   // ── Internal helpers ───────────────────────────────────────────
 
-  private async activatePlan(userId: string, plan: PlanType, stripeSubId?: string) {
+  private async activatePlan(
+    userId: string,
+    plan: PlanType,
+    stripeSubId?: string,
+    interval: 'monthly' | 'yearly' = 'monthly',
+  ) {
     const periodEnd = new Date();
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    if (interval === 'yearly') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    } else {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    }
 
     await this.prisma.$transaction([
       this.prisma.subscription.upsert({
@@ -393,6 +616,14 @@ export class SubscriptionService {
         data: { plan },
       }),
     ]);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true },
+    });
+    if (user) {
+      this.mailService.sendSubscriptionActivated(user, plan, periodEnd);
+    }
   }
 
   // Upgrade direct sans Stripe (sandbox / dev)

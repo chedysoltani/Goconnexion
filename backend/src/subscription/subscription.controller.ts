@@ -6,7 +6,7 @@ import {
 import type { RawBodyRequest } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SubscriptionService } from './subscription.service';
-import { CreateCheckoutDto, UpgradePlanDto } from './dto/subscription.dto';
+import { CreateCheckoutDto, UpgradePlanDto, CreateWisePaymentDto } from './dto/subscription.dto';
 
 @Controller('subscription')
 export class SubscriptionController {
@@ -40,7 +40,31 @@ export class SubscriptionController {
   @Post('checkout')
   createCheckout(@Request() req: any, @Body() dto: CreateCheckoutDto) {
     const userId = req.user.sub ?? req.user.id;
-    return this.subscriptionService.createCheckoutSession(userId, dto.plan, dto.interval ?? 'monthly');
+    return this.subscriptionService.createCheckoutSession(
+      userId,
+      dto.plan,
+      dto.interval ?? 'monthly',
+      dto.provider ?? 'stripe',
+    );
+  }
+
+  // ── Wise endpoints ────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Post('wise/payment-instructions')
+  createWiseInstructions(@Request() req: any, @Body() dto: CreateWisePaymentDto) {
+    const userId = req.user.sub ?? req.user.id;
+    return this.subscriptionService.createWisePaymentSession(userId, dto.plan as any, dto.interval ?? 'monthly');
+  }
+
+  @Post('wise/webhook')
+  @HttpCode(HttpStatus.OK)
+  async wiseWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('x-signature-sha256') signature: string,
+  ) {
+    const raw = (req as any).rawBody as Buffer;
+    return this.subscriptionService.handleWiseWebhook(raw, signature ?? '');
   }
 
   @UseGuards(JwtAuthGuard)

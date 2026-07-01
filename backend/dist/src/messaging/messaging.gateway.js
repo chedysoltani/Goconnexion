@@ -19,6 +19,14 @@ const socket_io_1 = require("socket.io");
 const jwt_1 = require("@nestjs/jwt");
 const messaging_service_1 = require("./messaging.service");
 const common_1 = require("@nestjs/common");
+function extractCookieToken(cookieHeader) {
+    for (const part of cookieHeader.split(';')) {
+        const [key, ...rest] = part.trim().split('=');
+        if (key === 'gc_access')
+            return rest.join('=');
+    }
+    return null;
+}
 let MessagingGateway = class MessagingGateway {
     static { MessagingGateway_1 = this; }
     jwtService;
@@ -37,11 +45,14 @@ let MessagingGateway = class MessagingGateway {
     }
     async handleConnection(client) {
         try {
-            const authHeader = client.handshake.auth?.token || client.handshake.query?.token;
-            if (!authHeader) {
+            const cookieHeader = client.handshake.headers.cookie ?? '';
+            const rawToken = extractCookieToken(cookieHeader) ||
+                client.handshake.auth?.token ||
+                client.handshake.query?.token;
+            if (!rawToken) {
                 throw new common_1.UnauthorizedException('No token provided');
             }
-            const token = authHeader.replace('Bearer ', '');
+            const token = String(rawToken).replace('Bearer ', '');
             const payload = await this.jwtService.verifyAsync(token, {
                 secret: process.env.JWT_SECRET || 'goconnexions-super-secret-key-12345!',
             });
@@ -106,7 +117,8 @@ __decorate([
 exports.MessagingGateway = MessagingGateway = MessagingGateway_1 = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
-            origin: '*',
+            origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+            credentials: true,
         },
     }),
     __metadata("design:paramtypes", [jwt_1.JwtService,

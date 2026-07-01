@@ -76,6 +76,11 @@ enum PlanStatus {
   TRIAL
 }
 
+enum PaymentProvider {
+  STRIPE
+  WISE
+}
+
 model User {
   id                   String               @id @default(uuid())
   email                String               @unique
@@ -84,7 +89,11 @@ model User {
   lastName             String
   avatarUrl            String?
   role                 UserRole             @default(FREELANCER)
-  isEmailVerified      Boolean              @default(false)
+  isEmailVerified           Boolean    @default(false)
+  emailVerificationToken    String?
+  emailVerificationExpires  DateTime?
+  passwordResetToken        String?
+  passwordResetExpires      DateTime?
   birthDate            DateTime?
   plan                 PlanType             @default(FREE)
   lastActiveAt         DateTime             @default(now())
@@ -348,18 +357,23 @@ model UserRelation {
 }
 
 model Subscription {
-  id                String     @id @default(uuid())
-  userId            String     @unique
-  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan              PlanType   @default(FREE)
-  status            PlanStatus @default(ACTIVE)
+  id                String          @id @default(uuid())
+  userId            String          @unique
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              PlanType        @default(FREE)
+  status            PlanStatus      @default(ACTIVE)
+  paymentProvider   PaymentProvider @default(STRIPE)
   stripeCustomerId  String?
   stripeSubId       String?
+  wiseReference     String?
+  pendingAmount     Float?
+  pendingCurrency   String?
+  lastPaymentDate   DateTime?
   currentPeriodEnd  DateTime?
-  cancelAtPeriodEnd Boolean    @default(false)
+  cancelAtPeriodEnd Boolean         @default(false)
   trialEndsAt       DateTime?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 // ─── Events ────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ dotenv.config();
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import { join } from 'path';
 import helmet from 'helmet';
@@ -19,6 +20,9 @@ async function bootstrap() {
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
+  // Cookie parser — doit être avant les guards JWT pour que req.cookies soit peuplé
+  app.use(cookieParser());
+
   // Enforce validation globally
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
@@ -28,7 +32,7 @@ async function bootstrap() {
   // Set API prefix
   app.setGlobalPrefix('api');
 
-  // Enable CORS
+  // Enable CORS — credentials: true obligatoire pour que les cookies cross-origin fonctionnent
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,

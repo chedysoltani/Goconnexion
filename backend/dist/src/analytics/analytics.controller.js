@@ -24,6 +24,9 @@ let AnalyticsController = class AnalyticsController {
     async getDashboardStats(req) {
         return this.analyticsService.getUserDashboardStats(req.user.id);
     }
+    async getEarnings(req) {
+        return this.analyticsService.getEarnings(req.user.id);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -33,6 +36,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getDashboardStats", null);
+__decorate([
+    (0, common_1.Get)('earnings'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getEarnings", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

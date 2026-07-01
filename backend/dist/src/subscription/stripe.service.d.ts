@@ -12,6 +12,7 @@ export declare class StripeService {
         interval: BillingInterval;
         successUrl: string;
         cancelUrl: string;
+        enableAcssDebit?: boolean;
     }): Promise<string>;
     createPortalSession(customerId: string, returnUrl: string): Promise<string>;
     constructEvent(payload: Buffer, signature: string): any;

@@ -48,4 +48,20 @@ export declare class AnalyticsController {
             website?: undefined;
         };
     }>;
+    getEarnings(req: any): Promise<{
+        earnings: {
+            id: string;
+            source: string;
+            amount: number;
+            date: Date;
+            status: string;
+            client: {
+                name: string;
+                company: string;
+            };
+            project: string;
+        }[];
+        totalPaid: number;
+        totalPending: number;
+    }>;
 }

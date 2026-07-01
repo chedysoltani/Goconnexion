@@ -1,6 +1,6 @@
 import type { RawBodyRequest } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
-import { CreateCheckoutDto, UpgradePlanDto } from './dto/subscription.dto';
+import { CreateCheckoutDto, UpgradePlanDto, CreateWisePaymentDto } from './dto/subscription.dto';
 export declare class SubscriptionController {
     private readonly subscriptionService;
     constructor(subscriptionService: SubscriptionService);
@@ -187,19 +187,35 @@ export declare class SubscriptionController {
             };
         };
         stripeConfigured: boolean;
+        wiseConfigured: boolean;
         id: string;
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.PlanStatus;
+        paymentProvider: import("@prisma/client").$Enums.PaymentProvider;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
+        wiseReference: string | null;
+        pendingAmount: number | null;
+        pendingCurrency: string | null;
+        lastPaymentDate: Date | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
         userId: string;
     }>;
     createCheckout(req: any, dto: CreateCheckoutDto): Promise<{
+        provider: string;
+        wiseInstructions: boolean;
+        reference: string;
+        amount: 0 | 49 | 25 | 890 | 19 | 159 | 399 | 29 | 249 | 199 | 99;
+        currency: string;
+        accountDetails: import("./wise.service").WiseAccountDetails;
+        plan: import("@prisma/client").$Enums.PlanType;
+        interval: import("./stripe.service").BillingInterval;
+        redirectUrl: string;
+    } | {
         upgraded: boolean;
         plan: import("@prisma/client").$Enums.PlanType;
         limits: {
@@ -284,10 +300,44 @@ export declare class SubscriptionController {
     } | {
         checkoutUrl: string;
     }>;
+    createWiseInstructions(req: any, dto: CreateWisePaymentDto): Promise<{
+        provider: string;
+        wiseInstructions: boolean;
+        reference: string;
+        amount: 0 | 49 | 25 | 890 | 19 | 159 | 399 | 29 | 249 | 199 | 99;
+        currency: string;
+        accountDetails: import("./wise.service").WiseAccountDetails;
+        plan: import("@prisma/client").$Enums.PlanType;
+        interval: import("./stripe.service").BillingInterval;
+        redirectUrl: string;
+    }>;
+    wiseWebhook(req: RawBodyRequest<Request>, signature: string): Promise<{
+        received: boolean;
+        ignored: boolean;
+        activated?: undefined;
+    } | {
+        received: boolean;
+        ignored?: undefined;
+        activated?: undefined;
+    } | {
+        received: boolean;
+        activated: boolean;
+        ignored?: undefined;
+    }>;
     createPortal(req: any): Promise<{
         url: string;
     }>;
     upgradeDirect(req: any, dto: UpgradePlanDto): Promise<{
+        provider: string;
+        wiseInstructions: boolean;
+        reference: string;
+        amount: 0 | 49 | 25 | 890 | 19 | 159 | 399 | 29 | 249 | 199 | 99;
+        currency: string;
+        accountDetails: import("./wise.service").WiseAccountDetails;
+        plan: import("@prisma/client").$Enums.PlanType;
+        interval: import("./stripe.service").BillingInterval;
+        redirectUrl: string;
+    } | {
         upgraded: boolean;
         plan: import("@prisma/client").$Enums.PlanType;
         limits: {
@@ -378,8 +428,13 @@ export declare class SubscriptionController {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.PlanStatus;
+        paymentProvider: import("@prisma/client").$Enums.PaymentProvider;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
+        wiseReference: string | null;
+        pendingAmount: number | null;
+        pendingCurrency: string | null;
+        lastPaymentDate: Date | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;

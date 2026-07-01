@@ -2,6 +2,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class AnalyticsService {
     private prisma;
     constructor(prisma: PrismaService);
+    getEarnings(userId: string): Promise<{
+        earnings: {
+            id: string;
+            source: string;
+            amount: number;
+            date: Date;
+            status: string;
+            client: {
+                name: string;
+                company: string;
+            };
+            project: string;
+        }[];
+        totalPaid: number;
+        totalPending: number;
+    }>;
     getUserDashboardStats(userId: string): Promise<{
         role: string;
         stats: {

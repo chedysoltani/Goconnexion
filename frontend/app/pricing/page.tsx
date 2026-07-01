@@ -329,7 +329,11 @@ export default function PricingPage() {
 
                     {/* CTA */}
                     <motion.a
-                      href={plan.id === 'FREE' ? '/auth/signup' : '/dashboard'}
+                      href={
+                        plan.id === 'FREE'
+                          ? '/auth/signup'
+                          : `/billing/checkout?plan=${plan.id}&interval=${billing}&price=${billing === 'yearly' ? Math.round(plan.price.yearly / 12) : plan.price.monthly}`
+                      }
                       whileHover={{ scale: 1.02, boxShadow: plan.popular ? `0 12px 32px ${plan.glow}` : undefined }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full flex items-center justify-center py-3 rounded-2xl text-[14px] font-bold transition-all duration-200"

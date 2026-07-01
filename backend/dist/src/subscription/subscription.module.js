@@ -11,14 +11,17 @@ const common_1 = require("@nestjs/common");
 const subscription_controller_1 = require("./subscription.controller");
 const subscription_service_1 = require("./subscription.service");
 const stripe_service_1 = require("./stripe.service");
+const wise_service_1 = require("./wise.service");
+const mail_module_1 = require("../mail/mail.module");
 let SubscriptionModule = class SubscriptionModule {
 };
 exports.SubscriptionModule = SubscriptionModule;
 exports.SubscriptionModule = SubscriptionModule = __decorate([
     (0, common_1.Module)({
+        imports: [mail_module_1.MailModule],
         controllers: [subscription_controller_1.SubscriptionController],
-        providers: [subscription_service_1.SubscriptionService, stripe_service_1.StripeService],
-        exports: [subscription_service_1.SubscriptionService, stripe_service_1.StripeService],
+        providers: [subscription_service_1.SubscriptionService, stripe_service_1.StripeService, wise_service_1.WiseService],
+        exports: [subscription_service_1.SubscriptionService, stripe_service_1.StripeService, wise_service_1.WiseService],
     })
 ], SubscriptionModule);
 //# sourceMappingURL=subscription.module.js.map

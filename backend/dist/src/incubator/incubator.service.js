@@ -12,12 +12,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.IncubatorService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const subscription_service_1 = require("../subscription/subscription.service");
 let IncubatorService = class IncubatorService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
     async createPost(userId, data) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: { subscription: true },
+        });
+        const plan = user?.subscription?.plan ?? 'FREE';
+        const limit = subscription_service_1.PLAN_LIMITS[plan]?.maxIncubatorPosts ?? 1;
+        if (limit !== -1) {
+            const postCount = await this.prisma.incubatorPost.count({ where: { authorId: userId } });
+            if (postCount >= limit) {
+                throw new common_1.ForbiddenException(`Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} post(s) dans l'incubateur. Passez à un plan supérieur pour continuer.`);
+            }
+        }
         return this.prisma.incubatorPost.create({
             data: {
                 title: data.title,

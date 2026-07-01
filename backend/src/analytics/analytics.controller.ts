@@ -11,4 +11,9 @@ export class AnalyticsController {
   async getDashboardStats(@Request() req: any) {
     return this.analyticsService.getUserDashboardStats(req.user.id);
   }
+
+  @Get('earnings')
+  async getEarnings(@Request() req: any) {
+    return this.analyticsService.getEarnings(req.user.id);
+  }
 }

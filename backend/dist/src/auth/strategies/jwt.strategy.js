@@ -14,6 +14,16 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 const prisma_service_1 = require("../../prisma/prisma.service");
+function cookieOrBearerExtractor(req) {
+    if (req?.cookies?.gc_access) {
+        return req.cookies.gc_access;
+    }
+    const authHeader = req?.headers?.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+        return authHeader.slice(7);
+    }
+    return null;
+}
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     prisma;
     constructor(prisma) {
@@ -22,9 +32,10 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             throw new Error('JWT_SECRET environment variable is required but not set.');
         }
         super({
-            jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([cookieOrBearerExtractor]),
             ignoreExpiration: false,
             secretOrKey: secret,
+            passReqToCallback: false,
         });
         this.prisma = prisma;
     }

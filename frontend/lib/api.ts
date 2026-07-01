@@ -1,22 +1,11 @@
+// Les tokens JWT sont stockés dans des cookies httpOnly posés par le backend.
+// Le frontend ne touche jamais aux tokens — le navigateur les envoie automatiquement.
+// Seul l'objet `user` (non-sensible) est gardé en localStorage pour l'UI.
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-function setAuthCookies(accessToken: string) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `gc_token=${accessToken}; path=/; max-age=86400; SameSite=Strict`;
-}
-
-function clearAuthCookies() {
-  if (typeof document === 'undefined') return;
-  document.cookie = 'gc_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
-}
-
 async function request(endpoint: string, options: RequestInit = {}, retry = true): Promise<any> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
   const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
@@ -24,38 +13,36 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // envoie les cookies gc_access / gc_refresh automatiquement
   });
 
-  // Token expired — try to refresh once (skip for auth endpoints to surface real errors)
+  // Token expiré — tenter un refresh silencieux une fois
   if (response.status === 401 && retry && typeof window !== 'undefined' && !endpoint.startsWith('/auth/')) {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include', // envoie gc_refresh, reçoit de nouveaux cookies
+      });
 
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          localStorage.setItem('token', refreshData.accessToken);
-          localStorage.setItem('refreshToken', refreshData.refreshToken);
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        // Mettre à jour les données user en localStorage (pas le token — c'est dans le cookie)
+        if (refreshData.user && typeof window !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(refreshData.user));
-          setAuthCookies(refreshData.accessToken);
-          return request(endpoint, options, false);
         }
-      } catch {
-        // refresh failed, fall through to logout
+        return request(endpoint, options, false);
       }
+    } catch {
+      // refresh impossible, on laisse passer le 401
     }
 
-    // Refresh impossible — clear session and redirect
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    clearAuthCookies();
-    window.location.href = '/auth/login';
+    // Session définitivement expirée — nettoyer et rediriger
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+      // Appel logout pour que le backend efface les cookies httpOnly
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+      window.location.href = '/auth/login';
+    }
     throw new Error('Session expirée. Veuillez vous reconnecter.');
   }
 
@@ -74,11 +61,9 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(credentials),
       });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+      // Les cookies sont posés par le backend — on stocke seulement l'objet user
+      if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        setAuthCookies(data.accessToken);
       }
       return data;
     },
@@ -89,8 +74,6 @@ export const api = {
         entrepreneur: 'ENTREPRENEUR',
         user: 'COLLABORATOR',
       };
-      const roleMapped = roleMap[signupData.role] ?? 'COLLABORATOR';
-
       const data = await request('/auth/register', {
         method: 'POST',
         body: JSON.stringify({
@@ -98,43 +81,32 @@ export const api = {
           password: signupData.password,
           firstName: signupData.firstName,
           lastName: signupData.lastName,
-          role: roleMapped,
+          role: roleMap[signupData.role] ?? 'COLLABORATOR',
         }),
       });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+      if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        setAuthCookies(data.accessToken);
       }
       return data;
     },
 
-    logout: () => {
+    logout: async () => {
+      // Demande au backend d'effacer les cookies httpOnly (le JS ne peut pas le faire lui-même)
+      await request('/auth/logout', { method: 'POST' }).catch(() => {});
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        clearAuthCookies();
       }
     },
 
     me: () => request('/auth/me'),
 
-    refresh: (refreshToken: string) =>
-      request('/auth/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      }, false),
+    refresh: () => request('/auth/refresh', { method: 'POST' }),
   },
 
   users: {
     suggestions: () => request('/users/suggestions'),
     updateProfile: (data: any) =>
-      request('/users/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+      request('/users/profile', { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   freelancers: {
@@ -149,20 +121,14 @@ export const api = {
     },
     getProfile: () => request('/freelancers/profile'),
     updateProfile: (data: any) =>
-      request('/freelancers/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+      request('/freelancers/profile', { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   entrepreneurs: {
     list: () => request('/entrepreneurs'),
     getProfile: () => request('/entrepreneurs/profile'),
     updateProfile: (data: any) =>
-      request('/entrepreneurs/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+      request('/entrepreneurs/profile', { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   projects: {
@@ -174,27 +140,15 @@ export const api = {
     },
     getOne: (id: string) => request(`/projects/${id}`),
     create: (data: any) =>
-      request('/projects', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+      request('/projects', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) =>
-      request(`/projects/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+      request(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => request(`/projects/${id}`, { method: 'DELETE' }),
     apply: (projectId: string, coverLetter?: string) =>
-      request(`/projects/${projectId}/apply`, {
-        method: 'POST',
-        body: JSON.stringify({ coverLetter }),
-      }),
+      request(`/projects/${projectId}/apply`, { method: 'POST', body: JSON.stringify({ coverLetter }) }),
     getApplications: (projectId: string) => request(`/projects/${projectId}/applications`),
     updateApplicationStatus: (applicationId: string, status: string) =>
-      request(`/projects/applications/${applicationId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      }),
+      request(`/projects/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify({ status }) }),
   },
 
   messaging: {
@@ -207,10 +161,7 @@ export const api = {
         body: JSON.stringify({ content }),
       }),
     startConversation: (targetUserId: string) =>
-      request('/messaging/conversations', {
-        method: 'POST',
-        body: JSON.stringify({ targetUserId }),
-      }),
+      request('/messaging/conversations', { method: 'POST', body: JSON.stringify({ targetUserId }) }),
   },
 
   notifications: {
@@ -226,72 +177,59 @@ export const api = {
     },
     getOne: (id: string) => request(`/incubator/${id}`),
     createPost: (data: { title: string; content: string; category: string }) =>
-      request('/incubator', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+      request('/incubator', { method: 'POST', body: JSON.stringify(data) }),
     deletePost: (id: string) => request(`/incubator/${id}`, { method: 'DELETE' }),
     addComment: (id: string, content: string) =>
-      request(`/incubator/${id}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      }),
+      request(`/incubator/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
     toggleLike: (id: string) => request(`/incubator/${id}/like`, { method: 'POST' }),
   },
 
   analytics: {
     dashboard: () => request('/analytics/dashboard'),
+    earnings: () => request('/analytics/earnings'),
+  },
+
+  admin: {
+    stats: () => request('/admin/stats'),
+    users: (page = 1, limit = 20) => request(`/admin/users?page=${page}&limit=${limit}`),
+    deleteUser: (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+    updateUserPlan: (id: string, plan: string) =>
+      request(`/admin/users/${id}/plan`, { method: 'PUT', body: JSON.stringify({ plan }) }),
   },
 
   feed: {
     list: () => request('/feed'),
     create: (data: { content: string; imageUrl?: string }) =>
-      request('/feed', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+      request('/feed', { method: 'POST', body: JSON.stringify(data) }),
     toggleLike: (id: string) => request(`/feed/${id}/like`, { method: 'POST' }),
     addComment: (id: string, content: string) =>
-      request(`/feed/${id}/comment`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      }),
+      request(`/feed/${id}/comment`, { method: 'POST', body: JSON.stringify({ content }) }),
   },
 
   uploads: {
     upload: (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      return request('/uploads', {
-        method: 'POST',
-        body: formData,
-      });
+      return request('/uploads', { method: 'POST', body: formData });
     },
   },
 
   subscription: {
     get: () => request('/subscription'),
     plans: () => request('/subscription/plans'),
-    checkout: (plan: 'PRO' | 'BUSINESS', interval: 'monthly' | 'yearly' = 'monthly') =>
-      request('/subscription/checkout', {
-        method: 'POST',
-        body: JSON.stringify({ plan, interval }),
-      }),
+    checkout: (plan: 'PRO' | 'BUSINESS', interval: 'monthly' | 'yearly' = 'monthly', provider: 'stripe' | 'wise' = 'stripe') =>
+      request('/subscription/checkout', { method: 'POST', body: JSON.stringify({ plan, interval, provider }) }),
     upgrade: (plan: 'PRO' | 'BUSINESS') =>
-      request('/subscription/upgrade', {
-        method: 'POST',
-        body: JSON.stringify({ plan }),
-      }),
+      request('/subscription/upgrade', { method: 'POST', body: JSON.stringify({ plan }) }),
     portal: () => request('/subscription/portal', { method: 'POST' }),
     cancel: () => request('/subscription/cancel', { method: 'DELETE' }),
+    wiseInstructions: (plan: string, interval: 'monthly' | 'yearly' = 'monthly') =>
+      request('/subscription/wise/payment-instructions', { method: 'POST', body: JSON.stringify({ plan, interval }) }),
   },
 
   connections: {
     sendRequest: (receiverId: string, options?: { message?: string; isCoffee?: boolean }) =>
-      request('/connections/request', {
-        method: 'POST',
-        body: JSON.stringify({ receiverId, ...options }),
-      }),
+      request('/connections/request', { method: 'POST', body: JSON.stringify({ receiverId, ...options }) }),
     acceptRequest: (requestId: string) =>
       request(`/connections/accept/${requestId}`, { method: 'POST' }),
     declineRequest: (requestId: string) =>

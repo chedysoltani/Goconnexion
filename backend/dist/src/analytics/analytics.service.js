@@ -17,6 +17,52 @@ let AnalyticsService = class AnalyticsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async getEarnings(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: { freelancerProfile: true },
+        });
+        if (!user?.freelancerProfile) {
+            return { earnings: [], totalPaid: 0, totalPending: 0 };
+        }
+        const applications = await this.prisma.projectApplication.findMany({
+            where: {
+                freelancerId: user.freelancerProfile.id,
+                status: { in: ['ACCEPTED', 'PENDING'] },
+            },
+            include: {
+                project: {
+                    include: {
+                        owner: {
+                            include: {
+                                user: { select: { firstName: true, lastName: true } },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { updatedAt: 'desc' },
+        });
+        const earnings = applications.map((app) => ({
+            id: app.id,
+            source: app.project.title,
+            amount: app.project.budget ?? 0,
+            date: app.updatedAt,
+            status: app.status === 'ACCEPTED' ? 'paid' : 'pending',
+            client: {
+                name: `${app.project.owner.user.firstName} ${app.project.owner.user.lastName}`,
+                company: app.project.owner.companyName ?? '',
+            },
+            project: app.project.title,
+        }));
+        const totalPaid = earnings
+            .filter((e) => e.status === 'paid')
+            .reduce((s, e) => s + e.amount, 0);
+        const totalPending = earnings
+            .filter((e) => e.status === 'pending')
+            .reduce((s, e) => s + e.amount, 0);
+        return { earnings, totalPaid, totalPending };
+    }
     async getUserDashboardStats(userId) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },

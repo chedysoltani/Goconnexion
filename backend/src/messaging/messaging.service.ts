@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PLAN_LIMITS } from '../subscription/subscription.service';
 
 @Injectable()
 export class MessagingService {
@@ -139,6 +140,27 @@ export class MessagingService {
 
     if (!participant) {
       throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    // Check monthly message limit
+    const sender = await this.prisma.user.findUnique({
+      where: { id: senderId },
+      include: { subscription: true },
+    });
+    const plan = sender?.subscription?.plan ?? 'FREE';
+    const limit = PLAN_LIMITS[plan]?.maxMessagesPerMonth ?? 50;
+    if (limit !== -1) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const messageCount = await this.prisma.message.count({
+        where: { senderId, createdAt: { gte: startOfMonth } },
+      });
+      if (messageCount >= limit) {
+        throw new ForbiddenException(
+          `Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} messages par mois. Passez à un plan supérieur pour continuer.`
+        );
+      }
     }
 
     return this.prisma.$transaction(async (tx) => {

@@ -10,13 +10,15 @@ exports.EntrepreneursModule = void 0;
 const common_1 = require("@nestjs/common");
 const entrepreneurs_controller_1 = require("./entrepreneurs.controller");
 const entrepreneurs_service_1 = require("./entrepreneurs.service");
+const prisma_module_1 = require("../prisma/prisma.module");
 let EntrepreneursModule = class EntrepreneursModule {
 };
 exports.EntrepreneursModule = EntrepreneursModule;
 exports.EntrepreneursModule = EntrepreneursModule = __decorate([
     (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
         controllers: [entrepreneurs_controller_1.EntrepreneursController],
-        providers: [entrepreneurs_service_1.EntrepreneursService]
+        providers: [entrepreneurs_service_1.EntrepreneursService],
     })
 ], EntrepreneursModule);
 //# sourceMappingURL=entrepreneurs.module.js.map

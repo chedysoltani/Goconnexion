@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Zap, Building2, Check, Sparkles,
-  ArrowRight, Loader2, CreditCard,
+  ArrowRight, Loader2, CreditCard, Globe,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -17,6 +17,7 @@ interface UpgradeModalProps {
 }
 
 type BillingInterval = 'monthly' | 'yearly';
+type PaymentProvider = 'stripe' | 'wise';
 
 const PLANS = [
   {
@@ -64,11 +65,11 @@ export default function UpgradeModal({
   onUpgraded,
 }: UpgradeModalProps) {
   const [billing, setBilling] = useState<BillingInterval>('monthly');
+  const [provider, setProvider] = useState<PaymentProvider>('stripe');
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [stripeConfigured, setStripeConfigured] = useState(false);
 
-  // Check si Stripe est configuré
   useEffect(() => {
     if (!isOpen) return;
     api.subscription.plans()
@@ -79,13 +80,22 @@ export default function UpgradeModal({
   const handleUpgrade = async (planId: 'PRO' | 'BUSINESS') => {
     setLoading(planId);
     try {
+      if (provider === 'wise') {
+        const data = await api.subscription.wiseInstructions(planId, billing);
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+          return;
+        }
+      }
+
       if (stripeConfigured) {
-        const data = await api.subscription.checkout(planId, billing);
+        const data = await api.subscription.checkout(planId, billing, provider);
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
           return;
         }
       }
+
       // Mode sandbox — redirige vers page checkout simulée
       const plan = PLANS.find(p => p.id === planId)!;
       const price = billing === 'yearly'
@@ -212,6 +222,42 @@ export default function UpgradeModal({
                 </div>
               </div>
 
+              {/* Payment provider selector */}
+              <div className="px-6 pt-5 pb-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>
+                  Méthode de paiement
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'stripe' as const, label: 'Carte / Interac Debit', icon: <CreditCard size={13} />, desc: 'Visa · Mastercard · Interac' },
+                    { id: 'wise' as const, label: 'Wise (virement)', icon: <Globe size={13} />, desc: 'Transfert international' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setProvider(p.id)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all"
+                      style={{
+                        border: provider === p.id ? '2px solid #3b82f6' : '1.5px solid #e2e8f0',
+                        background: provider === p.id ? '#eff6ff' : '#fafafa',
+                      }}
+                    >
+                      <span style={{ color: provider === p.id ? '#3b82f6' : '#64748b' }}>{p.icon}</span>
+                      <div>
+                        <p className="text-[12px] font-semibold leading-none mb-0.5" style={{ color: provider === p.id ? '#1d4ed8' : '#0f172a' }}>
+                          {p.label}
+                        </p>
+                        <p className="text-[10px]" style={{ color: '#94a3b8' }}>{p.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {provider === 'wise' && (
+                  <p className="text-[10.5px] mt-2 px-1" style={{ color: '#64748b' }}>
+                    Vous recevrez les coordonnées bancaires Wise + une référence unique à inclure dans le virement.
+                  </p>
+                )}
+              </div>
+
               {/* Plans */}
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {PLANS.map((plan) => {
@@ -310,6 +356,8 @@ export default function UpgradeModal({
                           <><Check size={14} /> Activé !</>
                         ) : isCurrent ? (
                           'Plan actuel'
+                        ) : provider === 'wise' ? (
+                          <><Globe size={13} /> Payer via Wise <ArrowRight size={13} /></>
                         ) : (
                           <><CreditCard size={13} /> Payer {displayPrice}€/mois <ArrowRight size={13} /></>
                         )}

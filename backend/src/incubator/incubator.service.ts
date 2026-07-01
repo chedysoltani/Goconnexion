@@ -1,11 +1,27 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PLAN_LIMITS } from '../subscription/subscription.service';
 
 @Injectable()
 export class IncubatorService {
   constructor(private prisma: PrismaService) {}
 
   async createPost(userId: string, data: { title: string; content: string; category: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { subscription: true },
+    });
+    const plan = user?.subscription?.plan ?? 'FREE';
+    const limit = PLAN_LIMITS[plan]?.maxIncubatorPosts ?? 1;
+    if (limit !== -1) {
+      const postCount = await this.prisma.incubatorPost.count({ where: { authorId: userId } });
+      if (postCount >= limit) {
+        throw new ForbiddenException(
+          `Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} post(s) dans l'incubateur. Passez à un plan supérieur pour continuer.`
+        );
+      }
+    }
+
     return this.prisma.incubatorPost.create({
       data: {
         title: data.title,

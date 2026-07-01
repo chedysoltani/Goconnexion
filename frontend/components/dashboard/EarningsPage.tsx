@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
+import { api } from '@/lib/api';
 import { Search, TrendingUp, DollarSign, Calendar, MoreHorizontal, ArrowUpRight } from 'lucide-react';
 
 interface EarningsPageProps {
@@ -61,39 +62,31 @@ const STAT_CARDS = (total: number, pending: number, fmt: (n: number) => string) 
 export default function EarningsPage({ user }: EarningsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'paid' | 'pending'>('all');
+  const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [totalPaid, setTotalPaid] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const earnings: Earning[] = [
-    {
-      id: '1', source: 'Projet E-commerce', amount: 8500,
-      date: new Date(Date.now() - 5 * 86400000), status: 'paid',
-      client: { name: 'Marie Laurent', company: 'FinTech Solutions' },
-      project: 'Plateforme E-commerce Fintech', invoice: 'INV-2024-001',
-    },
-    {
-      id: '2', source: 'Application Mobile', amount: 6200,
-      date: new Date(Date.now() - 12 * 86400000), status: 'paid',
-      client: { name: 'David Chen', company: 'HealthTech Inc' },
-      project: 'Application Mobile Santé', invoice: 'INV-2024-002',
-    },
-    {
-      id: '3', source: 'Refonte Site Corporate', amount: 4500,
-      date: new Date(Date.now() - 18 * 86400000), status: 'pending',
-      client: { name: 'Sophie Martin', company: 'Design Studio Pro' },
-      project: 'Refonte Site Corporate', invoice: 'INV-2024-003',
-    },
-    {
-      id: '4', source: 'Consulting SEO', amount: 2800,
-      date: new Date(Date.now() - 25 * 86400000), status: 'paid',
-      client: { name: 'Thomas Bernard', company: 'Tech Innovations' },
-      project: 'Dashboard Analytics IA', invoice: 'INV-2024-004',
-    },
-    {
-      id: '5', source: 'Maintenance Web', amount: 1500,
-      date: new Date(Date.now() - 30 * 86400000), status: 'overdue',
-      client: { name: 'Alexandre Petit', company: 'Marketing Agency' },
-      project: 'Campagne Marketing Digital', invoice: 'INV-2024-005',
-    },
-  ];
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await api.analytics.earnings();
+        setEarnings(
+          (data.earnings ?? []).map((e: any) => ({
+            ...e,
+            date: new Date(e.date),
+          })),
+        );
+        setTotalPaid(data.totalPaid ?? 0);
+        setTotalPending(data.totalPending ?? 0);
+      } catch {
+        // silencieux
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [user]);
 
   const filteredEarnings = earnings.filter((e) => {
     const q = searchTerm.toLowerCase();
@@ -110,11 +103,6 @@ export default function EarningsPage({ user }: EarningsPageProps) {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
   const formatDate = (d: Date) =>
     new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
-
-  const totalEarnings = earnings.filter((e) => e.status === 'paid').reduce((s, e) => s + e.amount, 0);
-  const pendingEarnings = earnings
-    .filter((e) => e.status === 'pending' || e.status === 'overdue')
-    .reduce((s, e) => s + e.amount, 0);
 
   const FILTERS: { key: 'all' | 'paid' | 'pending'; label: string; accent: string }[] = [
     { key: 'all',     label: 'Tous',       accent: '#4a90d9' },
@@ -151,7 +139,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {STAT_CARDS(totalEarnings, pendingEarnings, formatCurrency).map((card, i) => (
+          {STAT_CARDS(totalPaid, totalPending, formatCurrency).map((card, i) => (
             <div
               key={i}
               className="rounded-2xl p-5 transition-all duration-200"
@@ -281,7 +269,11 @@ export default function EarningsPage({ user }: EarningsPageProps) {
 
           {/* Rows */}
           <div className="divide-y divide-slate-50">
-            {filteredEarnings.length === 0 ? (
+            {loading ? (
+              <div className="p-12 text-center">
+                <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto" />
+              </div>
+            ) : filteredEarnings.length === 0 ? (
               <div className="p-12 text-center">
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -290,10 +282,10 @@ export default function EarningsPage({ user }: EarningsPageProps) {
                   <Search size={22} style={{ color: '#4a90d9' }} />
                 </div>
                 <p className="text-[14px] font-semibold mb-1" style={{ color: '#1a2332' }}>
-                  Aucun résultat
+                  Aucun revenu pour l'instant
                 </p>
                 <p className="text-[12px]" style={{ color: '#94a3b8' }}>
-                  Modifiez vos filtres pour afficher des revenus.
+                  Vos candidatures acceptées apparaîtront ici.
                 </p>
               </div>
             ) : (

@@ -34,6 +34,10 @@ let StripeService = StripeService_1 = class StripeService {
         if (!this.isKeyConfigured(key)) {
             this.logger.warn('⚠️  STRIPE_SECRET_KEY non configurée — mode sandbox actif');
         }
+        else {
+            const mode = key.startsWith('sk_live_') ? 'LIVE 🔴' : 'TEST 🟡';
+            this.logger.log(`✅ Stripe configuré en mode ${mode}`);
+        }
         this.stripe = new stripe_1.default(key);
     }
     async createOrRetrieveCustomer(userId, email, name, existingCustomerId) {
@@ -47,9 +51,13 @@ let StripeService = StripeService_1 = class StripeService {
         return customer.id;
     }
     async createCheckoutSession(params) {
-        const session = await this.stripe.checkout.sessions.create({
+        const paymentMethodTypes = params.enableAcssDebit
+            ? ['card', 'acss_debit']
+            : ['card'];
+        const sessionParams = {
             customer: params.customerId,
             mode: 'subscription',
+            payment_method_types: paymentMethodTypes,
             line_items: [{ price: params.priceId, quantity: 1 }],
             success_url: params.successUrl,
             cancel_url: params.cancelUrl,
@@ -66,7 +74,21 @@ let StripeService = StripeService_1 = class StripeService {
                 interval: params.interval,
             },
             allow_promotion_codes: true,
-        });
+        };
+        if (params.enableAcssDebit) {
+            sessionParams.payment_method_options = {
+                acss_debit: {
+                    currency: 'cad',
+                    mandate_options: {
+                        payment_schedule: 'interval',
+                        interval_description: `Abonnement ${params.plan} ${params.interval}`,
+                        transaction_type: 'personal',
+                    },
+                    verification_method: 'automatic',
+                },
+            };
+        }
+        const session = await this.stripe.checkout.sessions.create(sessionParams);
         if (!session.url)
             throw new Error('Stripe session URL manquante');
         return session.url;

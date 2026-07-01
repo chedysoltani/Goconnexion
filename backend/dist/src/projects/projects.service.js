@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const subscription_service_1 = require("../subscription/subscription.service");
 let ProjectsService = class ProjectsService {
     prisma;
     constructor(prisma) {
@@ -20,9 +21,18 @@ let ProjectsService = class ProjectsService {
     async create(userId, data) {
         const entrepreneur = await this.prisma.entrepreneurProfile.findUnique({
             where: { userId },
+            include: { user: { include: { subscription: true } } },
         });
         if (!entrepreneur) {
             throw new common_1.NotFoundException('Entrepreneur profile not found');
+        }
+        const plan = entrepreneur.user.subscription?.plan ?? 'FREE';
+        const limit = subscription_service_1.PLAN_LIMITS[plan]?.maxProjects ?? 1;
+        if (limit !== -1) {
+            const projectCount = await this.prisma.project.count({ where: { ownerId: entrepreneur.id } });
+            if (projectCount >= limit) {
+                throw new common_1.ForbiddenException(`Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} projet(s) maximum. Passez à un plan supérieur pour continuer.`);
+            }
         }
         return this.prisma.project.create({
             data: {
@@ -118,9 +128,18 @@ let ProjectsService = class ProjectsService {
     async apply(projectId, userId, coverLetter) {
         const freelancer = await this.prisma.freelancerProfile.findUnique({
             where: { userId },
+            include: { user: { include: { subscription: true } } },
         });
         if (!freelancer) {
             throw new common_1.NotFoundException('Freelancer profile not found');
+        }
+        const plan = freelancer.user.subscription?.plan ?? 'FREE';
+        const limit = subscription_service_1.PLAN_LIMITS[plan]?.maxApplications ?? 3;
+        if (limit !== -1) {
+            const appCount = await this.prisma.projectApplication.count({ where: { freelancerId: freelancer.id } });
+            if (appCount >= limit) {
+                throw new common_1.ForbiddenException(`Limite atteinte : votre plan ${plan === 'FREE' ? 'Gratuit' : plan} permet ${limit} candidature(s) maximum. Passez à un plan supérieur pour continuer.`);
+            }
         }
         const existing = await this.prisma.projectApplication.findFirst({
             where: {

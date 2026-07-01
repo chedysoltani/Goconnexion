@@ -1,8 +1,10 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { CreateBusinessCardInvitationDto } from './dto/business-card.dto';
 export declare class BusinessCardsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private mailService;
+    constructor(prisma: PrismaService, mailService: MailService);
     create(senderId: string, dto: CreateBusinessCardInvitationDto): Promise<{
         id: string;
         email: string | null;

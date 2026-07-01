@@ -1,5 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService, BillingInterval } from './stripe.service';
+import { WiseService } from './wise.service';
+import { MailService } from '../mail/mail.service';
 import { PlanType } from '@prisma/client';
 export declare const PLAN_LIMITS: {
     readonly FREE: {
@@ -116,8 +118,10 @@ export declare const PLAN_PRICES: {
 export declare class SubscriptionService {
     private prisma;
     private stripeService;
+    private wiseService;
+    private mailService;
     private readonly logger;
-    constructor(prisma: PrismaService, stripeService: StripeService);
+    constructor(prisma: PrismaService, stripeService: StripeService, wiseService: WiseService, mailService: MailService);
     getSubscription(userId: string): Promise<{
         limits: {
             readonly maxProjects: 1;
@@ -225,13 +229,19 @@ export declare class SubscriptionService {
             };
         };
         stripeConfigured: boolean;
+        wiseConfigured: boolean;
         id: string;
         plan: import("@prisma/client").$Enums.PlanType;
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.PlanStatus;
+        paymentProvider: import("@prisma/client").$Enums.PaymentProvider;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
+        wiseReference: string | null;
+        pendingAmount: number | null;
+        pendingCurrency: string | null;
+        lastPaymentDate: Date | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;
@@ -317,7 +327,17 @@ export declare class SubscriptionService {
         readonly canAccessExclusiveEvents: true;
         readonly badge: "INCUBATEUR";
     };
-    createCheckoutSession(userId: string, plan: 'PRO' | 'BUSINESS', interval: BillingInterval): Promise<{
+    createCheckoutSession(userId: string, plan: 'PRO' | 'BUSINESS', interval: BillingInterval, provider?: 'stripe' | 'wise'): Promise<{
+        provider: string;
+        wiseInstructions: boolean;
+        reference: string;
+        amount: 0 | 49 | 25 | 890 | 19 | 159 | 399 | 29 | 249 | 199 | 99;
+        currency: string;
+        accountDetails: import("./wise.service").WiseAccountDetails;
+        plan: import("@prisma/client").$Enums.PlanType;
+        interval: BillingInterval;
+        redirectUrl: string;
+    } | {
         upgraded: boolean;
         plan: import("@prisma/client").$Enums.PlanType;
         limits: {
@@ -402,6 +422,31 @@ export declare class SubscriptionService {
     } | {
         checkoutUrl: string;
     }>;
+    createWisePaymentSession(userId: string, plan: PlanType, interval: BillingInterval): Promise<{
+        provider: string;
+        wiseInstructions: boolean;
+        reference: string;
+        amount: 0 | 49 | 25 | 890 | 19 | 159 | 399 | 29 | 249 | 199 | 99;
+        currency: string;
+        accountDetails: import("./wise.service").WiseAccountDetails;
+        plan: import("@prisma/client").$Enums.PlanType;
+        interval: BillingInterval;
+        redirectUrl: string;
+    }>;
+    handleWiseWebhook(payload: Buffer, signature: string): Promise<{
+        received: boolean;
+        ignored: boolean;
+        activated?: undefined;
+    } | {
+        received: boolean;
+        ignored?: undefined;
+        activated?: undefined;
+    } | {
+        received: boolean;
+        activated: boolean;
+        ignored?: undefined;
+    }>;
+    sendWiseRenewalReminders(): Promise<void>;
     createPortalSession(userId: string): Promise<{
         url: string;
     }>;
@@ -414,8 +459,13 @@ export declare class SubscriptionService {
         createdAt: Date;
         updatedAt: Date;
         status: import("@prisma/client").$Enums.PlanStatus;
+        paymentProvider: import("@prisma/client").$Enums.PaymentProvider;
         stripeCustomerId: string | null;
         stripeSubId: string | null;
+        wiseReference: string | null;
+        pendingAmount: number | null;
+        pendingCurrency: string | null;
+        lastPaymentDate: Date | null;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
         trialEndsAt: Date | null;

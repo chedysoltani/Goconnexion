@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateCheckoutDto = exports.UpgradePlanDto = void 0;
+exports.CreateWisePaymentDto = exports.CreateCheckoutDto = exports.UpgradePlanDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpgradePlanDto {
     plan;
@@ -22,6 +22,7 @@ __decorate([
 class CreateCheckoutDto {
     plan;
     interval = 'monthly';
+    provider = 'stripe';
 }
 exports.CreateCheckoutDto = CreateCheckoutDto;
 __decorate([
@@ -33,4 +34,23 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCheckoutDto.prototype, "interval", void 0);
+__decorate([
+    (0, class_validator_1.IsIn)(['stripe', 'wise']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCheckoutDto.prototype, "provider", void 0);
+class CreateWisePaymentDto {
+    plan;
+    interval = 'monthly';
+}
+exports.CreateWisePaymentDto = CreateWisePaymentDto;
+__decorate([
+    (0, class_validator_1.IsEnum)(['PRO', 'BUSINESS', 'PREMIUM_ENTREPRENEUR', 'PREMIUM_FREELANCER', 'PREMIUM_INCUBATEUR']),
+    __metadata("design:type", String)
+], CreateWisePaymentDto.prototype, "plan", void 0);
+__decorate([
+    (0, class_validator_1.IsIn)(['monthly', 'yearly']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateWisePaymentDto.prototype, "interval", void 0);
 //# sourceMappingURL=subscription.dto.js.map

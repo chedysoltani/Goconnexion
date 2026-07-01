@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const business_cards_controller_1 = require("./business-cards.controller");
 const business_cards_service_1 = require("./business-cards.service");
 const prisma_module_1 = require("../prisma/prisma.module");
+const mail_module_1 = require("../mail/mail.module");
 let BusinessCardsModule = class BusinessCardsModule {
 };
 exports.BusinessCardsModule = BusinessCardsModule;
 exports.BusinessCardsModule = BusinessCardsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, mail_module_1.MailModule],
         controllers: [business_cards_controller_1.BusinessCardsController],
         providers: [business_cards_service_1.BusinessCardsService],
     })

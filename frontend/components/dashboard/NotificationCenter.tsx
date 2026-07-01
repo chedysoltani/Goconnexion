@@ -31,13 +31,9 @@ export default function NotificationCenter() {
   useEffect(() => {
     fetchNotifications();
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    // Connect to WebSocket gateway
-    const socket = io('http://localhost:3001', {
-      auth: { token },
-      query: { token },
+    // Le cookie gc_access est envoyé automatiquement dans le handshake WebSocket
+    const socket = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001', {
+      withCredentials: true,
     });
 
     socketRef.current = socket;

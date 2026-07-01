@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BusinessCardsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const mail_service_1 = require("../mail/mail.service");
 let BusinessCardsService = class BusinessCardsService {
     prisma;
-    constructor(prisma) {
+    mailService;
+    constructor(prisma, mailService) {
         this.prisma = prisma;
+        this.mailService = mailService;
     }
     async create(senderId, dto) {
         if (dto.inviteMethod === 'EMAIL' && !dto.email) {
@@ -24,9 +27,17 @@ let BusinessCardsService = class BusinessCardsService {
         if (dto.inviteMethod === 'SMS' && !dto.phone) {
             throw new common_1.BadRequestException('Téléphone requis pour invitation par SMS');
         }
+        const sender = await this.prisma.user.findUnique({
+            where: { id: senderId },
+            select: { firstName: true, lastName: true },
+        });
+        const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Un membre GoConnexions';
         const invitation = await this.prisma.businessCardInvitation.create({
             data: { ...dto, senderId, status: 'SENT' },
         });
+        if (dto.inviteMethod === 'EMAIL' && dto.email) {
+            await this.mailService.sendBusinessCardInvitation(senderName, dto.email);
+        }
         return invitation;
     }
     async findAllBySender(senderId) {
@@ -36,6 +47,11 @@ let BusinessCardsService = class BusinessCardsService {
         });
     }
     async updateStatus(id, senderId, status) {
+        const invitation = await this.prisma.businessCardInvitation.findUnique({ where: { id } });
+        if (!invitation)
+            throw new common_1.NotFoundException('Invitation introuvable');
+        if (invitation.senderId !== senderId)
+            throw new common_1.ForbiddenException('Accès refusé');
         return this.prisma.businessCardInvitation.update({
             where: { id },
             data: { status: status },
@@ -65,6 +81,7 @@ let BusinessCardsService = class BusinessCardsService {
 exports.BusinessCardsService = BusinessCardsService;
 exports.BusinessCardsService = BusinessCardsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        mail_service_1.MailService])
 ], BusinessCardsService);
 //# sourceMappingURL=business-cards.service.js.map

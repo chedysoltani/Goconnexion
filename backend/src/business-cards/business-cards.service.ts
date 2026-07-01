@@ -1,10 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { CreateBusinessCardInvitationDto } from './dto/business-card.dto';
 
 @Injectable()
 export class BusinessCardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
   async create(senderId: string, dto: CreateBusinessCardInvitationDto) {
     if (dto.inviteMethod === 'EMAIL' && !dto.email) {
@@ -14,12 +18,20 @@ export class BusinessCardsService {
       throw new BadRequestException('Téléphone requis pour invitation par SMS');
     }
 
+    const sender = await this.prisma.user.findUnique({
+      where: { id: senderId },
+      select: { firstName: true, lastName: true },
+    });
+    const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Un membre GoConnexions';
+
     const invitation = await this.prisma.businessCardInvitation.create({
       data: { ...dto, senderId, status: 'SENT' },
     });
 
-    // In a real app, send email/SMS here via NodeMailer or Twilio
-    // For now we mark as SENT immediately
+    if (dto.inviteMethod === 'EMAIL' && dto.email) {
+      await this.mailService.sendBusinessCardInvitation(senderName, dto.email);
+    }
+
     return invitation;
   }
 
@@ -31,6 +43,9 @@ export class BusinessCardsService {
   }
 
   async updateStatus(id: string, senderId: string, status: string) {
+    const invitation = await this.prisma.businessCardInvitation.findUnique({ where: { id } });
+    if (!invitation) throw new NotFoundException('Invitation introuvable');
+    if (invitation.senderId !== senderId) throw new ForbiddenException('Accès refusé');
     return this.prisma.businessCardInvitation.update({
       where: { id },
       data: { status: status as any },

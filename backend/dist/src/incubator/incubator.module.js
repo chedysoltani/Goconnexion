@@ -10,13 +10,15 @@ exports.IncubatorModule = void 0;
 const common_1 = require("@nestjs/common");
 const incubator_controller_1 = require("./incubator.controller");
 const incubator_service_1 = require("./incubator.service");
+const prisma_module_1 = require("../prisma/prisma.module");
 let IncubatorModule = class IncubatorModule {
 };
 exports.IncubatorModule = IncubatorModule;
 exports.IncubatorModule = IncubatorModule = __decorate([
     (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
         controllers: [incubator_controller_1.IncubatorController],
-        providers: [incubator_service_1.IncubatorService]
+        providers: [incubator_service_1.IncubatorService],
     })
 ], IncubatorModule);
 //# sourceMappingURL=incubator.module.js.map

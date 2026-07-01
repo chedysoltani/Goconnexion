@@ -1,10 +1,12 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { MailService } from '../mail/mail.service';
+import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 export declare class AuthService {
     private prisma;
     private jwtService;
-    constructor(prisma: PrismaService, jwtService: JwtService);
+    private mailService;
+    constructor(prisma: PrismaService, jwtService: JwtService, mailService: MailService);
     register(dto: RegisterDto): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -27,6 +29,7 @@ export declare class AuthService {
             role: import("@prisma/client").$Enums.UserRole;
             plan: import("@prisma/client").$Enums.PlanType;
             avatarUrl: string | null;
+            isEmailVerified: boolean;
         };
     }>;
     refresh(refreshToken: string): Promise<{
@@ -40,7 +43,20 @@ export declare class AuthService {
             role: import("@prisma/client").$Enums.UserRole;
             plan: import("@prisma/client").$Enums.PlanType;
             avatarUrl: string | null;
+            isEmailVerified: boolean;
         };
+    }>;
+    verifyEmail(token: string): Promise<{
+        message: string;
+    }>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        message: string;
+    }>;
+    resendVerificationEmail(userId: string): Promise<{
+        message: string;
     }>;
     private generateTokens;
 }

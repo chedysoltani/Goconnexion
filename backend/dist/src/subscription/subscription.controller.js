@@ -34,7 +34,15 @@ let SubscriptionController = class SubscriptionController {
     }
     createCheckout(req, dto) {
         const userId = req.user.sub ?? req.user.id;
-        return this.subscriptionService.createCheckoutSession(userId, dto.plan, dto.interval ?? 'monthly');
+        return this.subscriptionService.createCheckoutSession(userId, dto.plan, dto.interval ?? 'monthly', dto.provider ?? 'stripe');
+    }
+    createWiseInstructions(req, dto) {
+        const userId = req.user.sub ?? req.user.id;
+        return this.subscriptionService.createWisePaymentSession(userId, dto.plan, dto.interval ?? 'monthly');
+    }
+    async wiseWebhook(req, signature) {
+        const raw = req.rawBody;
+        return this.subscriptionService.handleWiseWebhook(raw, signature ?? '');
     }
     createPortal(req) {
         return this.subscriptionService.createPortalSession(req.user.sub ?? req.user.id);
@@ -80,6 +88,24 @@ __decorate([
     __metadata("design:paramtypes", [Object, subscription_dto_1.CreateCheckoutDto]),
     __metadata("design:returntype", void 0)
 ], SubscriptionController.prototype, "createCheckout", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('wise/payment-instructions'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, subscription_dto_1.CreateWisePaymentDto]),
+    __metadata("design:returntype", void 0)
+], SubscriptionController.prototype, "createWiseInstructions", null);
+__decorate([
+    (0, common_1.Post)('wise/webhook'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Headers)('x-signature-sha256')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], SubscriptionController.prototype, "wiseWebhook", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('portal'),

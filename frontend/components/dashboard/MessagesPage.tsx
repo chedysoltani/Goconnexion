@@ -85,11 +85,9 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   }, [user]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    const socket = io('http://localhost:3001', {
-      auth: { token },
+    // Le cookie gc_access est envoyé automatiquement dans le handshake WebSocket
+    const socket = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001', {
+      withCredentials: true,
       transports: ['websocket'],
     });
 
