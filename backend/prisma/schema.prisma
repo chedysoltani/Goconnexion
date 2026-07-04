@@ -368,6 +368,8 @@ model Subscription {
   wiseReference     String?
   pendingAmount     Float?
   pendingCurrency   String?
+  pendingPlan       PlanType?
+  pendingInterval   String?
   lastPaymentDate   DateTime?
   currentPeriodEnd  DateTime?
   cancelAtPeriodEnd Boolean         @default(false)

@@ -21,43 +21,57 @@ interface Earning {
 }
 
 const STATUS_CONFIG = {
-  paid:    { label: 'Payé',       color: '#10b981', bg: 'rgba(16,185,129,0.1)',  dot: '#10b981' },
+  paid:    { label: 'Acceptée',   color: '#10b981', bg: 'rgba(16,185,129,0.1)',  dot: '#10b981' },
   pending: { label: 'En attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  dot: '#f59e0b' },
   overdue: { label: 'En retard',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   dot: '#ef4444' },
 };
 
-const STAT_CARDS = (total: number, pending: number, fmt: (n: number) => string) => [
-  {
-    label: 'Revenus encaissés',
-    value: fmt(total),
-    sub: '+12.5% ce mois',
-    subPositive: true,
-    icon: <DollarSign size={20} color="#10b981" />,
-    iconBg: 'rgba(16,185,129,0.12)',
-    accent: '#10b981',
-    gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))',
-  },
-  {
-    label: 'En attente de paiement',
-    value: fmt(pending),
-    sub: '2 factures actives',
-    subPositive: false,
-    icon: <Calendar size={20} color="#f59e0b" />,
-    iconBg: 'rgba(245,158,11,0.12)',
-    accent: '#f59e0b',
-    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))',
-  },
-  {
-    label: 'Croissance mensuelle',
-    value: '+12.5%',
-    sub: 'vs mois dernier',
-    subPositive: true,
-    icon: <TrendingUp size={20} color="#4a90d9" />,
-    iconBg: 'rgba(74,144,217,0.12)',
-    accent: '#4a90d9',
-    gradient: 'linear-gradient(135deg, rgba(74,144,217,0.08), rgba(74,144,217,0.02))',
-  },
-];
+const STAT_CARDS = (
+  total: number,
+  pending: number,
+  pendingCount: number,
+  growthPct: number | null,
+  fmt: (n: number) => string,
+  isEntrepreneur: boolean,
+) => {
+  const growthLabel = growthPct === null ? '—' : `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(1)}%`;
+  const growthPositive = growthPct === null ? true : growthPct >= 0;
+
+  return [
+    {
+      label: isEntrepreneur ? 'Budget engagé' : 'Missions décrochées',
+      value: fmt(total),
+      sub: growthPct === null ? 'Pas encore de comparaison' : `${growthLabel} ce mois`,
+      subPositive: growthPositive,
+      icon: <DollarSign size={20} color="#10b981" />,
+      iconBg: 'rgba(16,185,129,0.12)',
+      accent: '#10b981',
+      gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))',
+    },
+    {
+      label: isEntrepreneur ? 'Projets en recherche' : 'Candidatures en attente',
+      value: fmt(pending),
+      sub: isEntrepreneur
+        ? `${pendingCount} projet${pendingCount !== 1 ? 's' : ''} sans freelancer accepté`
+        : `${pendingCount} candidature${pendingCount !== 1 ? 's' : ''} en attente`,
+      subPositive: false,
+      icon: <Calendar size={20} color="#f59e0b" />,
+      iconBg: 'rgba(245,158,11,0.12)',
+      accent: '#f59e0b',
+      gradient: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))',
+    },
+    {
+      label: 'Croissance mensuelle',
+      value: growthLabel,
+      sub: 'vs mois dernier',
+      subPositive: growthPositive,
+      icon: <TrendingUp size={20} color="#4a90d9" />,
+      iconBg: 'rgba(74,144,217,0.12)',
+      accent: '#4a90d9',
+      gradient: 'linear-gradient(135deg, rgba(74,144,217,0.08), rgba(74,144,217,0.02))',
+    },
+  ];
+};
 
 export default function EarningsPage({ user }: EarningsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,6 +113,21 @@ export default function EarningsPage({ user }: EarningsPageProps) {
     return match;
   });
 
+  const isEntrepreneur = user?.role?.toUpperCase() === 'ENTREPRENEUR';
+  const pendingCount = earnings.filter((e) => e.status === 'pending' || e.status === 'overdue').length;
+
+  const now = new Date();
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const sumPaidInMonth = (year: number, month: number) =>
+    earnings
+      .filter((e) => e.status === 'paid' && e.date.getFullYear() === year && e.date.getMonth() === month)
+      .reduce((s, e) => s + e.amount, 0);
+  const paidThisMonth = sumPaidInMonth(now.getFullYear(), now.getMonth());
+  const paidLastMonth = sumPaidInMonth(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
+  const growthPct = paidLastMonth > 0
+    ? ((paidThisMonth - paidLastMonth) / paidLastMonth) * 100
+    : (paidThisMonth > 0 ? 100 : null);
+
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
   const formatDate = (d: Date) =>
@@ -106,7 +135,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
 
   const FILTERS: { key: 'all' | 'paid' | 'pending'; label: string; accent: string }[] = [
     { key: 'all',     label: 'Tous',       accent: '#4a90d9' },
-    { key: 'paid',    label: 'Payés',      accent: '#10b981' },
+    { key: 'paid',    label: 'Acceptées',  accent: '#10b981' },
     { key: 'pending', label: 'En attente', accent: '#f59e0b' },
   ];
 
@@ -122,7 +151,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#1a2332' }}>Revenus</h1>
             <p className="text-[13px] mt-1" style={{ color: '#64748b' }}>
-              Suivez vos revenus, factures et paiements en temps réel
+              Suivez la valeur de vos missions et candidatures en temps réel
             </p>
           </div>
           <button
@@ -139,7 +168,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {STAT_CARDS(totalPaid, totalPending, formatCurrency).map((card, i) => (
+          {STAT_CARDS(totalPaid, totalPending, pendingCount, growthPct, formatCurrency, isEntrepreneur).map((card, i) => (
             <div
               key={i}
               className="rounded-2xl p-5 transition-all duration-200"
@@ -260,7 +289,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
             className="grid grid-cols-[2fr_2fr_1.2fr_1.2fr_1fr_auto] gap-4 px-5 py-3.5"
             style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}
           >
-            {['Source / Projet', 'Client', 'Montant', 'Date', 'Statut', 'Facture'].map((h) => (
+            {['Source / Projet', isEntrepreneur ? 'Freelancer' : 'Client', 'Montant', 'Date', 'Statut', 'Facture'].map((h) => (
               <span key={h} className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>
                 {h}
               </span>
@@ -282,10 +311,12 @@ export default function EarningsPage({ user }: EarningsPageProps) {
                   <Search size={22} style={{ color: '#4a90d9' }} />
                 </div>
                 <p className="text-[14px] font-semibold mb-1" style={{ color: '#1a2332' }}>
-                  Aucun revenu pour l'instant
+                  {isEntrepreneur ? 'Aucun projet pour l\'instant' : 'Aucun revenu pour l\'instant'}
                 </p>
                 <p className="text-[12px]" style={{ color: '#94a3b8' }}>
-                  Vos candidatures acceptées apparaîtront ici.
+                  {isEntrepreneur
+                    ? 'Vos projets publiés apparaîtront ici.'
+                    : 'Vos candidatures acceptées apparaîtront ici.'}
                 </p>
               </div>
             ) : (

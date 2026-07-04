@@ -196,6 +196,19 @@ export class MessagingService {
         },
       });
 
+      // Diffuse le message en temps réel à chaque participant via sa room personnelle
+      // (rejointe automatiquement à chaque connexion socket — contrairement à une room par
+      // conversation, qui devient stale si le socket se reconnecte sans re-émettre 'joinConversation').
+      try {
+        const { MessagingGateway } = require('./messaging.gateway');
+        for (const p of otherParticipants) {
+          MessagingGateway.emitToUser(p.userId, 'newMessage', message);
+        }
+        MessagingGateway.emitToUser(senderId, 'newMessage', message);
+      } catch (err) {
+        console.error('Error broadcasting newMessage over socket:', err);
+      }
+
       for (const p of otherParticipants) {
         try {
           const notif = await tx.notification.create({

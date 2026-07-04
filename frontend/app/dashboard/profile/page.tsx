@@ -77,6 +77,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'profile' | 'posts'>('profile');
 
+  const [basicData, setBasicData] = useState({ firstName: '', lastName: '', birthDate: '' });
   const [freelancerData, setFreelancerData] = useState({
     title: '', bio: '', skills: [] as string[], portfolioUrl: '', hourlyRate: 0, isAvailable: true, cvUrl: '',
   });
@@ -89,6 +90,11 @@ export default function ProfilePage() {
       try {
         const me = await api.auth.me();
         setUser(me);
+        setBasicData({
+          firstName: me.firstName || '',
+          lastName: me.lastName || '',
+          birthDate: me.birthDate ? me.birthDate.slice(0, 10) : '',
+        });
 
         if (me.role?.toLowerCase() === 'freelancer') {
           try {
@@ -114,6 +120,24 @@ export default function ProfilePage() {
     };
     fetchProfile();
   }, [router]);
+
+  const handleBasicSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true); setSaveSuccess(false); setSaveError(null);
+    try {
+      const updated = await api.users.updateProfile(basicData);
+      setUser(prev => prev ? { ...prev, ...updated } : updated);
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        localStorage.setItem('user', JSON.stringify({ ...parsed, ...updated }));
+      }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3500);
+    } catch (err: any) {
+      setSaveError(err.message || 'Erreur lors de la sauvegarde.');
+    } finally { setIsSaving(false); }
+  };
 
   const handleFreelancerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,7 +349,60 @@ export default function ProfilePage() {
         {activeSection === 'profile' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Personal info card */}
+              <div className="rounded-2xl overflow-hidden"
+                style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
+                <div className="px-6 py-4" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                      style={{ background: 'rgba(74,144,217,0.12)', color: '#4a90d9' }}>
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-[14px] font-bold text-foreground">Informations personnelles</h2>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <form onSubmit={handleBasicSubmit} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FieldGroup label="Prénom">
+                        <Input type="text" value={basicData.firstName}
+                          onChange={(e) => setBasicData({ ...basicData, firstName: e.target.value })}
+                          required />
+                      </FieldGroup>
+                      <FieldGroup label="Nom">
+                        <Input type="text" value={basicData.lastName}
+                          onChange={(e) => setBasicData({ ...basicData, lastName: e.target.value })}
+                          required />
+                      </FieldGroup>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FieldGroup label="Email">
+                        <Input type="email" value={user?.email || ''} disabled
+                          style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                      </FieldGroup>
+                      <FieldGroup label="Date de naissance">
+                        <Input type="date" value={basicData.birthDate}
+                          onChange={(e) => setBasicData({ ...basicData, birthDate: e.target.value })} />
+                      </FieldGroup>
+                    </div>
+                    <button type="submit" disabled={isSaving}
+                      className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all duration-200 disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 16px rgba(74,144,217,0.3)' }}>
+                      {isSaving ? (
+                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Enregistrement...</>
+                      ) : (
+                        <><svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>Enregistrer les informations</>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
               <div className="rounded-2xl overflow-hidden"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
                 {/* Card header */}

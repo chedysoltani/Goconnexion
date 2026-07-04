@@ -5,20 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FeedService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(userId?: string) {
-    let whereClause: any = {};
-
-    if (userId) {
-      const relations = await this.prisma.userRelation.findMany({
-        where: { userId },
-        select: { friendId: true },
-      });
-      const friendIds = relations.map(r => r.friendId);
-      whereClause = { authorId: { in: [...friendIds, userId] } };
-    }
-
+  async findAll() {
     return this.prisma.feedPost.findMany({
-      where: whereClause,
       include: {
         author: {
           select: {
@@ -98,6 +86,14 @@ export class FeedService {
           },
         },
       });
+
+      try {
+        const { MessagingGateway } = require('../messaging/messaging.gateway');
+        MessagingGateway.emitToAll('postLikeUpdated', { postId, userId, liked: false });
+      } catch (err) {
+        console.error('Error broadcasting postLikeUpdated over socket:', err);
+      }
+
       return { liked: false };
     } else {
       await this.prisma.feedPostLike.create({
@@ -137,6 +133,13 @@ export class FeedService {
         }
       } catch (err) {
         console.error('Error creating post like notification:', err);
+      }
+
+      try {
+        const { MessagingGateway } = require('../messaging/messaging.gateway');
+        MessagingGateway.emitToAll('postLikeUpdated', { postId, userId, liked: true });
+      } catch (err) {
+        console.error('Error broadcasting postLikeUpdated over socket:', err);
       }
 
       return { liked: true };
@@ -194,6 +197,13 @@ export class FeedService {
       }
     } catch (err) {
       console.error('Error creating post comment notification:', err);
+    }
+
+    try {
+      const { MessagingGateway } = require('../messaging/messaging.gateway');
+      MessagingGateway.emitToAll('postCommentAdded', { postId, comment });
+    } catch (err) {
+      console.error('Error broadcasting postCommentAdded over socket:', err);
     }
 
     return comment;

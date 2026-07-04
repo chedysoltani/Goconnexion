@@ -12,6 +12,7 @@ interface MessagesPageProps {
 
 interface Message {
   id: string;
+  conversationId: string;
   content: string;
   createdAt: string;
   senderId: string;
@@ -56,9 +57,12 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   const [newMessage, setNewMessage] = useState('');
   const [availableUsers, setAvailableUsers] = useState<Participant[]>([]);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [messageLimitError, setMessageLimitError] = useState<string | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const selectedConversationIdRef = useRef<string | null>(null);
+  useEffect(() => { selectedConversationIdRef.current = selectedConversationId; }, [selectedConversationId]);
 
   const fetchConversations = async () => {
     try {
@@ -71,9 +75,8 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
   const fetchUsers = async () => {
     try {
-      const data = await api.freelancers.list();
-      const users = data.map((p: any) => p.user).filter((u: any) => u.id !== user?.id);
-      setAvailableUsers(users);
+      const data = await api.users.list();
+      setAvailableUsers(data);
     } catch (error) {
       console.error('Error fetching available users:', error);
     }
@@ -94,10 +97,14 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     socketRef.current = socket;
 
     socket.on('newMessage', (msg: Message) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
-      });
+      // Le message arrive sur le canal personnel de l'utilisateur (toutes ses conversations
+      // confondues) — on ne l'affiche dans le fil ouvert que s'il appartient à cette conversation.
+      if (msg.conversationId === selectedConversationIdRef.current) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+      }
       fetchConversations();
     });
 
@@ -105,9 +112,7 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   }, []);
 
   useEffect(() => {
-    if (!socketRef.current || !selectedConversationId) return;
-    const socket = socketRef.current;
-    socket.emit('joinConversation', { conversationId: selectedConversationId });
+    if (!selectedConversationId) return;
 
     const loadMessages = async () => {
       try {
@@ -118,8 +123,10 @@ export default function MessagesPage({ user }: MessagesPageProps) {
       }
     };
     loadMessages();
+  }, [selectedConversationId]);
 
-    return () => { socket.emit('leaveConversation', { conversationId: selectedConversationId }); };
+  useEffect(() => {
+    setMessageLimitError(null);
   }, [selectedConversationId]);
 
   useEffect(() => {
@@ -133,6 +140,7 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     setNewMessage('');
     try {
       const saved = await api.messaging.sendMessage(selectedConversationId, content);
+      setMessageLimitError(null);
       // Affichage immédiat — le socket peut arriver après, la déduplication l'ignore
       if (saved?.id) {
         setMessages(prev => prev.some(m => m.id === saved.id) ? prev : [...prev, saved]);
@@ -141,8 +149,9 @@ export default function MessagesPage({ user }: MessagesPageProps) {
         const data = await api.messaging.messages(selectedConversationId);
         setMessages(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      if (error.message?.includes('Limite atteinte')) setMessageLimitError(error.message);
       setNewMessage(content); // remet le texte si erreur
     }
   };
@@ -427,6 +436,22 @@ export default function MessagesPage({ user }: MessagesPageProps) {
             })}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Limite de messages atteinte */}
+          {messageLimitError && (
+            <div className="mx-4 mb-3 flex items-start gap-3 px-4 py-3.5 rounded-2xl flex-shrink-0"
+              style={{ background: 'rgba(245,158,11,0.08)', border: '1.5px solid rgba(245,158,11,0.3)' }}>
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold" style={{ color: '#92400e' }}>{messageLimitError}</p>
+                <a href="/pricing"
+                  className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-xl text-[12px] font-bold text-white transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+                  Passer à un plan supérieur
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Message Input */}
           <form

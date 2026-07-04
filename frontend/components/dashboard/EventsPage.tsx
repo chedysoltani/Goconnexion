@@ -491,6 +491,8 @@ function EventCard({ event, currentUserId, onRegister, registered, onOpen }: {
 export default function EventsPage({ user }: Props) {
   const [events, setEvents] = useState<Event[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<string[]>([]);
+  const [myRegs, setMyRegs] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'mine'>('all');
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [upcomingOnly, setUpcomingOnly] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -509,6 +511,7 @@ export default function EventsPage({ user }: Props) {
       ]);
       setEvents(eventsData);
       setMyRegistrations(regsData.map((r: any) => r.eventId));
+      setMyRegs(regsData);
     } catch {
       // silent
     } finally {
@@ -523,12 +526,16 @@ export default function EventsPage({ user }: Props) {
     try {
       await api.events.register(eventId);
       setMyRegistrations(prev => [...prev, eventId]);
+      const event = events.find(e => e.id === eventId) ?? selectedEvent;
+      if (event) setMyRegs(prev => [{ id: eventId, eventId, event }, ...prev]);
     } catch (err: any) {
       alert(err.message || 'Erreur lors de l\'inscription');
     }
   };
 
-  const canCreate = (user?.role as string) === 'admin' || user?.role === 'entrepreneur';
+  // Le backend n'impose aucune restriction de rôle sur la création d'événements (POST /events
+  // n'a qu'un JwtAuthGuard) — n'importe quel utilisateur connecté peut organiser un événement.
+  const canCreate = !!user;
 
   return (
     <div className="h-full flex flex-col">
@@ -569,29 +576,49 @@ export default function EventsPage({ user }: Props) {
           )}
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-              style={activeCategory === cat
-                ? { background: CATEGORY_COLORS[cat] || '#3b82f6', color: '#fff' }
-                : { background: '#f1f5f9', color: '#64748b' }
-              }
-            >
-              {CATEGORY_LABELS[cat]}
-            </button>
-          ))}
+        {/* Tabs : Tous / Mes inscriptions */}
+        <div className="inline-flex p-1 rounded-2xl mb-4" style={{ background: '#f1f5f9' }}>
           <button
-            onClick={() => setUpcomingOnly(!upcomingOnly)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-            style={upcomingOnly ? { background: '#10b981', color: '#fff' } : { background: '#f1f5f9', color: '#64748b' }}
+            onClick={() => setActiveTab('all')}
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+            style={activeTab === 'all' ? { background: '#fff', color: '#1a2332', boxShadow: '0 2px 8px rgba(26,35,50,0.08)' } : { color: '#64748b' }}
           >
-            À venir
+            Tous les événements
+          </button>
+          <button
+            onClick={() => setActiveTab('mine')}
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+            style={activeTab === 'mine' ? { background: '#fff', color: '#1a2332', boxShadow: '0 2px 8px rgba(26,35,50,0.08)' } : { color: '#64748b' }}
+          >
+            Mes inscriptions ({myRegs.length})
           </button>
         </div>
+
+        {/* Filters */}
+        {activeTab === 'all' && (
+          <div className="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={activeCategory === cat
+                  ? { background: CATEGORY_COLORS[cat] || '#3b82f6', color: '#fff' }
+                  : { background: '#f1f5f9', color: '#64748b' }
+                }
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+            <button
+              onClick={() => setUpcomingOnly(!upcomingOnly)}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+              style={upcomingOnly ? { background: '#10b981', color: '#fff' } : { background: '#f1f5f9', color: '#64748b' }}
+            >
+              À venir
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -607,6 +634,29 @@ export default function EventsPage({ user }: Props) {
               </div>
             ))}
           </div>
+        ) : activeTab === 'mine' ? (
+          myRegs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+                <IconCalendar />
+              </div>
+              <p className="text-slate-500 font-medium">Vous n'êtes inscrit à aucun événement</p>
+              <p className="text-slate-400 text-sm mt-1">Parcourez "Tous les événements" pour vous inscrire.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myRegs.map(reg => (
+                <EventCard
+                  key={reg.id}
+                  event={reg.event}
+                  currentUserId={user?.id}
+                  onRegister={handleRegister}
+                  registered
+                  onOpen={() => setSelectedEvent(reg.event)}
+                />
+              ))}
+            </div>
+          )
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">

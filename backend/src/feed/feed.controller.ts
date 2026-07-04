@@ -8,8 +8,8 @@ export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
   @Get()
-  async getFeed(@Req() req: any) {
-    return this.feedService.findAll(req.user.id);
+  async getFeed() {
+    return this.feedService.findAll();
   }
 
   @Post()

@@ -12,6 +12,11 @@ export class UsersController {
     return this.usersService.getSuggestions(req.user.id);
   }
 
+  @Get()
+  async findAll(@Request() req: any) {
+    return this.usersService.findAllExceptSelf(req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
@@ -25,6 +30,8 @@ export class UsersController {
     const updateData: any = { ...body };
     if (body.birthDate) {
       updateData.birthDate = new Date(body.birthDate);
+    } else if ('birthDate' in body) {
+      updateData.birthDate = null;
     }
     return this.usersService.update(req.user.id, updateData);
   }

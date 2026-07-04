@@ -42,13 +42,19 @@ export class BusinessCardsService {
     });
   }
 
-  async updateStatus(id: string, senderId: string, status: string) {
+  async accept(id: string, userId: string, userEmail: string) {
     const invitation = await this.prisma.businessCardInvitation.findUnique({ where: { id } });
     if (!invitation) throw new NotFoundException('Invitation introuvable');
-    if (invitation.senderId !== senderId) throw new ForbiddenException('Accès refusé');
+
+    // Le destinataire (email correspondant) accepte sa propre invitation reçue,
+    // ou l'expéditeur la marque manuellement comme acceptée (ex: confirmation hors app).
+    const isSender = invitation.senderId === userId;
+    const isRecipient = invitation.email?.toLowerCase() === userEmail.toLowerCase();
+    if (!isSender && !isRecipient) throw new ForbiddenException('Accès refusé');
+
     return this.prisma.businessCardInvitation.update({
       where: { id },
-      data: { status: status as any },
+      data: { status: 'ACCEPTED' },
     });
   }
 

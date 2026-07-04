@@ -30,7 +30,7 @@ export class BusinessCardsController {
 
   @Patch(':id/accept')
   accept(@Param('id') id: string, @Request() req: any) {
-    return this.businessCardsService.updateStatus(id, req.user.id, 'ACCEPTED');
+    return this.businessCardsService.accept(id, req.user.id, req.user.email);
   }
 
   @Delete(':id')

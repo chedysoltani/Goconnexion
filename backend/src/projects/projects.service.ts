@@ -65,6 +65,7 @@ export class ProjectsService {
           include: {
             user: {
               select: {
+                id: true,
                 firstName: true,
                 lastName: true,
                 avatarUrl: true,
@@ -85,6 +86,7 @@ export class ProjectsService {
           include: {
             user: {
               select: {
+                id: true,
                 firstName: true,
                 lastName: true,
                 avatarUrl: true,

@@ -46,10 +46,30 @@ export class UsersService {
     });
   }
 
+  // Liste complète (hors soi-même et hors admin) — utilisée par la messagerie
+  // pour démarrer une conversation avec n'importe quel utilisateur du réseau.
+  async findAllExceptSelf(userId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        NOT: { id: userId },
+        role: { not: 'ADMIN' },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
+        role: true,
+        freelancerProfile: { select: { title: true } },
+      },
+      orderBy: { firstName: 'asc' },
+    });
+  }
+
   // Networking Suggestions
   async getSuggestions(userId: string) {
     const user = await this.findOne(userId);
-    
+
     let userSkills: string[] = [];
     if (user.role === 'FREELANCER') {
       const flProfile = await this.prisma.freelancerProfile.findUnique({
@@ -60,13 +80,14 @@ export class UsersService {
       }
     }
 
-    // Suggest other professional users
-    const suggestedRole = user.role === 'ENTREPRENEUR' ? 'FREELANCER' : 'ENTREPRENEUR';
+    // Rôle complémentaire (freelance <-> entrepreneur) : priorisé dans le tri, mais on ne
+    // suggère plus uniquement ce rôle — tout profil (hors admin) reste une suggestion valide.
+    const complementaryRole = user.role === 'ENTREPRENEUR' ? 'FREELANCER' : 'ENTREPRENEUR';
 
-    const suggestions = await this.prisma.user.findMany({
+    const candidates = await this.prisma.user.findMany({
       where: {
-        role: suggestedRole,
         NOT: { id: userId },
+        role: { not: 'ADMIN' },
       },
       select: {
         id: true,
@@ -78,19 +99,20 @@ export class UsersService {
         freelancerProfile: true,
         entrepreneurProfile: true,
       },
-      take: 20,
+      take: 100,
     });
 
-    if (userSkills.length > 0) {
-      return suggestions.sort((a, b) => {
-        const aSkills = a.freelancerProfile?.skills || [];
-        const bSkills = b.freelancerProfile?.skills || [];
-        const aMatches = aSkills.filter((s) => userSkills.includes(s)).length;
-        const bMatches = bSkills.filter((s) => userSkills.includes(s)).length;
-        return bMatches - aMatches;
-      });
-    }
+    const score = (candidate: (typeof candidates)[number]) => {
+      let s = candidate.role === complementaryRole ? 1000 : 0;
+      if (userSkills.length > 0) {
+        const candidateSkills = candidate.freelancerProfile?.skills || [];
+        s += candidateSkills.filter((skill) => userSkills.includes(skill)).length;
+      }
+      return s;
+    };
 
-    return suggestions;
+    return candidates
+      .sort((a, b) => score(b) - score(a))
+      .slice(0, 20);
   }
 }

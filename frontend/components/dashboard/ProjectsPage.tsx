@@ -25,7 +25,7 @@ interface ApiProject {
   createdAt: string;
   owner: {
     companyName: string | null;
-    user: { firstName: string; lastName: string; avatarUrl: string | null };
+    user: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
   };
 }
 
@@ -96,6 +96,15 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
   const [applications, setApplications]               = useState<ApiApplication[]>([]);
   const [appLoading, setAppLoading]                   = useState(false);
 
+  const isEntrepreneur = user?.role?.toUpperCase() === 'ENTREPRENEUR';
+  const isFreelancer   = user?.role?.toUpperCase() === 'FREELANCER';
+
+  const [applyProject, setApplyProject]     = useState<ApiProject | null>(null);
+  const [coverLetter, setCoverLetter]       = useState('');
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [applyError, setApplyError]         = useState('');
+  const [appliedProjectIds, setAppliedProjectIds] = useState<Set<string>>(new Set());
+
   // ── Chargement des projets ────────────────────────────────────────────
   const loadProjects = async (search?: string, status?: string) => {
     setLoading(true);
@@ -144,6 +153,31 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
       setFormError(e.message ?? 'Erreur lors de la création.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ── Postuler (Freelancer) ──────────────────────────────────────────────
+  const handleOpenApply = (project: ApiProject) => {
+    setApplyError('');
+    setCoverLetter('');
+    setApplyProject(project);
+  };
+
+  const handleSubmitApply = async () => {
+    if (!applyProject) return;
+    setApplySubmitting(true);
+    setApplyError('');
+    try {
+      await api.projects.apply(applyProject.id, coverLetter.trim() || undefined);
+      setAppliedProjectIds(prev => new Set(prev).add(applyProject.id));
+      setApplyProject(null);
+    } catch (e: any) {
+      const msg = e.message === 'You have already applied to this project'
+        ? 'Vous avez déjà postulé à ce projet.'
+        : (e.message ?? 'Erreur lors de la candidature.');
+      setApplyError(msg);
+    } finally {
+      setApplySubmitting(false);
     }
   };
 
@@ -200,14 +234,16 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
             <h1 className="text-2xl font-bold" style={{ color: '#1a2332' }}>Projets</h1>
             <p className="text-[13px] mt-1" style={{ color: '#64748b' }}>Gérez et suivez vos projets</p>
           </div>
-          <button
-            onClick={() => { setFormError(''); setCreateModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105"
-            style={{ background: 'linear-gradient(135deg,#4a90d9,#2563eb)', boxShadow: '0 4px 12px rgba(74,144,217,0.3)' }}
-          >
-            <Plus size={14} />
-            Nouveau projet
-          </button>
+          {isEntrepreneur && (
+            <button
+              onClick={() => { setFormError(''); setCreateModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105"
+              style={{ background: 'linear-gradient(135deg,#4a90d9,#2563eb)', boxShadow: '0 4px 12px rgba(74,144,217,0.3)' }}
+            >
+              <Plus size={14} />
+              Nouveau projet
+            </button>
+          )}
         </div>
 
         {/* Filters */}
@@ -375,14 +411,34 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
                           </span>
                         )}
                       </div>
-                      <button
-                        onClick={() => handleViewApplications(project)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 hover:scale-105 flex-shrink-0"
-                        style={{ background: 'rgba(74,144,217,0.08)', color: '#4a90d9' }}
-                      >
-                        <FileText size={11} />
-                        Candidatures
-                      </button>
+                      {isEntrepreneur && project.owner?.user?.id === user?.id && (
+                        <button
+                          onClick={() => handleViewApplications(project)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 hover:scale-105 flex-shrink-0"
+                          style={{ background: 'rgba(74,144,217,0.08)', color: '#4a90d9' }}
+                        >
+                          <FileText size={11} />
+                          Candidatures
+                        </button>
+                      )}
+                      {isFreelancer && (
+                        appliedProjectIds.has(project.id) ? (
+                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold flex-shrink-0"
+                            style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}>
+                            <CheckCircle size={11} />
+                            Déjà postulé
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenApply(project)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 hover:scale-105 flex-shrink-0 text-white"
+                            style={{ background: 'linear-gradient(135deg,#4a90d9,#2563eb)', boxShadow: '0 2px 8px rgba(74,144,217,0.3)' }}
+                          >
+                            <FileText size={11} />
+                            Postuler
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -552,6 +608,60 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL : Postuler ─────────────────────────────────────────────── */}
+      {applyProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 24px 64px rgba(15,23,42,0.2)' }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <h2 className="text-[16px] font-bold" style={{ color: '#1a2332' }}>Postuler</h2>
+                <p className="text-[12px] mt-0.5 line-clamp-1" style={{ color: '#94a3b8' }}>{applyProject.title}</p>
+              </div>
+              <button onClick={() => setApplyProject(null)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ color: '#94a3b8' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f1f5f9'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {applyError && (
+                <div className="px-3 py-2 rounded-xl text-[12px] font-medium" style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  {applyError}
+                </div>
+              )}
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#374151' }}>Lettre de motivation (optionnel)</label>
+                <textarea rows={5} placeholder="Expliquez pourquoi vous êtes le bon profil pour ce projet..."
+                  value={coverLetter} onChange={e => setCoverLetter(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl text-[13px] resize-none transition-all"
+                  style={{ border: '1.5px solid #e2e8f0', outline: 'none', color: '#1a2332' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4a90d9'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.1)'; }}
+                  onBlur={e =>  { e.currentTarget.style.borderColor = '#e2e8f0';  e.currentTarget.style.boxShadow = 'none'; }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 px-6 py-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+              <button onClick={() => setApplyProject(null)}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
+                style={{ background: '#f8fafc', color: '#64748b', border: '1.5px solid #e2e8f0' }}
+              >
+                Annuler
+              </button>
+              <button onClick={handleSubmitApply} disabled={applySubmitting}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg,#4a90d9,#2563eb)', boxShadow: '0 4px 12px rgba(74,144,217,0.3)' }}
+              >
+                {applySubmitting && <Loader2 size={13} className="animate-spin" />}
+                {applySubmitting ? 'Envoi...' : 'Envoyer ma candidature'}
+              </button>
             </div>
           </div>
         </div>

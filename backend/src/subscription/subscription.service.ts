@@ -229,12 +229,16 @@ export class SubscriptionService {
         wiseReference: reference,
         pendingAmount: amount,
         pendingCurrency: currency,
+        pendingPlan: plan,
+        pendingInterval: interval,
       },
       update: {
         paymentProvider: PaymentProvider.WISE,
         wiseReference: reference,
         pendingAmount: amount,
         pendingCurrency: currency,
+        pendingPlan: plan,
+        pendingInterval: interval,
       },
     });
 
@@ -296,11 +300,11 @@ export class SubscriptionService {
       );
     }
 
-    const intervalMonths = sub.pendingAmount && PLAN_PRICES[sub.plan]?.yearly === sub.pendingAmount ? 12 : 1;
+    const intervalMonths = sub.pendingInterval === 'yearly' ? 12 : 1;
     const periodEnd = new Date();
     periodEnd.setMonth(periodEnd.getMonth() + intervalMonths);
 
-    const activatedPlan = sub.plan !== PlanType.FREE ? sub.plan : PlanType.PRO;
+    const activatedPlan = sub.pendingPlan ?? PlanType.PRO;
 
     await this.prisma.$transaction([
       this.prisma.subscription.update({
@@ -312,6 +316,8 @@ export class SubscriptionService {
           cancelAtPeriodEnd: false,
           lastPaymentDate: new Date(),
           wiseReference: this.wiseService.generateReference(sub.userId),
+          pendingPlan: null,
+          pendingInterval: null,
         },
       }),
       this.prisma.user.update({

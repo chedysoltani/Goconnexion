@@ -46,6 +46,12 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     }
   }
 
+  static emitToAll(event: string, data: any) {
+    if (MessagingGateway.instance && MessagingGateway.instance.server) {
+      MessagingGateway.instance.server.emit(event, data);
+    }
+  }
+
   async handleConnection(client: Socket) {
     try {
       // Priorité : cookie httpOnly gc_access → auth.token (legacy) → query.token
@@ -77,40 +83,17 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     console.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('joinConversation')
-  handleJoinConversation(
-    @ConnectedSocket() client: Socket,
-    @MessageBody('conversationId') conversationId: string,
-  ) {
-    client.join(conversationId);
-    console.log(`User ${client.data.user?.sub} joined conversation: ${conversationId}`);
-    return { status: 'joined', conversationId };
-  }
-
-  @SubscribeMessage('leaveConversation')
-  handleLeaveConversation(
-    @ConnectedSocket() client: Socket,
-    @MessageBody('conversationId') conversationId: string,
-  ) {
-    client.leave(conversationId);
-    console.log(`User ${client.data.user?.sub} left conversation: ${conversationId}`);
-    return { status: 'left', conversationId };
-  }
-
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { conversationId: string; content: string },
   ) {
     const senderId = client.data.user.sub;
-    const message = await this.messagingService.sendMessage(
+    // messagingService.sendMessage diffuse déjà le 'newMessage' à chaque participant via MessagingGateway.emitToUser
+    return this.messagingService.sendMessage(
       data.conversationId,
       senderId,
       data.content,
     );
-
-    // Broadcast the message to everyone in the room (including sender)
-    this.server.to(data.conversationId).emit('newMessage', message);
-    return message;
   }
 }

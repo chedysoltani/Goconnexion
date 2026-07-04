@@ -40,6 +40,7 @@ export default function SignupForm() {
     email: '', password: '', firstName: '', lastName: '',
     role: 'user', profile: { bio: '' },
   });
+  const [referralCode, setReferralCode] = useState('');
 
   useEffect(() => {
     const r = searchParams.get('role') as UserRole;
@@ -47,6 +48,8 @@ export default function SignupForm() {
       setRole(r);
       setForm((p) => ({ ...p, role: r }));
     }
+    const ref = searchParams.get('ref');
+    if (ref) setReferralCode(ref);
   }, [searchParams]);
 
   const upd = (field: string, value: any) => {
@@ -99,6 +102,10 @@ export default function SignupForm() {
     setGlobalError('');
     try {
       await api.auth.register(form);
+      if (referralCode.trim()) {
+        // Best-effort : un code invalide/expiré ne doit pas bloquer la création du compte.
+        await api.referral.registerReferral(referralCode.trim()).catch(() => {});
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setGlobalError(err.message || 'Une erreur est survenue.');
@@ -190,6 +197,11 @@ export default function SignupForm() {
                   <input type="password" placeholder="Minimum 8 caractères" value={form.password}
                     onChange={(e) => upd('password', e.target.value)}
                     className={`input-dark ${errors.password ? 'error' : ''}`} />
+                </DarkField>
+                <DarkField label="Code de parrainage (optionnel)">
+                  <input type="text" placeholder="Ex : JEAN-A1B2C3" value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    className="input-dark" />
                 </DarkField>
               </div>
             )}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { io } from 'socket.io-client';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import { FeedSkeleton } from '@/components/ui/skeleton';
@@ -132,6 +133,13 @@ function PostCard({
   const [localLikeCount, setLocalLikeCount] = useState(post.likes.length);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Resynchronise l'état local quand les likes du post changent (ex: mise à jour reçue
+  // en temps réel via socket pour un like posé par un autre utilisateur).
+  useEffect(() => {
+    setLocalLiked(post.likes.some(l => l.userId === currentUserId));
+    setLocalLikeCount(post.likes.length);
+  }, [post.likes, currentUserId]);
 
   const roleBadge = getRoleBadge(post.author.role);
 
@@ -666,7 +674,7 @@ function EmptyState({ filter }: { filter: 'public' | 'profile' }) {
       <p className="text-[12.5px] text-slate-400 max-w-xs mx-auto leading-relaxed">
         {filter === 'profile'
           ? 'Partagez votre première publication pour la voir ici.'
-          : 'Connectez-vous à des professionnels pour enrichir votre fil.'}
+          : 'Soyez le premier à publier quelque chose ici !'}
       </p>
     </motion.div>
   );
@@ -862,6 +870,33 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
   };
 
   useEffect(() => { fetchFeed(); }, [user]);
+
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001', {
+      withCredentials: true,
+      transports: ['websocket'],
+    });
+
+    socket.on('postLikeUpdated', ({ postId, userId, liked }: { postId: string; userId: string; liked: boolean }) => {
+      setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId) return p;
+        const already = p.likes.some((l) => l.userId === userId);
+        if (liked && !already) return { ...p, likes: [...p.likes, { userId }] };
+        if (!liked && already) return { ...p, likes: p.likes.filter((l) => l.userId !== userId) };
+        return p;
+      }));
+    });
+
+    socket.on('postCommentAdded', ({ postId, comment }: { postId: string; comment: FeedComment }) => {
+      setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId) return p;
+        if (p.comments.some((c) => c.id === comment.id)) return p;
+        return { ...p, comments: [...p.comments, comment] };
+      }));
+    });
+
+    return () => { socket.disconnect(); };
+  }, []);
 
   const filtered = posts.filter(p =>
     activeFilter === 'profile' ? p.author.id === user?.id : true

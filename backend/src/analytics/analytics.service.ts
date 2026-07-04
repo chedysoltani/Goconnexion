@@ -8,16 +8,24 @@ export class AnalyticsService {
   async getEarnings(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { freelancerProfile: true },
+      include: { freelancerProfile: true, entrepreneurProfile: true },
     });
 
-    if (!user?.freelancerProfile) {
-      return { earnings: [], totalPaid: 0, totalPending: 0 };
+    if (user?.freelancerProfile) {
+      return this.getFreelancerEarnings(user.freelancerProfile.id);
     }
 
+    if (user?.entrepreneurProfile) {
+      return this.getEntrepreneurSpending(user.entrepreneurProfile.id);
+    }
+
+    return { earnings: [], totalPaid: 0, totalPending: 0 };
+  }
+
+  private async getFreelancerEarnings(freelancerProfileId: string) {
     const applications = await this.prisma.projectApplication.findMany({
       where: {
-        freelancerId: user.freelancerProfile.id,
+        freelancerId: freelancerProfileId,
         status: { in: ['ACCEPTED', 'PENDING'] },
       },
       include: {
@@ -47,6 +55,50 @@ export class AnalyticsService {
       project: app.project.title,
     }));
 
+    return this.withTotals(earnings);
+  }
+
+  // Pendant de getFreelancerEarnings côté Entrepreneur : "revenus" devient "budget engagé"
+  // sur ses propres projets — payé une fois qu'un freelancer est accepté, en attente sinon.
+  private async getEntrepreneurSpending(entrepreneurProfileId: string) {
+    const projects = await this.prisma.project.findMany({
+      where: { ownerId: entrepreneurProfileId },
+      include: {
+        applications: {
+          where: { status: 'ACCEPTED' },
+          include: {
+            freelancer: {
+              include: { user: { select: { firstName: true, lastName: true } } },
+            },
+          },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const earnings = projects.map((project) => {
+      const accepted = project.applications[0];
+      return {
+        id: project.id,
+        source: project.title,
+        amount: project.budget ?? 0,
+        date: project.updatedAt,
+        status: accepted ? 'paid' : 'pending',
+        client: {
+          name: accepted
+            ? `${accepted.freelancer.user.firstName} ${accepted.freelancer.user.lastName}`
+            : 'Recherche en cours',
+          company: '',
+        },
+        project: project.title,
+      };
+    });
+
+    return this.withTotals(earnings);
+  }
+
+  private withTotals(earnings: Array<{ amount: number; status: string }>) {
     const totalPaid = earnings
       .filter((e) => e.status === 'paid')
       .reduce((s, e) => s + e.amount, 0);

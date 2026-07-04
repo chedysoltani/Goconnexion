@@ -101,9 +101,16 @@ export const api = {
     me: () => request('/auth/me'),
 
     refresh: () => request('/auth/refresh', { method: 'POST' }),
+
+    forgotPassword: (email: string) =>
+      request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+    resetPassword: (token: string, password: string) =>
+      request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
   },
 
   users: {
+    list: () => request('/users'),
     suggestions: () => request('/users/suggestions'),
     updateProfile: (data: any) =>
       request('/users/profile', { method: 'PUT', body: JSON.stringify(data) }),
