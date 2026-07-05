@@ -4,6 +4,24 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+// Le vrai JWT ne quitte jamais le cookie httpOnly cross-domain (api.goconnexions.com).
+// Next.js middleware.ts tourne sur le domaine du frontend (goconnexion.vercel.app) et ne peut
+// donc pas voir ce cookie cross-domain — il a seulement besoin de savoir "session active ou non"
+// pour ses redirections. On pose ici un simple marqueur, jamais le token, pour ne pas créer une
+// copie du JWT accessible en JS (donc volable via XSS et rejouable via Authorization: Bearer).
+const CLIENT_SESSION_COOKIE = 'gc_access';
+const CLIENT_SESSION_MAX_AGE = 24 * 60 * 60; // aligné sur la durée de vie de l'access token
+
+function setClientSessionMarker() {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${CLIENT_SESSION_COOKIE}=1; path=/; max-age=${CLIENT_SESSION_MAX_AGE}; SameSite=Lax`;
+}
+
+function clearClientSessionMarker() {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${CLIENT_SESSION_COOKIE}=; path=/; max-age=0`;
+}
+
 async function request(endpoint: string, options: RequestInit = {}, retry = true): Promise<any> {
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
@@ -30,6 +48,7 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
         if (refreshData.user && typeof window !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(refreshData.user));
         }
+        setClientSessionMarker();
         return request(endpoint, options, false);
       }
     } catch {
@@ -39,6 +58,7 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
     // Session définitivement expirée — nettoyer et rediriger
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
+      clearClientSessionMarker();
       // Appel logout pour que le backend efface les cookies httpOnly
       await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
       window.location.href = '/auth/login';
@@ -64,6 +84,7 @@ export const api = {
       // Les cookies sont posés par le backend — on stocke seulement l'objet user
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
+        setClientSessionMarker();
       }
       return data;
     },
@@ -86,6 +107,7 @@ export const api = {
       });
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
+        setClientSessionMarker();
       }
       return data;
     },
@@ -95,6 +117,7 @@ export const api = {
       await request('/auth/logout', { method: 'POST' }).catch(() => {});
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user');
+        clearClientSessionMarker();
       }
     },
 

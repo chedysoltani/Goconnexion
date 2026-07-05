@@ -34,7 +34,7 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: any) {
     const data = await this.authService.register(dto);
     this.setAuthCookies(res, data.accessToken, data.refreshToken);
-    return { user: data.user };
+    return { user: data.user, accessToken: data.accessToken };
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: any) {
     const data = await this.authService.login(dto);
     this.setAuthCookies(res, data.accessToken, data.refreshToken);
-    return { user: data.user };
+    return { user: data.user, accessToken: data.accessToken };
   }
 
   // ── Refresh ────────────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export class AuthController {
     }
     const data = await this.authService.refresh(refreshToken);
     this.setAuthCookies(res, data.accessToken, data.refreshToken);
-    return { user: data.user };
+    return { user: data.user, accessToken: data.accessToken };
   }
 
   // ── Logout ─────────────────────────────────────────────────────────────────
