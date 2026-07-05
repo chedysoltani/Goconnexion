@@ -107,6 +107,9 @@ export const api = {
 
     resetPassword: (token: string, password: string) =>
       request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+
+    verifyEmail: (token: string) =>
+      request(`/auth/verify-email?token=${encodeURIComponent(token)}`),
   },
 
   users: {
