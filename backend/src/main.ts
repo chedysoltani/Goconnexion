@@ -41,7 +41,24 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Requêtes sans header Origin (curl, serveur-à-serveur, apps mobiles) — pas soumises à la CORS du navigateur
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Autorise tous les sous-domaines *.vercel.app (previews de déploiement)
+      try {
+        const hostname = new URL(origin).hostname;
+        if (hostname === 'vercel.app' || hostname.endsWith('.vercel.app')) {
+          return callback(null, true);
+        }
+      } catch {
+        // origin non parsable — refusé ci-dessous
+      }
+
+      return callback(new Error(`Origin ${origin} non autorisée par CORS`), false);
+    },
     credentials: true,
   });
 
