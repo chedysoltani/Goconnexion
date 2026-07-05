@@ -407,8 +407,18 @@ function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () 
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [showImage, setShowImage] = useState(false);
+  const [showLink, setShowLink] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
   const [posting, setPosting] = useState(false);
   const [focused, setFocused] = useState(false);
+
+  const handleAddLink = () => {
+    const url = linkUrl.trim();
+    if (!url) return;
+    setContent((c) => (c ? `${c}\n${url}` : url));
+    setLinkUrl('');
+    setShowLink(false);
+  };
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -432,6 +442,8 @@ function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () 
       setContent('');
       setImageUrl('');
       setShowImage(false);
+      setLinkUrl('');
+      setShowLink(false);
       onCreated();
     } finally {
       setPosting(false);
@@ -531,6 +543,51 @@ function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () 
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Link section */}
+          <AnimatePresence>
+            {showLink && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{ overflow: 'hidden', marginTop: 10 }}
+              >
+                <div
+                  className="rounded-xl p-3 flex items-center gap-2"
+                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
+                >
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={linkUrl}
+                    onChange={e => setLinkUrl(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
+                    className="flex-1 px-2.5 py-1.5 rounded-lg text-[11.5px] outline-none min-w-0"
+                    style={{ background: 'white', border: '1px solid #e2e8f0', color: '#0f172a' }}
+                  />
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleAddLink}
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-blue-600 flex-shrink-0"
+                    style={{ background: 'white', border: '1px solid #e2e8f0' }}
+                  >
+                    Ajouter
+                  </motion.button>
+                  <button
+                    type="button"
+                    onClick={() => { setLinkUrl(''); setShowLink(false); }}
+                    className="text-[11px] font-medium text-red-400 hover:text-red-500 flex-shrink-0"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Footer */}
@@ -551,6 +608,7 @@ function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () 
             </motion.button>
             <motion.button
               type="button"
+              onClick={() => setShowLink(v => !v)}
               whileHover={{ background: 'rgba(59,130,246,0.06)' }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold text-slate-500"
@@ -682,6 +740,15 @@ function EmptyState({ filter }: { filter: 'public' | 'profile' }) {
 
 // ── RightSidebar ───────────────────────────────────────────────
 function RightSidebar({ user }: { user: User | null }) {
+  const [connectionsCount, setConnectionsCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    api.connections.friends()
+      .then((friends: any[]) => setConnectionsCount(friends.length))
+      .catch(() => setConnectionsCount(null));
+  }, [user]);
+
   return (
     <div className="space-y-4" style={{ width: 240, flexShrink: 0 }}>
       {/* Profile card */}
@@ -731,8 +798,8 @@ function RightSidebar({ user }: { user: User | null }) {
               style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}
             >
               {[
-                { label: 'Vues du profil', value: '142', icon: <BarChart2 size={12} /> },
-                { label: 'Connexions', value: '38', icon: <UserPlus size={12} /> },
+                { label: 'Vues du profil', value: '—', icon: <BarChart2 size={12} /> },
+                { label: 'Connexions', value: connectionsCount === null ? '—' : String(connectionsCount), icon: <UserPlus size={12} /> },
               ].map(stat => (
                 <div key={stat.label} className="text-center">
                   <div className="text-[18px] font-bold text-slate-800">{stat.value}</div>
