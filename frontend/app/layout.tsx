@@ -4,6 +4,7 @@ import { DM_Sans, Fraunces } from 'next/font/google';
 import '../styles/index.css';
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n/I18nContext';
+import { getSiteUrl } from '@/lib/site-url';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -27,7 +28,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(getSiteUrl()),
   title: 'GoConnexions — Networking That Actually Works',
   description:
     'GoConnexions helps entrepreneurs and freelancers build real professional relationships through smart check-ins, follow-ups, and human-centered networking tools.',
