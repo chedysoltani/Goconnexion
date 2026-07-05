@@ -12,6 +12,10 @@ const PRICE_MAP: Record<string, Record<BillingInterval, string>> = {
     monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? '',
     yearly:  process.env.STRIPE_PRICE_BUSINESS_YEARLY  ?? '',
   },
+  PREMIUM_INCUBATEUR: {
+    monthly: process.env.STRIPE_PRICE_INCUBATEUR_MONTHLY ?? '',
+    yearly:  process.env.STRIPE_PRICE_INCUBATEUR_YEARLY  ?? '',
+  },
 };
 
 @Injectable()

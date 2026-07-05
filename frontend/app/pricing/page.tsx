@@ -9,7 +9,7 @@ import {
   FileText, BarChart3, Video, Globe, Lock,
 } from 'lucide-react';
 
-type PlanId = 'FREE' | 'PRO' | 'BUSINESS';
+type PlanId = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_INCUBATEUR';
 type Billing = 'monthly' | 'yearly';
 
 interface Feature {
@@ -46,7 +46,7 @@ const PLANS: {
       { text: '1 projet actif', available: true, icon: <Zap size={13} /> },
       { text: '10 connexions', available: true, icon: <Users size={13} /> },
       { text: '50 messages / mois', available: true, icon: <MessageSquare size={13} /> },
-      { text: '1 post Incubateur / mois', available: true, icon: <Globe size={13} /> },
+      { text: 'Espace Incubateur', available: false },
       { text: 'Analytics de profil', available: false },
       { text: 'Contrats électroniques', available: false },
       { text: 'Paiement sécurisé', available: false },
@@ -70,7 +70,7 @@ const PLANS: {
       { text: '5 projets actifs', available: true, icon: <Zap size={13} /> },
       { text: 'Connexions illimitées', available: true, highlight: true, icon: <Users size={13} /> },
       { text: 'Messagerie illimitée', available: true, highlight: true, icon: <MessageSquare size={13} /> },
-      { text: 'Incubateur illimité', available: true, icon: <Globe size={13} /> },
+      { text: 'Espace Incubateur', available: false },
       { text: 'Analytics de profil', available: true, highlight: true, icon: <BarChart3 size={13} /> },
       { text: 'Contrats & signatures', available: true, icon: <FileText size={13} /> },
       { text: 'Paiement sécurisé (escrow)', available: true, icon: <Shield size={13} /> },
@@ -308,18 +308,18 @@ export default function PricingPage() {
                       </AnimatePresence>
                       {displayPrice > 0 && (
                         <div className="pb-1.5">
-                          <span className="text-[15px] font-semibold" style={{ color: '#94a3b8' }}>€</span>
+                          <span className="text-[15px] font-semibold" style={{ color: '#94a3b8' }}>CAD</span>
                           <span className="text-[12px] ml-0.5 block leading-none" style={{ color: '#cbd5e1' }}>/ mois</span>
                         </div>
                       )}
                       {displayPrice === 0 && (
-                        <span className="pb-2 text-[15px]" style={{ color: '#94a3b8' }}>€ / mois</span>
+                        <span className="pb-2 text-[15px]" style={{ color: '#94a3b8' }}>CAD / mois</span>
                       )}
                     </div>
 
                     {billing === 'yearly' && plan.price.yearly > 0 && (
                       <p className="text-[11px] mb-4" style={{ color: '#94a3b8' }}>
-                        Facturé {plan.price.yearly}€/an
+                        Facturé {plan.price.yearly} CAD/an
                         <span className="ml-1.5 font-bold" style={{ color: '#10b981' }}>
                           (-{discount}%)
                         </span>
@@ -408,6 +408,123 @@ export default function PricingPage() {
               );
             })}
           </div>
+
+          {/* PREMIUM Incubateur — plan spécialisé */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-20"
+          >
+            <div className="text-center mb-8">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
+                style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#8b5cf6' }}>
+                <Sparkles size={11} />
+                Espace Exclusif
+              </span>
+            </div>
+
+            <div
+              className="relative rounded-3xl overflow-hidden p-8 md:p-12"
+              style={{
+                background: 'linear-gradient(135deg, #080f1a 0%, #0a1628 50%, #0d1f38 100%)',
+                border: '1px solid rgba(139,92,246,0.25)',
+                boxShadow: '0 0 0 1px rgba(139,92,246,0.1), 0 24px 64px rgba(0,0,0,0.3)',
+              }}
+            >
+              {/* Dot grid */}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle, rgba(139,92,246,0.1) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+              {/* Glow */}
+              <div className="absolute top-0 right-0 w-96 h-96 pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }} />
+
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
+                {/* Left */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                      <Sparkles size={22} color="#a78bfa" />
+                    </div>
+                    <div>
+                      <h3 className="text-[20px] font-bold text-white">PREMIUM Incubateur</h3>
+                      <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Accès à l'espace communautaire exclusif</p>
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3 mt-6">
+                    {[
+                      'Espace Incubateur illimité',
+                      'Posts, ressources & discussions',
+                      'Communauté de membres vérifiés',
+                      'Connexions & messages illimités',
+                      'Analytics & boost de profil',
+                      'Événements exclusifs',
+                      'Accès API complet',
+                      'Badge INCUBATEUR visible',
+                    ].map((feat) => (
+                      <div key={feat} className="flex items-center gap-2.5">
+                        <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'rgba(139,92,246,0.2)' }}>
+                          <Check size={9} color="#a78bfa" strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[12.5px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right — pricing */}
+                <div className="shrink-0 text-center md:text-right">
+                  <div className="inline-flex flex-col items-center md:items-end p-6 rounded-2xl"
+                    style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
+
+                    <div className="flex items-end gap-1.5 mb-1">
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={`incubateur-${billing}`}
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-[42px] font-bold leading-none tracking-tight text-white"
+                        >
+                          {billing === 'yearly' ? Math.round(890 / 12) : 99}
+                        </motion.span>
+                      </AnimatePresence>
+                      <div className="pb-2">
+                        <span className="text-[15px] font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>CAD</span>
+                        <span className="text-[12px] ml-0.5 block leading-none" style={{ color: 'rgba(255,255,255,0.3)' }}>/ mois</span>
+                      </div>
+                    </div>
+
+                    {billing === 'yearly' && (
+                      <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        Facturé 890 CAD/an
+                        <span className="ml-1.5 font-bold" style={{ color: '#10b981' }}>(-25%)</span>
+                      </p>
+                    )}
+                    {billing === 'monthly' && <div className="mb-4" />}
+
+                    <motion.a
+                      href={`/billing/checkout?plan=PREMIUM_INCUBATEUR&interval=${billing}&price=${billing === 'yearly' ? Math.round(890 / 12) : 99}`}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="px-8 py-3 rounded-2xl text-[14px] font-bold text-white transition-all"
+                      style={{ background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', boxShadow: '0 6px 24px rgba(139,92,246,0.4)' }}
+                    >
+                      Rejoindre l'Incubateur
+                    </motion.a>
+
+                    <p className="text-[10px] mt-3" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                      Annulation à tout moment
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Social proof */}
           <motion.div
