@@ -33,8 +33,15 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Enable CORS — credentials: true obligatoire pour que les cookies cross-origin fonctionnent
+  // FRONTEND_URL peut contenir plusieurs origines séparées par des virgules
+  // (ex: "https://goconnexion.vercel.app,https://goconnexions.com")
+  const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 

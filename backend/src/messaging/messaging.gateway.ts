@@ -21,9 +21,16 @@ function extractCookieToken(cookieHeader: string): string | null {
   return null;
 }
 
+// FRONTEND_URL peut contenir plusieurs origines séparées par des virgules
+// (ex: "https://goconnexion.vercel.app,https://goconnexions.com")
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
+
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   },
 })
