@@ -147,7 +147,7 @@ export class SubscriptionService {
 
   async createCheckoutSession(
     userId: string,
-    plan: 'PRO' | 'BUSINESS',
+    plan: 'PRO' | 'BUSINESS' | 'PREMIUM_INCUBATEUR',
     interval: BillingInterval,
     provider: 'stripe' | 'wise' = 'stripe',
   ) {
