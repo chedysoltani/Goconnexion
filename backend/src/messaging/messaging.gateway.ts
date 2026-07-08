@@ -21,16 +21,29 @@ function extractCookieToken(cookieHeader: string): string | null {
   return null;
 }
 
-// FRONTEND_URL peut contenir plusieurs origines séparées par des virgules
-// (ex: "https://goconnexion.vercel.app,https://goconnexions.com")
-const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+const explicitOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
   .split(',')
   .map((url) => url.trim())
   .filter(Boolean);
 
+function wsOrigin(
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void,
+) {
+  if (!origin) return callback(null, true);
+  if (explicitOrigins.includes(origin)) return callback(null, true);
+  try {
+    const hostname = new URL(origin).hostname;
+    if (hostname === 'vercel.app' || hostname.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+  } catch { /* origin non parsable */ }
+  return callback(new Error(`Origin ${origin} non autorisée`), false);
+}
+
 @WebSocketGateway({
   cors: {
-    origin: allowedOrigins,
+    origin: wsOrigin,
     credentials: true,
   },
 })
