@@ -158,6 +158,7 @@ export default function VideoCallModal({
 
       // Flush ICE candidates that arrived before the remote description was set
       for (const c of pendingCandidatesRef.current) {
+        if (!pc || pc.signalingState === 'closed') break;
         try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
       }
       pendingCandidatesRef.current = [];
@@ -184,12 +185,13 @@ export default function VideoCallModal({
 
     const onAnswered = async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
       const pc = pcRef.current;
-      // Guard: only apply answer when we are waiting for one
-      if (!pc || pc.signalingState !== 'have-local-offer') return;
+      if (!pc || pc.signalingState === 'closed') return;
+      if (pc.signalingState !== 'have-local-offer') return;
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         // Flush ICE candidates that arrived before the answer
         for (const c of pendingCandidatesRef.current) {
+          if (pc.signalingState === 'closed') break;
           try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
         }
         pendingCandidatesRef.current = [];
@@ -210,7 +212,7 @@ export default function VideoCallModal({
 
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
-      if (!pc || !candidate) return;
+      if (!pc || !candidate || pc.signalingState === 'closed') return;
       // Queue candidates until remote description is set to avoid InvalidStateError
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
