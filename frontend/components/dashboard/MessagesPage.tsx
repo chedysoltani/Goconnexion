@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
@@ -580,8 +581,8 @@ export default function MessagesPage({ user }: MessagesPageProps) {
         </div>
       )}
 
-      {/* Video / Audio Call Modal */}
-      {activeCall && socketRef.current && (
+      {/* Video / Audio Call Modal — rendered via portal to escape Framer Motion transform stacking context */}
+      {activeCall && socketRef.current && typeof document !== 'undefined' && createPortal(
         <VideoCallModal
           socket={socketRef.current}
           targetUser={activeCall.target}
@@ -589,7 +590,8 @@ export default function MessagesPage({ user }: MessagesPageProps) {
           direction={activeCall.direction}
           incomingOffer={activeCall.offer}
           onClose={() => setActiveCall(null)}
-        />
+        />,
+        document.body
       )}
 
       {/* New Chat Modal */}
