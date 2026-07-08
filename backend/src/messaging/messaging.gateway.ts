@@ -122,6 +122,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     @MessageBody() data: { targetUserId: string; callType: 'video' | 'audio'; offer: any },
   ) {
     const caller = client.data.user;
+    console.log(`[WS] video-call-request from caller=${caller?.sub} → relaying incoming-call to room=${data.targetUserId} type=${data.callType}`);
     this.server.to(data.targetUserId).emit('incoming-call', {
       callerId: caller.sub,
       callerFirstName: caller.firstName ?? '',
@@ -130,6 +131,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       callType: data.callType,
       offer: data.offer,
     });
+    console.log(`[WS] incoming-call emitted to room ${data.targetUserId}`);
   }
 
   @SubscribeMessage('video-call-answer')
@@ -137,7 +139,10 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { callerId: string; answer: any },
   ) {
+    const calleeId = client.data.user?.sub ?? 'unknown';
+    console.log(`[WS] video-call-answer received from callee=${calleeId} → relaying call-answered to caller room=${data.callerId}`);
     this.server.to(data.callerId).emit('call-answered', { answer: data.answer });
+    console.log(`[WS] call-answered emitted to room ${data.callerId}`);
   }
 
   @SubscribeMessage('video-call-reject')
