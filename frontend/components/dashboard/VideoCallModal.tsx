@@ -145,15 +145,22 @@ export default function VideoCallModal({
   }, [getMedia, buildPeerConnection, socket, targetUser.id, callType, onClose]);
 
   const acceptIncomingCall = useCallback(async () => {
-    if (!incomingOffer) return;
+    console.log('answer clicked', { incomingOffer, callStatus });
+    if (!incomingOffer) {
+      console.warn('[WebRTC] acceptIncomingCall: incomingOffer is null — cannot answer');
+      return;
+    }
     try {
+      console.log('[WebRTC] requesting media...');
       const stream = await getMedia();
+      console.log('[WebRTC] media granted, tracks:', stream.getTracks().map(t => t.kind));
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
       const pc = buildPeerConnection();
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
+      console.log('[WebRTC] setRemoteDescription (offer)');
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer));
 
       // Flush ICE candidates that arrived before the remote description was set
@@ -164,13 +171,15 @@ export default function VideoCallModal({
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log('[WebRTC] answer created, emitting video-call-answer to', targetUser.id);
 
       socket.emit('video-call-answer', { callerId: targetUser.id, answer });
-    } catch {
+    } catch (err) {
+      console.error('[WebRTC] acceptIncomingCall error:', err);
       setCallStatus('error');
       setTimeout(onClose, 2000);
     }
-  }, [incomingOffer, getMedia, buildPeerConnection, socket, targetUser.id, onClose]);
+  }, [incomingOffer, callStatus, getMedia, buildPeerConnection, socket, targetUser.id, onClose]);
 
   const rejectCall = useCallback(() => {
     socket.emit('video-call-reject', { callerId: targetUser.id });
