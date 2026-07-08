@@ -458,7 +458,7 @@ function CreatePostCard({ user, onCreated }: { user: User | null; onCreated: () 
     if (!file) return;
     try {
       const res = await api.uploads.upload(file);
-      setImageUrl(`http://localhost:3001${res.file.path}`);
+      setImageUrl(`${process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001'}${res.file.path}`);
     } catch { }
   };
 

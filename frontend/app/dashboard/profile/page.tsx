@@ -169,7 +169,7 @@ export default function ProfilePage() {
     try {
       setIsSaving(true);
       const res = await api.uploads.upload(file);
-      const avatarUrl = `http://localhost:3001${res.file.path}`;
+      const avatarUrl = `${process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001'}${res.file.path}`;
       await api.users.updateProfile({ avatarUrl });
       setUser(prev => prev ? { ...prev, avatarUrl } : null);
       const stored = localStorage.getItem('user');
@@ -191,7 +191,7 @@ export default function ProfilePage() {
     try {
       setIsSaving(true);
       const res = await api.uploads.upload(file);
-      setFreelancerData(prev => ({ ...prev, cvUrl: `http://localhost:3001${res.file.path}` }));
+      setFreelancerData(prev => ({ ...prev, cvUrl: `${process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001'}${res.file.path}` }));
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
     } catch (err: any) {
