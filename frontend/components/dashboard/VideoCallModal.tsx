@@ -279,7 +279,7 @@ export default function VideoCallModal({
                 {targetUser.firstName} {targetUser.lastName}
               </h3>
               <p
-                className={`text-sm font-medium ${callStatus === 'connected' ? 'text-emerald-400' : callStatus === 'rejected' || callStatus === 'error' ? 'text-red-400' : 'text-white/50'}`}
+                className={`text-sm font-medium ${callStatus === 'rejected' || callStatus === 'error' ? 'text-red-400' : 'text-white/50'}`}
               >
                 {statusLabel[callStatus]}
               </p>
