@@ -133,17 +133,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
     { id: 'analytics',      label: 'Analytiques',      icon: <IconAnalytics /> },
   ];
 
-  const roleItems: NavItem[] = role === 'entrepreneur'
-    ? [
-        { id: 'team',        label: 'Équipe',      icon: <IconConnections />, href: '/dashboard/team' },
-        { id: 'recruitment', label: 'Recrutement', icon: <IconProjects />,    href: '/dashboard/recruitment' },
-      ]
-    : role === 'user'
-    ? [
-        { id: 'learning', label: 'Formation',  icon: <IconIncubator />, href: '/dashboard/learning' },
-        { id: 'goals',    label: 'Objectifs',  icon: <IconAnalytics />, href: '/dashboard/goals' },
-      ]
-    : [];
+  const roleItems: NavItem[] = [];
 
   return (
     <motion.aside

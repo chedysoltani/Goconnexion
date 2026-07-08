@@ -120,14 +120,26 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
 
   useEffect(() => { loadProjects(); }, []);
 
-  // Filtre local sur le texte (appel API pour le status)
+  const CATEGORY_KEYWORDS: Record<string, string[]> = {
+    web:       ['web', 'site', 'react', 'angular', 'vue', 'html', 'css', 'frontend', 'backend', 'fullstack', 'next', 'node'],
+    mobile:    ['mobile', 'ios', 'android', 'react native', 'flutter', 'swift', 'kotlin', 'app'],
+    design:    ['design', 'ui', 'ux', 'figma', 'adobe', 'illustrator', 'photoshop', 'branding', 'logo', 'graphique'],
+    marketing: ['marketing', 'seo', 'sem', 'ads', 'social media', 'content', 'email', 'growth', 'community'],
+  };
+
   const displayed = projects.filter(p => {
     const q = searchTerm.toLowerCase();
-    return (
+    const matchText =
       p.title.toLowerCase().includes(q) ||
       p.description.toLowerCase().includes(q) ||
-      p.skills.some(s => s.toLowerCase().includes(q))
-    );
+      p.skills.some(s => s.toLowerCase().includes(q));
+
+    if (!matchText) return false;
+
+    if (activeCategory === 'all') return true;
+    const keywords = CATEGORY_KEYWORDS[activeCategory] ?? [];
+    const allText = [p.title, p.description, ...p.skills].join(' ').toLowerCase();
+    return keywords.some(k => allText.includes(k));
   });
 
   // ── Créer un projet ───────────────────────────────────────────────────

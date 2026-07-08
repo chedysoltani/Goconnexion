@@ -222,7 +222,7 @@ function CreateEventModal({ onClose, onCreated }: { onClose: () => void; onCreat
             </div>
             {!form.isFree && (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Prix (TND)</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Prix (CAD)</label>
                 <input type="number" min="0" step="0.01" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   value={form.price} onChange={e => setForm(p => ({...p, price: e.target.value}))} />
               </div>
@@ -297,7 +297,7 @@ function EventDetailModal({ event, currentUserId, registered, onRegister, onClos
               </span>
               {event.isFree
                 ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
-                : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} TND</span>
+                : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} CAD</span>
               }
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ color: '#94a3b8' }}
@@ -443,7 +443,7 @@ function EventCard({ event, currentUserId, onRegister, registered, onOpen }: {
             </span>
             {event.isFree
               ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
-              : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} TND</span>
+              : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} CAD</span>
             }
           </div>
         </div>

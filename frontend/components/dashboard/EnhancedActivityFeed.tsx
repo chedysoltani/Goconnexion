@@ -133,6 +133,7 @@ function PostCard({
   const [localLikeCount, setLocalLikeCount] = useState(post.likes.length);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
 
   // Resynchronise l'état local quand les likes du post changent (ex: mise à jour reçue
   // en temps réel via socket pour un like posé par un autre utilisateur).
@@ -158,6 +159,34 @@ function PostCard({
     setCommentText('');
   };
 
+  const handleShare = async () => {
+    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Post de ${post.author.firstName} ${post.author.lastName}`,
+          text: post.content.slice(0, 100),
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
+      }
+    } catch { }
+  };
+
+  const handleSave = async () => {
+    const next = !saved;
+    setSaved(next);
+    try {
+      const { api } = await import('@/lib/api');
+      await api.feed.toggleSave(post.id);
+    } catch {
+      setSaved(!next);
+    }
+  };
+
   const actions = [
     {
       label: "J'aime",
@@ -181,18 +210,18 @@ function PostCard({
       onClick: () => setShowComments(v => !v),
     },
     {
-      label: 'Partager',
-      active: false,
+      label: shareToast ? 'Lien copié !' : 'Partager',
+      active: shareToast,
       activeColor: '#10b981',
-      icon: <Share2 size={15} className="text-slate-400" />,
-      onClick: () => { },
+      icon: <Share2 size={15} className={shareToast ? 'text-emerald-500' : 'text-slate-400'} />,
+      onClick: handleShare,
     },
     {
       label: 'Sauvegarder',
       active: saved,
       activeColor: '#f59e0b',
       icon: <Bookmark size={15} className={saved ? 'fill-amber-500 text-amber-500' : 'text-slate-400'} />,
-      onClick: () => setSaved(v => !v),
+      onClick: handleSave,
     },
   ];
 
@@ -739,14 +768,20 @@ function EmptyState({ filter }: { filter: 'public' | 'profile' }) {
 }
 
 // ── RightSidebar ───────────────────────────────────────────────
+interface TrendingTag { tag: string; count: number }
+
 function RightSidebar({ user }: { user: User | null }) {
   const [connectionsCount, setConnectionsCount] = useState<number | null>(null);
+  const [trending, setTrending] = useState<TrendingTag[]>([]);
 
   useEffect(() => {
     if (!user) return;
     api.connections.friends()
       .then((friends: any[]) => setConnectionsCount(friends.length))
       .catch(() => setConnectionsCount(null));
+    api.feed.trending()
+      .then((tags: TrendingTag[]) => setTrending(tags))
+      .catch(() => setTrending([]));
   }, [user]);
 
   return (
@@ -831,21 +866,27 @@ function RightSidebar({ user }: { user: User | null }) {
           <TrendingUp size={14} className="text-blue-500" />
           <span className="text-[12.5px] font-semibold text-slate-700">Tendances</span>
         </div>
-        {['#NextJS', '#FreelanceLife', '#MVPLaunch', '#GoConnexion'].map((tag, i) => (
-          <div
-            key={tag}
-            className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
-            style={{ borderBottom: i < 3 ? '1px solid #f8fafc' : 'none' }}
-          >
-            <div className="flex items-center gap-1.5 text-blue-600 text-[12px] font-semibold mb-0.5">
-              <Hash size={11} />
-              {tag.slice(1)}
-            </div>
-            <div className="text-[10.5px] text-slate-400">
-              {[48, 31, 27, 19][i]} posts cette semaine
-            </div>
+        {trending.length === 0 ? (
+          <div className="px-4 py-3 text-[11px] text-slate-400">
+            Aucune tendance pour l'instant
           </div>
-        ))}
+        ) : (
+          trending.map((item, i) => (
+            <div
+              key={item.tag}
+              className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
+              style={{ borderBottom: i < trending.length - 1 ? '1px solid #f8fafc' : 'none' }}
+            >
+              <div className="flex items-center gap-1.5 text-blue-600 text-[12px] font-semibold mb-0.5">
+                <Hash size={11} />
+                {item.tag.slice(1)}
+              </div>
+              <div className="text-[10.5px] text-slate-400">
+                {item.count} post{item.count > 1 ? 's' : ''} cette semaine
+              </div>
+            </div>
+          ))
+        )}
       </motion.div>
     </div>
   );

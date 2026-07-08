@@ -146,6 +146,65 @@ export class FeedService {
     }
   }
 
+  async getTrending() {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const posts = await this.prisma.feedPost.findMany({
+      where: { createdAt: { gte: since } },
+      select: { content: true },
+    });
+
+    const counts = new Map<string, number>();
+    const hashtagRegex = /#[\wÀ-ɏ]+/g;
+    for (const post of posts) {
+      const tags = post.content.match(hashtagRegex) ?? [];
+      for (const tag of tags) {
+        const key = tag.toLowerCase();
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([tag, count]) => ({ tag, count }));
+  }
+
+  async toggleSave(postId: string, userId: string) {
+    const existing = await this.prisma.savedPost.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (existing) {
+      await this.prisma.savedPost.delete({
+        where: { userId_postId: { userId, postId } },
+      });
+      return { saved: false };
+    }
+
+    await this.prisma.savedPost.create({ data: { postId, userId } });
+    return { saved: true };
+  }
+
+  async getSavedPosts(userId: string) {
+    const saved = await this.prisma.savedPost.findMany({
+      where: { userId },
+      include: {
+        post: {
+          include: {
+            author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } },
+            likes: { select: { userId: true } },
+            comments: {
+              include: { author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return saved.map((s) => s.post);
+  }
+
   async addComment(postId: string, userId: string, content: string) {
     // Validate post exists
     const post = await this.prisma.feedPost.findUnique({ where: { id: postId } });

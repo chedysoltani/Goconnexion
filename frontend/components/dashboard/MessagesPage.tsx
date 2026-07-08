@@ -5,6 +5,7 @@ import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
 import { Search, Send, Phone, Video, MoreHorizontal, Circle, UserPlus, MessageSquare } from 'lucide-react';
+import VideoCallModal, { IncomingCall } from './VideoCallModal';
 
 interface MessagesPageProps {
   user: User | null;
@@ -58,6 +59,12 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   const [availableUsers, setAvailableUsers] = useState<Participant[]>([]);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [messageLimitError, setMessageLimitError] = useState<string | null>(null);
+  const [activeCall, setActiveCall] = useState<{
+    type: 'video' | 'audio';
+    direction: 'outgoing' | 'incoming';
+    target: Participant;
+    offer?: RTCSessionDescriptionInit;
+  } | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +102,22 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     });
 
     socketRef.current = socket;
+
+    socket.on('incoming-call', (call: IncomingCall) => {
+      // Find or create participant info from available users
+      const callerInfo: Participant = {
+        id: call.callerId,
+        firstName: call.callerFirstName,
+        lastName: call.callerLastName,
+        role: call.callerRole,
+      };
+      setActiveCall({
+        type: call.callType,
+        direction: 'incoming',
+        target: callerInfo,
+        offer: call.offer,
+      });
+    });
 
     socket.on('newMessage', (msg: Message) => {
       // Le message arrive sur le canal personnel de l'utilisateur (toutes ses conversations
@@ -379,13 +402,26 @@ export default function MessagesPage({ user }: MessagesPageProps) {
 
             <div className="flex items-center gap-1">
               {[
-                { icon: <Phone size={15} />, title: 'Appel vocal' },
-                { icon: <Video size={15} />, title: 'Appel vidéo' },
-                { icon: <MoreHorizontal size={15} />, title: 'Plus d\'options' },
+                {
+                  icon: <Phone size={15} />,
+                  title: 'Appel vocal',
+                  onClick: () => activeParticipant && setActiveCall({ type: 'audio', direction: 'outgoing', target: activeParticipant }),
+                },
+                {
+                  icon: <Video size={15} />,
+                  title: 'Appel vidéo',
+                  onClick: () => activeParticipant && setActiveCall({ type: 'video', direction: 'outgoing', target: activeParticipant }),
+                },
+                {
+                  icon: <MoreHorizontal size={15} />,
+                  title: "Plus d'options",
+                  onClick: undefined,
+                },
               ].map((action, i) => (
                 <button
                   key={i}
                   title={action.title}
+                  onClick={action.onClick}
                   className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150"
                   style={{ color: '#64748b' }}
                   onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#1a2332'; }}
@@ -542,6 +578,18 @@ export default function MessagesPage({ user }: MessagesPageProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Video / Audio Call Modal */}
+      {activeCall && socketRef.current && (
+        <VideoCallModal
+          socket={socketRef.current}
+          targetUser={activeCall.target}
+          callType={activeCall.type}
+          direction={activeCall.direction}
+          incomingOffer={activeCall.offer}
+          onClose={() => setActiveCall(null)}
+        />
       )}
 
       {/* New Chat Modal */}

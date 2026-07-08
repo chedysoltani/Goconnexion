@@ -20,6 +20,7 @@ import AdsPage from '@/components/dashboard/AdsPage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import SupportChatWidget from '@/components/dashboard/SupportChatWidget';
 import PlanBadge from '@/components/ui/PlanBadge';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
@@ -355,6 +356,7 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+      <SupportChatWidget />
     </div>
   );
 }

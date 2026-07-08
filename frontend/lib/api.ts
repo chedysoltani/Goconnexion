@@ -232,11 +232,19 @@ export const api = {
 
   feed: {
     list: () => request('/feed'),
+    trending: () => request('/feed/trending'),
+    saved: () => request('/feed/saved'),
     create: (data: { content: string; imageUrl?: string }) =>
       request('/feed', { method: 'POST', body: JSON.stringify(data) }),
     toggleLike: (id: string) => request(`/feed/${id}/like`, { method: 'POST' }),
+    toggleSave: (id: string) => request(`/feed/${id}/save`, { method: 'POST' }),
     addComment: (id: string, content: string) =>
       request(`/feed/${id}/comment`, { method: 'POST', body: JSON.stringify({ content }) }),
+  },
+
+  support: {
+    submit: (data: { name?: string; email?: string; subject?: string; message: string }) =>
+      request('/support', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   uploads: {

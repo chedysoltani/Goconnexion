@@ -40,6 +40,8 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   static instance: MessagingGateway | null = null;
 
+  private onlineUsers = new Set<string>();
+
   constructor(
     private jwtService: JwtService,
     private messagingService: MessagingService,
@@ -59,9 +61,12 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     }
   }
 
+  static getOnlineUsers(): string[] {
+    return MessagingGateway.instance ? Array.from(MessagingGateway.instance.onlineUsers) : [];
+  }
+
   async handleConnection(client: Socket) {
     try {
-      // Priorité : cookie httpOnly gc_access → auth.token (legacy) → query.token
       const cookieHeader = client.handshake.headers.cookie ?? '';
       const rawToken =
         extractCookieToken(cookieHeader) ||
@@ -79,6 +84,8 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
       client.data.user = payload;
       await client.join(payload.sub);
+      this.onlineUsers.add(payload.sub);
+      this.server.emit('user-online', { userId: payload.sub });
       console.log(`Client connected: ${client.id} (User: ${payload.sub})`);
     } catch (err) {
       console.log(`Connection rejected for client ${client.id}:`, err instanceof Error ? err.message : err);
@@ -87,7 +94,61 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   }
 
   handleDisconnect(client: Socket) {
+    const userId = client.data.user?.sub;
+    if (userId) {
+      this.onlineUsers.delete(userId);
+      this.server.emit('user-offline', { userId });
+    }
     console.log(`Client disconnected: ${client.id}`);
+  }
+
+  // ── WebRTC Signaling ────────────────────────────────────────────
+  @SubscribeMessage('video-call-request')
+  handleVideoCallRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { targetUserId: string; callType: 'video' | 'audio'; offer: any },
+  ) {
+    const caller = client.data.user;
+    this.server.to(data.targetUserId).emit('incoming-call', {
+      callerId: caller.sub,
+      callerFirstName: caller.firstName ?? '',
+      callerLastName: caller.lastName ?? '',
+      callerRole: caller.role ?? 'FREELANCER',
+      callType: data.callType,
+      offer: data.offer,
+    });
+  }
+
+  @SubscribeMessage('video-call-answer')
+  handleVideoCallAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { callerId: string; answer: any },
+  ) {
+    this.server.to(data.callerId).emit('call-answered', { answer: data.answer });
+  }
+
+  @SubscribeMessage('video-call-reject')
+  handleVideoCallReject(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { callerId: string },
+  ) {
+    this.server.to(data.callerId).emit('call-rejected', {});
+  }
+
+  @SubscribeMessage('video-call-end')
+  handleVideoCallEnd(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { targetUserId: string },
+  ) {
+    this.server.to(data.targetUserId).emit('call-ended', {});
+  }
+
+  @SubscribeMessage('ice-candidate')
+  handleIceCandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { targetUserId: string; candidate: any },
+  ) {
+    this.server.to(data.targetUserId).emit('ice-candidate', { candidate: data.candidate });
   }
 
   @SubscribeMessage('sendMessage')

@@ -120,6 +120,7 @@ model User {
   feedPosts            FeedPost[]
   feedPostLikes        FeedPostLike[]
   feedPostComments     FeedPostComment[]
+  savedPosts           SavedPost[]
   
   // Connection relations
   sentRequests         ConnectionRequest[]  @relation("SentRequests")
@@ -300,8 +301,20 @@ model FeedPost {
   author    User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes     FeedPostLike[]
   comments  FeedPostComment[]
+  savedBy   SavedPost[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+}
+
+model SavedPost {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
 }
 
 model FeedPostLike {

@@ -26,6 +26,91 @@ const STATUS_CONFIG = {
   overdue: { label: 'En retard',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   dot: '#ef4444' },
 };
 
+function exportPDF(
+  rows: Earning[],
+  totalPaid: number,
+  totalPending: number,
+  isEntrepreneur: boolean,
+  fmt: (n: number) => string,
+  fmtDate: (d: Date) => string,
+) {
+  const statusLabels: Record<string, string> = { paid: 'Acceptée', pending: 'En attente', overdue: 'En retard' };
+  const tableRows = rows
+    .map(
+      (e) => `
+      <tr>
+        <td>${e.source}</td>
+        <td>${e.client.name}</td>
+        <td style="font-weight:600">${fmt(e.amount)}</td>
+        <td>${fmtDate(e.date)}</td>
+        <td style="color:${e.status === 'paid' ? '#10b981' : e.status === 'overdue' ? '#ef4444' : '#f59e0b'}">${statusLabels[e.status]}</td>
+      </tr>`,
+    )
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport Revenus — GoConnexion</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; margin: 0; padding: 32px; color: #1a2332; font-size: 13px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
+    .logo { font-size: 22px; font-weight: 800; }
+    .logo span { color: #3b82f6; }
+    .date { font-size: 11px; color: #94a3b8; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; }
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; margin: 0 0 4px; }
+    .stat-value { font-size: 20px; font-weight: 700; margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #f8fafc; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .footer { margin-top: 32px; font-size: 10px; color: #cbd5e1; text-align: center; }
+    @media print { body { padding: 0; } .no-print { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Go<span>Connexion</span></div>
+    <div class="date">Rapport généré le ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+  </div>
+  <h2 style="margin:0 0 16px;font-size:18px">${isEntrepreneur ? 'Rapport Budget Projets' : 'Rapport Revenus Freelance'}</h2>
+  <div class="stats">
+    <div class="stat">
+      <p class="stat-label">${isEntrepreneur ? 'Budget engagé' : 'Missions décrochées'}</p>
+      <p class="stat-value" style="color:#10b981">${fmt(totalPaid)}</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">En attente</p>
+      <p class="stat-value" style="color:#f59e0b">${fmt(totalPending)}</p>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Source / Projet</th>
+        <th>${isEntrepreneur ? 'Freelancer' : 'Client'}</th>
+        <th>Montant</th>
+        <th>Date</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>${tableRows || '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Aucune donnée</td></tr>'}</tbody>
+  </table>
+  <div class="footer">GoConnexion © ${new Date().getFullYear()} — Rapport confidentiel</div>
+  <script>window.print();</script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
+}
+
 const STAT_CARDS = (
   total: number,
   pending: number,
@@ -129,7 +214,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
     : (paidThisMonth > 0 ? 100 : null);
 
   const formatCurrency = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+    new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 }).format(n);
   const formatDate = (d: Date) =>
     new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 
@@ -155,6 +240,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
             </p>
           </div>
           <button
+            onClick={() => exportPDF(filteredEarnings, totalPaid, totalPending, isEntrepreneur, formatCurrency, formatDate)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105"
             style={{
               background: 'linear-gradient(135deg, #4a90d9, #2563eb)',
@@ -162,7 +248,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
             }}
           >
             <ArrowUpRight size={14} />
-            Exporter
+            Exporter PDF
           </button>
         </div>
 

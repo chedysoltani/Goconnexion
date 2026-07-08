@@ -269,6 +269,35 @@ export class MailService {
     );
   }
 
+  async sendSupportTicket(data: {
+    fromName: string;
+    fromEmail: string;
+    subject: string;
+    message: string;
+  }): Promise<void> {
+    const adminEmail = process.env.SUPPORT_EMAIL ?? 'chedysoltani0@gmail.com';
+    await this.send(
+      adminEmail,
+      `[Support] ${this.esc(data.subject)} — de ${this.esc(data.fromName)}`,
+      this.wrap(`
+        <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#0f172a">
+          Nouveau ticket de support
+        </h1>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 20px">
+          <p style="margin:0 0 8px;font-size:13px;color:#64748b">
+            <strong>De :</strong> ${this.esc(data.fromName)} &lt;${this.esc(data.fromEmail)}&gt;
+          </p>
+          <p style="margin:0;font-size:13px;color:#64748b">
+            <strong>Sujet :</strong> ${this.esc(data.subject)}
+          </p>
+        </div>
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:16px">
+          <p style="margin:0;font-size:14px;color:#0f172a;line-height:1.6;white-space:pre-wrap">${this.esc(data.message)}</p>
+        </div>
+      `),
+    );
+  }
+
   async sendBusinessCardInvitation(
     senderName: string,
     recipientEmail: string,
