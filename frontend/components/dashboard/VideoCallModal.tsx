@@ -59,6 +59,7 @@ export default function VideoCallModal({
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const closedRef = useRef(false);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
@@ -154,6 +155,13 @@ export default function VideoCallModal({
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer));
+
+      // Flush ICE candidates that arrived before the remote description was set
+      for (const c of pendingCandidatesRef.current) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
+      }
+      pendingCandidatesRef.current = [];
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
@@ -175,7 +183,17 @@ export default function VideoCallModal({
     if (direction === 'outgoing') startOutgoingCall();
 
     const onAnswered = async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
-      await pcRef.current?.setRemoteDescription(new RTCSessionDescription(answer));
+      const pc = pcRef.current;
+      // Guard: only apply answer when we are waiting for one
+      if (!pc || pc.signalingState !== 'have-local-offer') return;
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        // Flush ICE candidates that arrived before the answer
+        for (const c of pendingCandidatesRef.current) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
+        }
+        pendingCandidatesRef.current = [];
+      } catch { /* ignore if PC was closed in the meantime */ }
     };
 
     const onRejected = () => {
@@ -191,8 +209,13 @@ export default function VideoCallModal({
     };
 
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
-      if (pcRef.current && candidate) {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      const pc = pcRef.current;
+      if (!pc || !candidate) return;
+      // Queue candidates until remote description is set to avoid InvalidStateError
+      if (pc.remoteDescription) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
+      } else {
+        pendingCandidatesRef.current.push(candidate);
       }
     };
 
