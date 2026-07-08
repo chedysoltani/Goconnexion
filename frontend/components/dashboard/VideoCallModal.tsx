@@ -158,7 +158,6 @@ export default function VideoCallModal({
 
       // Flush ICE candidates that arrived before the remote description was set
       for (const c of pendingCandidatesRef.current) {
-        if (!pc || pc.signalingState === 'closed') break;
         try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
       }
       pendingCandidatesRef.current = [];
@@ -191,7 +190,6 @@ export default function VideoCallModal({
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         // Flush ICE candidates that arrived before the answer
         for (const c of pendingCandidatesRef.current) {
-          if (pc.signalingState === 'closed') break;
           try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
         }
         pendingCandidatesRef.current = [];
