@@ -19,6 +19,7 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string }> = 
 export default function UserProfileCard({ user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -26,8 +27,10 @@ export default function UserProfileCard({ user }: Props) {
 
   const roleMeta = ROLE_META[user?.role?.toLowerCase() ?? 'user'] ?? ROLE_META.user;
 
-  const handleLogout = () => {
-    api.auth.logout();
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    await api.auth.logout();
     router.push('/auth/login');
   };
 
@@ -136,12 +139,13 @@ export default function UserProfileCard({ user }: Props) {
             <div className="border-t border-gc-border py-2">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                disabled={loggingOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="flex-shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Se déconnecter
+                {loggingOut ? 'Déconnexion…' : 'Se déconnecter'}
               </button>
             </div>
           </div>

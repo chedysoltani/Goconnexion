@@ -110,43 +110,7 @@ export class CronService {
     });
   }
 
-  /**
-   * Run every day at 10:00 AM to send event reminders (24h before)
-   */
-  @Cron(CronExpression.EVERY_DAY_AT_10AM)
-  async handleEventReminders() {
-    this.logger.log('Starting daily event reminder checks...');
-    try {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dayAfter = new Date();
-      dayAfter.setDate(dayAfter.getDate() + 2);
-
-      const events = (await this.prisma.$queryRaw`
-        SELECT e.id, e.title, e.type, e.location, e."virtualLink"
-        FROM "Event" e
-        WHERE e."startDate" >= ${tomorrow} AND e."startDate" <= ${dayAfter} AND e."isActive" = true
-      `) as any[];
-
-      for (const event of events) {
-        const registrations = (await this.prisma.$queryRaw`
-          SELECT "userId" FROM "EventRegistration" WHERE "eventId" = ${event.id} AND status = 'REGISTERED'
-        `) as any[];
-
-        for (const reg of registrations) {
-          await this.notificationsService.create({
-            userId: reg.userId,
-            title: `Rappel : ${event.title} demain`,
-            content: `N'oubliez pas ! "${event.title}" commence demain. ${event.type === 'PHYSICAL' ? `Lieu : ${event.location}` : `Lien : ${event.virtualLink}`}`,
-            type: 'EVENT',
-          });
-        }
-      }
-      this.logger.log(`Event reminders sent for ${events.length} upcoming events.`);
-    } catch (error) {
-      this.logger.error('Error running event reminders cron job:', error);
-    }
-  }
+  // Event reminders are handled by EventsService.sendUpcomingReminders() (@Cron EVERY_DAY_AT_10AM)
 
   /**
    * Helper to manually trigger inactivity notification for testing

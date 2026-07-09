@@ -325,6 +325,135 @@ export class MailService {
     );
   }
 
+  // ── Événements ────────────────────────────────────────────────────────────
+
+  async sendEventTicket(
+    user: { email: string; firstName: string },
+    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
+    ticketCode: string,
+    ticketType?: { name: string; price: number; currency: string } | null,
+    booth?: { number: string; type: string } | null,
+  ): Promise<void> {
+    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const ticketUrl = `${base}/events/ticket/${ticketCode}`;
+    const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    const lieu = event.address ?? event.location ?? 'À confirmer';
+
+    await this.send(
+      user.email,
+      `Votre billet — ${this.esc(event.title)}`,
+      this.wrap(`
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a">
+          Votre billet est confirmé ✅
+        </h1>
+        <p style="margin:0 0 24px;color:#475569">Bonjour ${this.esc(user.firstName)}, votre inscription est validée.</p>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:0 0 24px">
+          <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a">${this.esc(event.title)}</p>
+          <p style="margin:0 0 4px;font-size:13px;color:#64748b">📅 ${this.esc(date)}</p>
+          <p style="margin:0 0 0;font-size:13px;color:#64748b">📍 ${this.esc(lieu)}</p>
+          ${ticketType ? `<p style="margin:8px 0 0;font-size:13px;color:#3b82f6;font-weight:600">🎫 ${this.esc(ticketType.name)} — ${ticketType.price === 0 ? 'Gratuit' : `${ticketType.price} ${this.esc(ticketType.currency)}`}</p>` : ''}
+          ${booth ? `<p style="margin:4px 0 0;font-size:13px;color:#7c3aed;font-weight:600">🏪 Stand ${this.esc(booth.number)} (${this.esc(booth.type)})</p>` : ''}
+        </div>
+
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px;margin:0 0 24px;text-align:center">
+          <p style="margin:0 0 4px;font-size:12px;color:#0369a1;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Code billet</p>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#0f172a;font-family:monospace">${this.esc(ticketCode)}</p>
+        </div>
+
+        ${this.btn('Afficher mon billet + QR code', ticketUrl, '#3b82f6')}
+        <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;text-align:center">
+          Présentez ce QR code à l'entrée de l'événement.
+        </p>
+      `),
+    );
+  }
+
+  async sendEventReminder(
+    user: { email: string; firstName: string },
+    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
+    ticketCode: string,
+  ): Promise<void> {
+    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const ticketUrl = `${base}/events/ticket/${ticketCode}`;
+    const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    const lieu = event.address ?? event.location ?? 'À confirmer';
+
+    await this.send(
+      user.email,
+      `Rappel — ${this.esc(event.title)} commence demain`,
+      this.wrap(`
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a">
+          C'est demain ! 🗓️
+        </h1>
+        <p style="margin:0 0 24px;color:#475569">
+          Bonjour ${this.esc(user.firstName)}, voici un rappel pour votre événement de demain.
+        </p>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:0 0 24px">
+          <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a">${this.esc(event.title)}</p>
+          <p style="margin:0 0 4px;font-size:13px;color:#64748b">📅 ${this.esc(date)}</p>
+          <p style="margin:0 0 0;font-size:13px;color:#64748b">📍 ${this.esc(lieu)}</p>
+        </div>
+
+        ${this.btn('Voir mon billet', ticketUrl, '#0f172a')}
+        <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;text-align:center">
+          N'oubliez pas votre code QR à l'entrée.
+        </p>
+      `),
+    );
+  }
+
+  async sendBoothReservationConfirmation(
+    user: { email: string; firstName: string },
+    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
+    booth: { number: string; type: string; price: number; currency: string; surface?: number | null; description?: string | null },
+  ): Promise<void> {
+    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const eventsUrl = `${base}/dashboard`;
+    const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    const lieu = event.address ?? event.location ?? 'À confirmer';
+
+    await this.send(
+      user.email,
+      `Confirmation de stand — ${this.esc(event.title)}`,
+      this.wrap(`
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a">
+          Votre stand est réservé 🏪
+        </h1>
+        <p style="margin:0 0 24px;color:#475569">
+          Bonjour ${this.esc(user.firstName)}, votre stand au salon est confirmé.
+        </p>
+
+        <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:20px;margin:0 0 16px">
+          <p style="margin:0 0 4px;font-size:13px;color:#7c3aed;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Votre stand</p>
+          <p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#0f172a">Stand ${this.esc(booth.number)}</p>
+          <p style="margin:0 0 2px;font-size:13px;color:#64748b">Type : ${this.esc(booth.type)}</p>
+          ${booth.surface ? `<p style="margin:0 0 2px;font-size:13px;color:#64748b">Surface : ${booth.surface} m²</p>` : ''}
+          <p style="margin:0 0 0;font-size:14px;font-weight:700;color:#7c3aed">${booth.price} ${this.esc(booth.currency)}</p>
+          ${booth.description ? `<p style="margin:8px 0 0;font-size:13px;color:#64748b">${this.esc(booth.description)}</p>` : ''}
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:0 0 24px">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#0f172a">${this.esc(event.title)}</p>
+          <p style="margin:0 0 2px;font-size:13px;color:#64748b">📅 ${this.esc(date)}</p>
+          <p style="margin:0;font-size:13px;color:#64748b">📍 ${this.esc(lieu)}</p>
+        </div>
+
+        ${this.btn('Voir mes événements', eventsUrl, '#7c3aed')}
+        <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;text-align:center">
+          Conservez cet email comme preuve de réservation.
+        </p>
+      `),
+    );
+  }
+
   // ── Helpers privés ────────────────────────────────────────────────────────
 
   private btn(label: string, url: string, color = '#3b82f6'): string {

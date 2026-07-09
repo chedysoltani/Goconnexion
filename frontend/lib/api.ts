@@ -298,6 +298,35 @@ export const api = {
     cancelRegistration: (eventId: string) => request(`/events/${eventId}/register`, { method: 'DELETE' }),
     myRegistrations: () => request('/events/my-registrations'),
     participants: (eventId: string) => request(`/events/${eventId}/participants`),
+
+    // Ticket types
+    ticketTypes: (eventId: string) => request(`/events/${eventId}/ticket-types`),
+    createTicketType: (eventId: string, data: any) =>
+      request(`/events/${eventId}/ticket-types`, { method: 'POST', body: JSON.stringify(data) }),
+    updateTicketType: (eventId: string, ttId: string, data: any) =>
+      request(`/events/${eventId}/ticket-types/${ttId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteTicketType: (eventId: string, ttId: string) =>
+      request(`/events/${eventId}/ticket-types/${ttId}`, { method: 'DELETE' }),
+
+    // Booths
+    booths: (eventId: string) => request(`/events/${eventId}/booths`),
+    createBooth: (eventId: string, data: any) =>
+      request(`/events/${eventId}/booths`, { method: 'POST', body: JSON.stringify(data) }),
+    updateBooth: (eventId: string, boothId: string, data: any) =>
+      request(`/events/${eventId}/booths/${boothId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteBooth: (eventId: string, boothId: string) =>
+      request(`/events/${eventId}/booths/${boothId}`, { method: 'DELETE' }),
+
+    // Registration with payment
+    registerCheckout: (eventId: string, data: { ticketTypeId?: string; boothId?: string; provider?: string }) =>
+      request(`/events/${eventId}/register/checkout`, { method: 'POST', body: JSON.stringify(data) }),
+
+    // Check-in (organizer)
+    checkIn: (ticketCode: string) =>
+      request(`/events/registrations/${ticketCode}/checkin`, { method: 'PATCH' }),
+
+    // Public ticket page
+    getTicket: (ticketCode: string) => request(`/events/ticket/${ticketCode}`),
   },
 
   businessCards: {

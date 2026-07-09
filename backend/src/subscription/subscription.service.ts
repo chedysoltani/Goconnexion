@@ -1,9 +1,10 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService, BillingInterval } from './stripe.service';
 import { WiseService, WiseCreditEvent } from './wise.service';
 import { MailService } from '../mail/mail.service';
+import { EventsService } from '../events/events.service';
 import { PlanType, PlanStatus, PaymentProvider } from '@prisma/client';
 
 export const PLAN_LIMITS = {
@@ -111,6 +112,7 @@ export class SubscriptionService {
     private stripeService: StripeService,
     private wiseService: WiseService,
     private mailService: MailService,
+    @Inject(forwardRef(() => EventsService)) private eventsService: EventsService,
   ) {}
 
   // ── Status ─────────────────────────────────────────────────────
@@ -282,6 +284,20 @@ export class SubscriptionService {
       return { received: true };
     }
 
+    // Route WE- prefixed references to event registrations
+    if (reference.startsWith('WE-')) {
+      const reg = await this.prisma.eventRegistration.findFirst({
+        where: { paymentId: reference },
+      });
+      if (!reg) {
+        this.logger.warn(`Wise webhook: référence événement inconnue "${reference}"`);
+        return { received: true };
+      }
+      await this.eventsService.activateEventRegistration(reg.id, reference, PaymentProvider.WISE);
+      this.logger.log(`Inscription événement Wise activée, ref=${reference}`);
+      return { received: true, activated: true };
+    }
+
     const sub = await this.prisma.subscription.findFirst({
       where: { wiseReference: reference },
     });
@@ -413,7 +429,18 @@ export class SubscriptionService {
 
       case 'checkout.session.completed': {
         const session = event.data.object as any;
-        const { userId, plan, interval } = session.metadata ?? {};
+        const meta = session.metadata ?? {};
+
+        if (meta.type === 'event' && meta.registrationId) {
+          await this.eventsService.activateEventRegistration(
+            meta.registrationId,
+            session.payment_intent as string,
+            PaymentProvider.STRIPE,
+          );
+          break;
+        }
+
+        const { userId, plan, interval } = meta;
         if (userId && plan) {
           await this.activatePlan(
             userId,

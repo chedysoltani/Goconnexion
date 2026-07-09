@@ -31,6 +31,23 @@ enum EventCategory {
   INVESTISSEMENT
   FORMATION
   INCUBATEUR
+  SALON
+  CONFERENCE
+  HACKATHON
+}
+
+enum BoothStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+}
+
+enum BoothType {
+  SMALL
+  MEDIUM
+  LARGE
+  CORNER
+  VIP
 }
 
 enum EventType {
@@ -131,6 +148,7 @@ model User {
   // New feature relations
   organizedEvents      Event[]                  @relation("OrganizedEvents")
   eventRegistrations   EventRegistration[]      @relation("EventRegistrations")
+  boothReservations    Booth[]                  @relation("BoothReservations")
   sentInvitations      BusinessCardInvitation[] @relation("SentInvitations")
   referralCode         ReferralCode?            @relation("ReferralCode")
   referredBy           Referral?                @relation("ReferredByUser")
@@ -402,28 +420,78 @@ model Event {
   startDate     DateTime
   endDate       DateTime
   location      String?
+  address       String?
+  latitude      Float?
+  longitude     Float?
   virtualLink   String?
   capacity      Int?
   price         Float               @default(0)
+  currency      String              @default("CAD")
   isFree        Boolean             @default(true)
   imageUrl      String?
   organizerId   String
   organizer     User                @relation("OrganizedEvents", fields: [organizerId], references: [id])
   registrations EventRegistration[]
+  ticketTypes   TicketType[]
+  booths        Booth[]
   isActive      Boolean             @default(true)
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 }
 
+model TicketType {
+  id            String              @id @default(uuid())
+  eventId       String
+  event         Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name          String
+  price         Float               @default(0)
+  currency      String              @default("CAD")
+  capacity      Int?
+  description   String?
+  color         String?
+  registrations EventRegistration[]
+  createdAt     DateTime            @default(now())
+}
+
+model Booth {
+  id              String            @id @default(uuid())
+  eventId         String
+  event           Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  number          String
+  type            BoothType
+  price           Float
+  currency        String            @default("CAD")
+  surface         Float?
+  description     String?
+  status          BoothStatus       @default(AVAILABLE)
+  reservedById    String?
+  reservedBy      User?             @relation("BoothReservations", fields: [reservedById], references: [id])
+  paymentId       String?
+  paymentProvider PaymentProvider?
+  paidAt          DateTime?
+  registration    EventRegistration?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
 model EventRegistration {
-  id         String             @id @default(uuid())
-  eventId    String
-  event      Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User               @relation("EventRegistrations", fields: [userId], references: [id])
-  ticketCode String             @unique @default(uuid())
-  status     RegistrationStatus @default(REGISTERED)
-  createdAt  DateTime           @default(now())
+  id              String             @id @default(uuid())
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User               @relation("EventRegistrations", fields: [userId], references: [id])
+  ticketCode      String             @unique @default(uuid())
+  status          RegistrationStatus @default(REGISTERED)
+  ticketTypeId    String?
+  ticketType      TicketType?        @relation(fields: [ticketTypeId], references: [id])
+  boothId         String?            @unique
+  booth           Booth?             @relation(fields: [boothId], references: [id])
+  paymentId       String?
+  paymentProvider PaymentProvider?
+  paidAt          DateTime?
+  checkedInAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@unique([eventId, userId])
 }

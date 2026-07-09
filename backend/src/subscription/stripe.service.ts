@@ -111,6 +111,46 @@ export class StripeService {
     return session.url;
   }
 
+  // ── Event Checkout Session ────────────────────────────────────
+
+  async createEventCheckoutSession(params: {
+    customerId: string;
+    amount: number;
+    currency: string;
+    eventTitle: string;
+    registrationId: string;
+    eventId: string;
+    userId: string;
+    boothId?: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<string> {
+    const session = await this.stripe.checkout.sessions.create({
+      customer: params.customerId,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: params.currency,
+          unit_amount: params.amount,
+          product_data: { name: params.eventTitle },
+        },
+        quantity: 1,
+      }],
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      metadata: {
+        type: 'event',
+        registrationId: params.registrationId,
+        eventId: params.eventId,
+        userId: params.userId,
+        ...(params.boothId ? { boothId: params.boothId } : {}),
+      },
+    });
+    if (!session.url) throw new Error('Stripe session URL manquante');
+    return session.url;
+  }
+
   // ── Customer Portal ───────────────────────────────────────────
 
   async createPortalSession(customerId: string, returnUrl: string): Promise<string> {
