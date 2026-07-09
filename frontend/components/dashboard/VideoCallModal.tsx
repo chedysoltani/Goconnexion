@@ -133,6 +133,7 @@ export default function VideoCallModal({
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
+      console.log('[WebRTC] emitting video-call-request, socket.id=', socket.id, 'target=', targetUser.id);
       socket.emit('video-call-request', {
         targetUserId: targetUser.id,
         callType,
@@ -189,20 +190,32 @@ export default function VideoCallModal({
 
   // Wire socket events
   useEffect(() => {
+    console.log('[WebRTC] socket wired, id=', socket.id, 'connected=', socket.connected, 'direction=', direction);
+
     if (direction === 'outgoing') startOutgoingCall();
 
-    const onAnswered = async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
+    const onAnswered = async (data: { answer: RTCSessionDescriptionInit }) => {
+      console.log('[WebRTC] call-answered received', data);
       const pc = pcRef.current;
-      if (!pc || pc.signalingState === 'closed') return;
-      if (pc.signalingState !== 'have-local-offer') return;
+      if (!pc || pc.signalingState === 'closed') {
+        console.warn('[WebRTC] call-answered ignored — pc is null or closed');
+        return;
+      }
+      if (pc.signalingState !== 'have-local-offer') {
+        console.warn('[WebRTC] call-answered ignored — signalingState is', pc.signalingState, '(expected have-local-offer)');
+        return;
+      }
       try {
-        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        console.log('[WebRTC] setRemoteDescription(answer) OK, signalingState=', pc.signalingState);
         // Flush ICE candidates that arrived before the answer
         for (const c of pendingCandidatesRef.current) {
           try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
         }
         pendingCandidatesRef.current = [];
-      } catch { /* ignore if PC was closed in the meantime */ }
+      } catch (err) {
+        console.error('[WebRTC] setRemoteDescription(answer) failed:', err);
+      }
     };
 
     const onRejected = () => {

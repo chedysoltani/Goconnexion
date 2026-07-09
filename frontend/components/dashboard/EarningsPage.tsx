@@ -104,11 +104,19 @@ function exportPDF(
 </body>
 </html>`;
 
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    // Popup bloqué — téléchargement direct en fallback
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `revenus-goconnexion-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
 }
 
 const STAT_CARDS = (
