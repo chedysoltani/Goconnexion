@@ -64,6 +64,9 @@ export default function VideoCallModal({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const closedRef = useRef(false);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  // Always holds the latest socket — avoids stale closures when the prop changes between renders
+  const socketRef = useRef(socket);
+  useEffect(() => { socketRef.current = socket; }, [socket]);
 
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
@@ -74,11 +77,11 @@ export default function VideoCallModal({
   }, []);
 
   const endCall = useCallback(() => {
-    socket.emit('video-call-end', { targetUserId: targetUser.id });
+    socketRef.current.emit('video-call-end', { targetUserId: targetUser.id });
     cleanup();
     setCallStatus('ended');
     setTimeout(onClose, 1500);
-  }, [socket, targetUser.id, cleanup, onClose]);
+  }, [targetUser.id, cleanup, onClose]);
 
   const buildPeerConnection = useCallback((): RTCPeerConnection => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -86,7 +89,7 @@ export default function VideoCallModal({
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        socket.emit('ice-candidate', {
+        socketRef.current.emit('ice-candidate', {
           targetUserId: targetUser.id,
           candidate: e.candidate,
         });
@@ -113,7 +116,7 @@ export default function VideoCallModal({
     };
 
     return pc;
-  }, [socket, targetUser.id, endCall]);
+  }, [targetUser.id, endCall]);
 
   const getMedia = useCallback(async (): Promise<MediaStream> => {
     const constraints = callType === 'video' ? { video: true, audio: true } : { video: false, audio: true };
@@ -137,8 +140,8 @@ export default function VideoCallModal({
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      console.log('[WebRTC] emitting video-call-request, socket.id=', socket.id, 'target=', targetUser.id);
-      socket.emit('video-call-request', {
+      console.log('[WebRTC] emitting video-call-request, socket.id=', socketRef.current.id, 'target=', targetUser.id);
+      socketRef.current.emit('video-call-request', {
         targetUserId: targetUser.id,
         callType,
         offer,
@@ -147,7 +150,7 @@ export default function VideoCallModal({
       setCallStatus('error');
       setTimeout(onClose, 2000);
     }
-  }, [getMedia, buildPeerConnection, socket, targetUser.id, callType, onClose]);
+  }, [getMedia, buildPeerConnection, targetUser.id, callType, onClose]);
 
   const acceptIncomingCall = useCallback(async () => {
     console.log('answer clicked', { incomingOffer, callStatus });
@@ -178,19 +181,19 @@ export default function VideoCallModal({
       await pc.setLocalDescription(answer);
       console.log('[WebRTC] answer created, emitting video-call-answer to', targetUser.id);
 
-      socket.emit('video-call-answer', { callerId: targetUser.id, answer });
+      socketRef.current.emit('video-call-answer', { callerId: targetUser.id, answer });
     } catch (err) {
       console.error('[WebRTC] acceptIncomingCall error:', err);
       setCallStatus('error');
       setTimeout(onClose, 2000);
     }
-  }, [incomingOffer, callStatus, getMedia, buildPeerConnection, socket, targetUser.id, onClose]);
+  }, [incomingOffer, callStatus, getMedia, buildPeerConnection, targetUser.id, onClose]);
 
   const rejectCall = useCallback(() => {
-    socket.emit('video-call-reject', { callerId: targetUser.id });
+    socketRef.current.emit('video-call-reject', { callerId: targetUser.id });
     cleanup();
     onClose();
-  }, [socket, targetUser.id, cleanup, onClose]);
+  }, [targetUser.id, cleanup, onClose]);
 
   // Handle call-answered via prop (listener lives in MessagesPage on the stable socket)
   useEffect(() => {
@@ -219,9 +222,12 @@ export default function VideoCallModal({
       .catch((err) => console.error('[WebRTC] setRemoteDescription(answer) failed:', err));
   }, [remoteAnswer]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Wire remaining socket events (rejected / ended / ICE — these are directional and not prone to the stale-socket issue)
+  // Wire remaining socket events (rejected / ended / ICE)
   useEffect(() => {
-    console.log('[WebRTC] socket wired, id=', socket.id, 'connected=', socket.connected, 'direction=', direction);
+    const s = socketRef.current;
+    if (direction === 'outgoing') {
+      console.log('[WebRTC] caller socket wired, id=', s.id, 'connected=', s.connected);
+    }
 
     if (direction === 'outgoing') startOutgoingCall();
 
@@ -240,7 +246,6 @@ export default function VideoCallModal({
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
       if (!pc || !candidate || pc.signalingState === 'closed') return;
-      // Queue candidates until remote description is set to avoid InvalidStateError
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
       } else {
@@ -248,14 +253,14 @@ export default function VideoCallModal({
       }
     };
 
-    socket.on('call-rejected', onRejected);
-    socket.on('call-ended', onEnded);
-    socket.on('ice-candidate', onIce);
+    s.on('call-rejected', onRejected);
+    s.on('call-ended', onEnded);
+    s.on('ice-candidate', onIce);
 
     return () => {
-      socket.off('call-rejected', onRejected);
-      socket.off('call-ended', onEnded);
-      socket.off('ice-candidate', onIce);
+      s.off('call-rejected', onRejected);
+      s.off('call-ended', onEnded);
+      s.off('ice-candidate', onIce);
       cleanup();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

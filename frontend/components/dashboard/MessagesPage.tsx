@@ -136,12 +136,13 @@ export default function MessagesPage({ user }: MessagesPageProps) {
       fetchConversations();
     });
 
-    // Lifted here to guarantee the listener is always on the active socket,
-    // not on a stale closure inside VideoCallModal.
+    // call-answered lives here (not in VideoCallModal) so it always fires on the
+    // active socket, regardless of VideoCallModal re-renders or stale closures.
     socket.on('call-answered', (data: { answer: RTCSessionDescriptionInit }) => {
       console.log('[WebRTC] call-answered received !!!', data);
       setRemoteAnswer(data);
     });
+    console.log('[WebRTC] call-answered listener registered on socket.id=', socket.id, 'connected=', socket.connected);
 
     return () => { socket.disconnect(); };
   }, []);
