@@ -26,6 +26,8 @@ interface VideoCallModalProps {
   callType: 'video' | 'audio';
   direction: 'outgoing' | 'incoming';
   incomingOffer?: RTCSessionDescriptionInit;
+  remoteAnswer?: { answer: RTCSessionDescriptionInit } | null;
+  onRemoteAnswerConsumed?: () => void;
   onClose: () => void;
 }
 
@@ -44,6 +46,8 @@ export default function VideoCallModal({
   callType,
   direction,
   incomingOffer,
+  remoteAnswer,
+  onRemoteAnswerConsumed,
   onClose,
 }: VideoCallModalProps) {
   const [callStatus, setCallStatus] = useState<CallStatus>(
@@ -188,35 +192,38 @@ export default function VideoCallModal({
     onClose();
   }, [socket, targetUser.id, cleanup, onClose]);
 
-  // Wire socket events
+  // Handle call-answered via prop (listener lives in MessagesPage on the stable socket)
+  useEffect(() => {
+    if (!remoteAnswer) return;
+    console.log('[WebRTC] remoteAnswer prop received, processing answer');
+    const pc = pcRef.current;
+    if (!pc || pc.signalingState === 'closed') {
+      console.warn('[WebRTC] remoteAnswer ignored — pc is null or closed');
+      onRemoteAnswerConsumed?.();
+      return;
+    }
+    if (pc.signalingState !== 'have-local-offer') {
+      console.warn('[WebRTC] remoteAnswer ignored — signalingState is', pc.signalingState, '(expected have-local-offer)');
+      onRemoteAnswerConsumed?.();
+      return;
+    }
+    onRemoteAnswerConsumed?.();
+    pc.setRemoteDescription(new RTCSessionDescription(remoteAnswer.answer))
+      .then(() => {
+        console.log('[WebRTC] setRemoteDescription(answer) OK, signalingState=', pc.signalingState);
+        for (const c of pendingCandidatesRef.current) {
+          pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+        }
+        pendingCandidatesRef.current = [];
+      })
+      .catch((err) => console.error('[WebRTC] setRemoteDescription(answer) failed:', err));
+  }, [remoteAnswer]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wire remaining socket events (rejected / ended / ICE — these are directional and not prone to the stale-socket issue)
   useEffect(() => {
     console.log('[WebRTC] socket wired, id=', socket.id, 'connected=', socket.connected, 'direction=', direction);
 
     if (direction === 'outgoing') startOutgoingCall();
-
-    const onAnswered = async (data: { answer: RTCSessionDescriptionInit }) => {
-      console.log('[WebRTC] call-answered received', data);
-      const pc = pcRef.current;
-      if (!pc || pc.signalingState === 'closed') {
-        console.warn('[WebRTC] call-answered ignored — pc is null or closed');
-        return;
-      }
-      if (pc.signalingState !== 'have-local-offer') {
-        console.warn('[WebRTC] call-answered ignored — signalingState is', pc.signalingState, '(expected have-local-offer)');
-        return;
-      }
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        console.log('[WebRTC] setRemoteDescription(answer) OK, signalingState=', pc.signalingState);
-        // Flush ICE candidates that arrived before the answer
-        for (const c of pendingCandidatesRef.current) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
-        }
-        pendingCandidatesRef.current = [];
-      } catch (err) {
-        console.error('[WebRTC] setRemoteDescription(answer) failed:', err);
-      }
-    };
 
     const onRejected = () => {
       cleanup();
@@ -241,13 +248,11 @@ export default function VideoCallModal({
       }
     };
 
-    socket.on('call-answered', onAnswered);
     socket.on('call-rejected', onRejected);
     socket.on('call-ended', onEnded);
     socket.on('ice-candidate', onIce);
 
     return () => {
-      socket.off('call-answered', onAnswered);
       socket.off('call-rejected', onRejected);
       socket.off('call-ended', onEnded);
       socket.off('ice-candidate', onIce);

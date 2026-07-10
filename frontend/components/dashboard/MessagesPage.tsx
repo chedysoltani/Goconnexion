@@ -72,6 +72,10 @@ export default function MessagesPage({ user }: MessagesPageProps) {
   const selectedConversationIdRef = useRef<string | null>(null);
   useEffect(() => { selectedConversationIdRef.current = selectedConversationId; }, [selectedConversationId]);
 
+  // call-answered is lifted here so it always fires on the stable socket,
+  // regardless of VideoCallModal re-renders or stale closures.
+  const [remoteAnswer, setRemoteAnswer] = useState<{ answer: RTCSessionDescriptionInit } | null>(null);
+
   const fetchConversations = async () => {
     try {
       const data = await api.messaging.conversations();
@@ -130,6 +134,13 @@ export default function MessagesPage({ user }: MessagesPageProps) {
         });
       }
       fetchConversations();
+    });
+
+    // Lifted here to guarantee the listener is always on the active socket,
+    // not on a stale closure inside VideoCallModal.
+    socket.on('call-answered', (data: { answer: RTCSessionDescriptionInit }) => {
+      console.log('[WebRTC] call-answered received !!!', data);
+      setRemoteAnswer(data);
     });
 
     return () => { socket.disconnect(); };
@@ -589,7 +600,9 @@ export default function MessagesPage({ user }: MessagesPageProps) {
           callType={activeCall.type}
           direction={activeCall.direction}
           incomingOffer={activeCall.offer}
-          onClose={() => setActiveCall(null)}
+          remoteAnswer={remoteAnswer}
+          onRemoteAnswerConsumed={() => setRemoteAnswer(null)}
+          onClose={() => { setActiveCall(null); setRemoteAnswer(null); }}
         />,
         document.body
       )}
