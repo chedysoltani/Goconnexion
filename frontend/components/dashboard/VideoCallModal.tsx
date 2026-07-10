@@ -67,6 +67,7 @@ export default function VideoCallModal({
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -104,15 +105,19 @@ export default function VideoCallModal({
       }
     };
 
-    pc.ontrack = (e) => {
-      if (remoteVideoRef.current && e.streams[0]) {
-        remoteVideoRef.current.srcObject = e.streams[0];
-      }
-    };
-
     const startTimer = () => {
       if (!timerRef.current) {
         timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+      }
+    };
+
+    // ontrack fires only when media is actually flowing — most reliable connected signal
+    pc.ontrack = (e) => {
+      if (e.streams[0]) {
+        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
+        setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
+        startTimer();
       }
     };
 
@@ -337,6 +342,9 @@ export default function VideoCallModal({
             background: 'linear-gradient(135deg, #0a1628 0%, #080f1a 100%)',
           }}
         >
+          {/* Remote audio — always active, works before video connects and for audio-only calls */}
+          <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
+
           {/* Remote video (visible once connected) */}
           <video
             ref={remoteVideoRef}
