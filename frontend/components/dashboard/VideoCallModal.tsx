@@ -113,6 +113,7 @@ export default function VideoCallModal({
 
     // ontrack fires only when media is actually flowing — most reliable connected signal
     pc.ontrack = (e) => {
+      console.log('[WebRTC] ontrack fired !', e.track.kind, 'streams:', e.streams.length);
       if (e.streams[0]) {
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
@@ -210,6 +211,8 @@ export default function VideoCallModal({
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log('[WebRTC] callee local tracks:', pc.getSenders().map(s => s.track?.kind));
+      console.log('[WebRTC] callee transceivers:', pc.getTransceivers().map(t => t.direction));
       console.log('[WebRTC] answer created, emitting video-call-answer to', targetUser.id);
 
       socketRef.current.emit('video-call-answer', { callerId: targetUser.id, answer });
