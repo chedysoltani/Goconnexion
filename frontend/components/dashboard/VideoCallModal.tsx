@@ -102,15 +102,33 @@ export default function VideoCallModal({
       }
     };
 
+    const startTimer = () => {
+      if (!timerRef.current) {
+        timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+      }
+    };
+
     pc.onconnectionstatechange = () => {
+      console.log('[WebRTC] connectionState=', pc.connectionState);
       if (pc.connectionState === 'connected') {
         setCallStatus('connected');
-        timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+        startTimer();
       } else if (
         pc.connectionState === 'disconnected' ||
         pc.connectionState === 'failed' ||
         pc.connectionState === 'closed'
       ) {
+        endCall();
+      }
+    };
+
+    // Fallback: iceConnectionState fires more reliably across browsers than connectionState
+    pc.oniceconnectionstatechange = () => {
+      console.log('[WebRTC] iceConnectionState=', pc.iceConnectionState);
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
+        startTimer();
+      } else if (pc.iceConnectionState === 'failed') {
         endCall();
       }
     };
@@ -182,6 +200,8 @@ export default function VideoCallModal({
       console.log('[WebRTC] answer created, emitting video-call-answer to', targetUser.id);
 
       socketRef.current.emit('video-call-answer', { callerId: targetUser.id, answer });
+      // Show "connecting" state while ICE negotiates (onconnectionstatechange will set 'connected')
+      setCallStatus('calling');
     } catch (err) {
       console.error('[WebRTC] acceptIncomingCall error:', err);
       setCallStatus('error');
@@ -213,7 +233,7 @@ export default function VideoCallModal({
     onRemoteAnswerConsumed?.();
     pc.setRemoteDescription(new RTCSessionDescription(remoteAnswer.answer))
       .then(() => {
-        console.log('[WebRTC] setRemoteDescription(answer) OK, signalingState=', pc.signalingState);
+        console.log('[WebRTC] setRemoteDescription(answer) OK — signalingState=', pc.signalingState, '— waiting for ICE...');
         for (const c of pendingCandidatesRef.current) {
           pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
         }
