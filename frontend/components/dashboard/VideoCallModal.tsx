@@ -77,6 +77,10 @@ export default function VideoCallModal({
   const socketRef = useRef(socket);
   useEffect(() => { socketRef.current = socket; }, [socket]);
 
+  useEffect(() => {
+    console.log('[WebRTC] audio ref in DOM:', !!remoteAudioRef.current, document.querySelectorAll('audio').length);
+  }, []);
+
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
     closedRef.current = true;
