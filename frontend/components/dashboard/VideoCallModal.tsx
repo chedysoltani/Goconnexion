@@ -115,7 +115,11 @@ export default function VideoCallModal({
     pc.ontrack = (e) => {
       console.log('[WebRTC] ontrack fired !', e.track.kind, 'streams:', e.streams.length, 'stream[0]:', !!e.streams[0]);
       if (e.streams[0]) {
-        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
+        console.log('[WebRTC] attaching stream to audio element, ref=', !!remoteAudioRef.current);
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = e.streams[0];
+          console.log('[WebRTC] stream attached, tracks=', e.streams[0].getTracks().map(t => t.kind));
+        }
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
         console.log('[WebRTC] setting status connected from ontrack');
         setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
