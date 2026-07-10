@@ -117,22 +117,36 @@ export default function VideoCallModal({
 
     // ontrack fires only when media is actually flowing — most reliable connected signal
     pc.ontrack = (e) => {
-      console.log('[WebRTC] ontrack fired !', e.track.kind, 'streams:', e.streams.length, 'stream[0]:', !!e.streams[0]);
+      console.log('[WebRTC] ontrack fired !', e.track.kind, 'muted:', e.track.muted, 'streams:', e.streams.length);
       if (e.streams[0]) {
-        console.log('[WebRTC] attaching stream to audio element, ref=', !!remoteAudioRef.current);
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = e.streams[0];
-          console.log('[WebRTC] stream attached, tracks=', e.streams[0].getTracks().map(t => t.kind));
-          remoteAudioRef.current.play().catch(err => {
-            console.warn('[WebRTC] autoplay blocked:', err);
-          });
-        }
+        // Attach immediately so the element is ready when the track unmutes
+        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-        console.log('[WebRTC] setting status connected from ontrack');
-        setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
-        startTimer();
+
+        const playAudio = () => {
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.play().catch(err => console.warn('[WebRTC] autoplay blocked:', err));
+          }
+        };
+
+        if (!e.track.muted) {
+          // Track already live — play immediately
+          console.log('[WebRTC] track already unmuted, playing now');
+          playAudio();
+          setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
+          startTimer();
+        } else {
+          // Track muted at start — wait for unmute (fires once ICE fully settles)
+          console.log('[WebRTC] track muted, waiting for unmute event...');
+          e.track.onunmute = () => {
+            console.log('[WebRTC] track unmuted, audio should play now');
+            playAudio();
+            setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
+            startTimer();
+          };
+        }
       } else {
-        console.warn('[WebRTC] ontrack: e.streams[0] is falsy — skipping setCallStatus');
+        console.warn('[WebRTC] ontrack: e.streams[0] is falsy — skipping');
       }
     };
 
