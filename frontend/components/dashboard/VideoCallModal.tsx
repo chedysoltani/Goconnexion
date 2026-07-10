@@ -219,8 +219,8 @@ export default function VideoCallModal({
       console.log('[WebRTC] answer created, emitting video-call-answer to', targetUser.id);
 
       socketRef.current.emit('video-call-answer', { callerId: targetUser.id, answer });
-      // Show "connecting" state while ICE negotiates (onconnectionstatechange will set 'connected')
-      setCallStatus('calling');
+      // Only transition to 'calling' if ontrack hasn't already set 'connected'
+      setCallStatus((prev) => (prev === 'ringing' ? 'calling' : prev));
     } catch (err) {
       console.error('[WebRTC] acceptIncomingCall error:', err);
       setCallStatus('error');
