@@ -34,17 +34,14 @@ interface VideoCallModalProps {
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:54.39.146.150:3478' },
     {
       urls: [
-        'turn:standard.relay.metered.ca:80',
-        'turn:standard.relay.metered.ca:80?transport=tcp',
-        'turn:standard.relay.metered.ca:443',
-        'turns:standard.relay.metered.ca:443?transport=tcp',
+        'turn:54.39.146.150:3478',
+        'turn:54.39.146.150:3478?transport=tcp',
       ],
-      username: 'e84ebb3c2e1a7e3a34b09f47',
-      credential: 'uRg1RP++JMRBPsxM',
+      username: 'goconnexion',
+      credential: 'TurnPass2026!',
     },
   ],
 };
