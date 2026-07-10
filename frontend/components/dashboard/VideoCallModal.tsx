@@ -119,6 +119,9 @@ export default function VideoCallModal({
         if (remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = e.streams[0];
           console.log('[WebRTC] stream attached, tracks=', e.streams[0].getTracks().map(t => t.kind));
+          remoteAudioRef.current.play().catch(err => {
+            console.warn('[WebRTC] autoplay blocked:', err);
+          });
         }
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
         console.log('[WebRTC] setting status connected from ontrack');
