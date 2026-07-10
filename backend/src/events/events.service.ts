@@ -262,7 +262,12 @@ export class EventsService {
           successUrl: `${process.env.FRONTEND_URL}/events/ticket/${registration.ticketCode}?payment=success`,
           cancelUrl: `${process.env.FRONTEND_URL}/events/${eventId}?payment=cancelled`,
         });
-        return { url: session, free: false, registrationId: registration.id };
+        // Store session ID immediately so frontend can detect pending Stripe payment (vs capacity waitlist)
+        await this.prisma.eventRegistration.update({
+          where: { id: registration.id },
+          data: { paymentId: session.sessionId },
+        });
+        return { url: session.url, free: false, registrationId: registration.id };
       }
       // Dev-only sandbox bypass — NEVER in production
       if (process.env.NODE_ENV === 'production') {

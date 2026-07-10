@@ -135,7 +135,7 @@ export class StripeService {
     boothId?: string;
     successUrl: string;
     cancelUrl: string;
-  }): Promise<string> {
+  }): Promise<{ url: string; sessionId: string }> {
     const session = await this.stripe.checkout.sessions.create({
       customer: params.customerId,
       mode: 'payment',
@@ -159,7 +159,7 @@ export class StripeService {
       },
     });
     if (!session.url) throw new Error('Stripe session URL manquante');
-    return session.url;
+    return { url: session.url, sessionId: session.id };
   }
 
   // ── Customer Portal ───────────────────────────────────────────

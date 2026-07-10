@@ -605,7 +605,7 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                       {(() => { const sc = STATUS_LABELS[myStatusKey]; return (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                       ); })()}
-                      {isPendingPayment && myRegistration.paymentId && (
+                      {isPendingPayment && myRegistration.paymentId?.startsWith('WE-') && (
                         <p className="text-[10px] text-orange-500 mt-1">Réf. Wise : <span className="font-mono">{myRegistration.paymentId}</span></p>
                       )}
                     </div>
@@ -730,10 +730,16 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                 {event.isFree ? "S'inscrire gratuitement" : "S'inscrire / Réserver"}
               </button>
             )}
-            {/* Real waitlist (capacity full, no payment) → info only */}
+            {/* Real waitlist (capacity full, no payment) → info + quit option */}
             {!isOwner && isRealWaitlist && (
-              <div className="w-full py-2.5 rounded-xl text-center text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                ⏳ Vous êtes en liste d'attente
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 py-2.5 rounded-xl text-center text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  ⏳ Vous êtes en liste d'attente
+                </div>
+                <button onClick={handleCancel} disabled={actionLoading === 'cancel'}
+                  className="py-2.5 px-3 rounded-xl text-sm font-semibold border border-slate-200 text-slate-500 hover:bg-slate-50">
+                  Quitter
+                </button>
               </div>
             )}
             {/* Pending payment → retry checkout or cancel */}
