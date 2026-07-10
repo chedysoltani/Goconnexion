@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 
@@ -27,9 +27,12 @@ function formatDate(dateStr: string) {
 
 export default function EventPublicPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancelBanner, setCancelBanner] = useState<'idle' | 'cancelling' | 'done' | 'error'>('idle');
 
   useEffect(() => {
     api.events.getOne(id)
@@ -37,6 +40,20 @@ export default function EventPublicPage() {
       .catch(() => setError('Événement introuvable'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (searchParams?.get('payment') !== 'cancelled') return;
+    setCancelBanner('cancelling');
+    api.events.cancelRegistration(id)
+      .then(() => setCancelBanner('done'))
+      .catch(() => setCancelBanner('error'))
+      .finally(() => {
+        // Remove ?payment=cancelled from URL without reload
+        const clean = window.location.pathname;
+        router.replace(clean);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -76,6 +93,23 @@ export default function EventPublicPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+        {/* Payment cancelled banner */}
+        {cancelBanner === 'cancelling' && (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center text-sm text-amber-700">
+            Annulation du paiement en cours…
+          </div>
+        )}
+        {cancelBanner === 'done' && (
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-sm text-slate-600">
+            Paiement annulé — votre réservation provisoire a été libérée. Vous pouvez réessayer quand vous voulez.
+          </div>
+        )}
+        {cancelBanner === 'error' && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-center text-sm text-red-600">
+            Paiement annulé. Si une réservation est encore en attente, elle sera automatiquement libérée.
+          </div>
+        )}
 
         {/* Hero */}
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">

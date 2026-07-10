@@ -26,12 +26,23 @@ export class StripeService {
 
   constructor() {
     const key = process.env.STRIPE_SECRET_KEY ?? 'sk_test_placeholder';
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+
     if (!this.isKeyConfigured(key)) {
-      this.logger.warn('⚠️  STRIPE_SECRET_KEY non configurée — mode sandbox actif');
+      this.logger.warn('⚠️  STRIPE_SECRET_KEY non configurée — mode sandbox actif (dev uniquement)');
     } else {
       const mode = key.startsWith('sk_live_') ? 'LIVE 🔴' : 'TEST 🟡';
       this.logger.log(`✅ Stripe configuré en mode ${mode}`);
     }
+
+    if (!webhookSecret || webhookSecret.includes('REMPLACE') || webhookSecret.includes('placeholder')) {
+      this.logger.warn(
+        '⚠️  STRIPE_WEBHOOK_SECRET non configuré — les webhooks de paiement seront rejetés.\n' +
+        '   → En local : stripe listen --forward-to localhost:3001/subscription/webhook\n' +
+        '   → En production : configurer le webhook sur dashboard.stripe.com'
+      );
+    }
+
     this.stripe = new Stripe(key);
   }
 

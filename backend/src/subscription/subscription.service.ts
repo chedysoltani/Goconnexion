@@ -158,7 +158,11 @@ export class SubscriptionService {
     }
 
     if (!this.stripeService.isConfigured()) {
-      // Mode sandbox : upgrade direct sans Stripe
+      if (process.env.NODE_ENV === 'production') {
+        throw new BadRequestException('Le paiement par carte n\'est pas disponible actuellement.');
+      }
+      // Dev-only sandbox bypass — NEVER in production
+      this.logger.warn('⚠️  Stripe non configuré — upgrade sandbox direct (dev uniquement)');
       return this.upgradeDirect(userId, plan as PlanType);
     }
 

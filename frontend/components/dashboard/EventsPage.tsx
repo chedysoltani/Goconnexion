@@ -453,14 +453,18 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
   const catColor = CATEGORY_COLORS[event.category] || '#3b82f6';
   const isOwner = event.organizer.id === currentUserId;
   const spotsLeft = event.capacity ? event.capacity - event._count.registrations : null;
-  const isRegistered = !!myRegistration && myRegistration.status !== 'CANCELLED';
+  const isRegistered = myRegistration?.status === 'REGISTERED' || myRegistration?.status === 'ATTENDED';
+  const isPendingPayment = myRegistration?.status === 'WAITLISTED' && !!myRegistration?.paymentId;
+  const isRealWaitlist = myRegistration?.status === 'WAITLISTED' && !myRegistration?.paymentId;
 
   const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-    REGISTERED: { label: 'Inscrit', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-    WAITLISTED: { label: 'Liste d\'attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    CANCELLED:  { label: 'Annulé', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-    ATTENDED:   { label: 'Présent', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+    REGISTERED:       { label: 'Inscrit', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    WAITLISTED:       { label: 'Liste d\'attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    PENDING_PAYMENT:  { label: 'Paiement en attente', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+    CANCELLED:        { label: 'Annulé', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+    ATTENDED:         { label: 'Présent', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
   };
+  const myStatusKey = isPendingPayment ? 'PENDING_PAYMENT' : (myRegistration?.status ?? 'REGISTERED');
 
   const loadParticipants = useCallback(async () => {
     setLoadingPart(true);
@@ -595,14 +599,17 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                   </div>
                 </div>
                 {myRegistration && !isOwner && (
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${isPendingPayment ? 'bg-orange-50 border-orange-200' : 'bg-emerald-50 border-emerald-200'}`}>
                     <div>
-                      <p className="text-xs font-semibold text-emerald-700">Votre inscription</p>
-                      {(() => { const sc = STATUS_LABELS[myRegistration.status] ?? STATUS_LABELS.REGISTERED; return (
+                      <p className={`text-xs font-semibold ${isPendingPayment ? 'text-orange-700' : 'text-emerald-700'}`}>Votre inscription</p>
+                      {(() => { const sc = STATUS_LABELS[myStatusKey]; return (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                       ); })()}
+                      {isPendingPayment && myRegistration.paymentId && (
+                        <p className="text-[10px] text-orange-500 mt-1">Réf. Wise : <span className="font-mono">{myRegistration.paymentId}</span></p>
+                      )}
                     </div>
-                    {myRegistration.ticketCode && (
+                    {isRegistered && myRegistration.ticketCode && (
                       <a href={`/events/ticket/${myRegistration.ticketCode}`} target="_blank" rel="noreferrer"
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold">
                         Mon billet
@@ -714,15 +721,37 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
           </div>
 
           {/* Footer actions */}
-          <div className="p-4 pt-0 flex-shrink-0 border-t border-slate-100">
-            {!isOwner && !isRegistered && (
+          <div className="p-4 pt-0 flex-shrink-0 border-t border-slate-100 space-y-2">
+            {/* Not registered at all → show checkout */}
+            {!isOwner && !isRegistered && !isPendingPayment && !isRealWaitlist && (
               <button onClick={() => setShowCheckout(true)}
                 className="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:scale-[1.02]"
                 style={{ background: `linear-gradient(135deg,${catColor},${catColor}cc)`, boxShadow: `0 4px 12px ${catColor}30` }}>
                 {event.isFree ? "S'inscrire gratuitement" : "S'inscrire / Réserver"}
               </button>
             )}
-            {!isOwner && isRegistered && myRegistration.status === 'REGISTERED' && (
+            {/* Real waitlist (capacity full, no payment) → info only */}
+            {!isOwner && isRealWaitlist && (
+              <div className="w-full py-2.5 rounded-xl text-center text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                ⏳ Vous êtes en liste d'attente
+              </div>
+            )}
+            {/* Pending payment → retry checkout or cancel */}
+            {!isOwner && isPendingPayment && (
+              <div className="flex gap-2">
+                <button onClick={() => setShowCheckout(true)}
+                  className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+                  🔄 Reprendre le paiement
+                </button>
+                <button onClick={handleCancel} disabled={actionLoading === 'cancel'}
+                  className="py-2.5 px-3 rounded-xl text-sm font-semibold border border-slate-200 text-slate-500 hover:bg-slate-50">
+                  Annuler
+                </button>
+              </div>
+            )}
+            {/* Confirmed → cancel */}
+            {!isOwner && isRegistered && (
               <button onClick={handleCancel} disabled={actionLoading === 'cancel'}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all border border-red-200 text-red-500 hover:bg-red-50">
                 {actionLoading === 'cancel' ? 'Annulation...' : 'Annuler mon inscription'}
@@ -754,7 +783,9 @@ function EventCard({ event, currentUserId, myRegistration, onOpen }: {
   const catColor = CATEGORY_COLORS[event.category] || '#3b82f6';
   const isOwner = event.organizer.id === currentUserId;
   const spotsLeft = event.capacity ? event.capacity - event._count.registrations : null;
-  const isRegistered = !!myRegistration && myRegistration.status !== 'CANCELLED';
+  const isRegistered = myRegistration?.status === 'REGISTERED' || myRegistration?.status === 'ATTENDED';
+  const isPendingPayment = myRegistration?.status === 'WAITLISTED' && !!myRegistration?.paymentId;
+  const isRealWaitlist = myRegistration?.status === 'WAITLISTED' && !myRegistration?.paymentId;
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -802,7 +833,9 @@ function EventCard({ event, currentUserId, myRegistration, onOpen }: {
           </div>
           {isOwner && <span className="text-[11px] font-semibold" style={{ color: catColor }}>Mon événement →</span>}
           {!isOwner && isRegistered && <span className="text-[11px] font-semibold text-emerald-600">Inscrit ✓</span>}
-          {!isOwner && !isRegistered && (
+          {!isOwner && isPendingPayment && <span className="text-[11px] font-semibold text-orange-500">⏳ Paiement en attente</span>}
+          {!isOwner && isRealWaitlist && <span className="text-[11px] font-semibold text-amber-600">Liste d'attente</span>}
+          {!isOwner && !isRegistered && !isPendingPayment && !isRealWaitlist && (
             <span className="text-[11px] font-semibold" style={{ color: catColor }}>Voir →</span>
           )}
         </div>

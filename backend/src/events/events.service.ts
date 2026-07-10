@@ -264,7 +264,17 @@ export class EventsService {
         });
         return { url: session, free: false, registrationId: registration.id };
       }
-      // Sandbox — activate directly
+      // Dev-only sandbox bypass — NEVER in production
+      if (process.env.NODE_ENV === 'production') {
+        // Undo registration before throwing
+        await this.prisma.eventRegistration.update({
+          where: { id: registration.id },
+          data: { status: 'CANCELLED' },
+        });
+        if (booth) await this.prisma.booth.update({ where: { id: booth.id }, data: { status: 'AVAILABLE', reservedById: null } });
+        throw new BadRequestException('Le paiement par carte n\'est pas disponible actuellement. Contactez l\'organisateur.');
+      }
+      this.logger.warn('⚠️  Stripe non configuré — activation sandbox directe (dev uniquement)');
       await this.activateEventRegistration(registration.id, 'sandbox', PaymentProvider.STRIPE);
       return { free: true, registrationId: registration.id, sandboxActivated: true };
     }
@@ -381,13 +391,16 @@ export class EventsService {
       where: { eventId_userId: { eventId, userId } },
     });
     if (!reg) throw new NotFoundException('Inscription introuvable');
+    if (reg.status === 'CANCELLED') return { message: 'Déjà annulé' };
+
+    const wasConfirmed = reg.status === 'REGISTERED' || reg.status === 'ATTENDED';
 
     await this.prisma.eventRegistration.update({
       where: { eventId_userId: { eventId, userId } },
       data: { status: 'CANCELLED' },
     });
 
-    // Release booth if reserved
+    // Release booth — only if the registration was actually paid/confirmed
     if (reg.boothId) {
       await this.prisma.booth.update({
         where: { id: reg.boothId },
@@ -395,29 +408,31 @@ export class EventsService {
       });
     }
 
-    // Promote first WAITLISTED to REGISTERED
-    const next = await this.prisma.eventRegistration.findFirst({
-      where: { eventId, status: 'WAITLISTED' },
-      orderBy: { createdAt: 'asc' },
-    });
-    if (next) {
-      await this.prisma.eventRegistration.update({
-        where: { id: next.id },
-        data: { status: 'REGISTERED' },
+    // Promote only real waitlisted users (paymentId = null means capacity-based waitlist, not payment-pending)
+    if (wasConfirmed) {
+      const next = await this.prisma.eventRegistration.findFirst({
+        where: { eventId, status: 'WAITLISTED', paymentId: null },
+        orderBy: { createdAt: 'asc' },
       });
-      await this.notifications.create({
-        userId: next.userId,
-        title: 'Bonne nouvelle !',
-        content: `Une place s'est libérée — vous êtes maintenant inscrit à l'événement.`,
-        type: 'EVENT',
-      });
+      if (next) {
+        await this.prisma.eventRegistration.update({
+          where: { id: next.id },
+          data: { status: 'REGISTERED' },
+        });
+        await this.notifications.create({
+          userId: next.userId,
+          title: 'Bonne nouvelle !',
+          content: `Une place s'est libérée — vous êtes maintenant inscrit à l'événement.`,
+          type: 'EVENT',
+        });
+      }
     }
 
     return { message: 'Inscription annulée' };
   }
 
   async getMyRegistrations(userId: string) {
-    return this.prisma.eventRegistration.findMany({
+    const regs = await this.prisma.eventRegistration.findMany({
       where: { userId, status: { not: 'CANCELLED' } },
       include: {
         event: { include: { organizer: { select: { id: true, firstName: true, lastName: true } }, _count: { select: { registrations: true } } } },
@@ -426,6 +441,11 @@ export class EventsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    // Annotate WAITLISTED entries so the frontend knows if it's payment-pending vs capacity-waitlist
+    return regs.map(r => ({
+      ...r,
+      pendingPayment: r.status === 'WAITLISTED' && !!r.paymentId,
+    }));
   }
 
   async getEventParticipants(eventId: string) {
