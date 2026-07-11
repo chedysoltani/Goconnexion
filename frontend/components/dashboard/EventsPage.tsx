@@ -902,7 +902,7 @@ export default function EventsPage({ user }: Props) {
 
       {/* Header */}
       <div className="px-6 pt-6 pb-0 flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-xl font-bold text-slate-800">Événements</h2>
             <p className="text-sm text-slate-500 mt-0.5">Salons, networking, formations et hackathons</p>

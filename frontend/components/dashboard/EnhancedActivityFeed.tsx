@@ -1033,7 +1033,7 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
         </div>
 
         {/* Main layout: feed + right sidebar */}
-        <div className="flex gap-5 items-start">
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
           {/* Feed column */}
           <div className="flex-1 min-w-0">
             <CreatePostCard user={user} onCreated={fetchFeed} />
@@ -1068,8 +1068,10 @@ export default function EnhancedActivityFeed({ user }: EnhancedActivityFeedProps
             )}
           </div>
 
-          {/* Right sidebar */}
-          <RightSidebar user={user} />
+          {/* Right sidebar — hidden on mobile */}
+          <div className="hidden lg:block">
+            <RightSidebar user={user} />
+          </div>
         </div>
       </div>
     </div>

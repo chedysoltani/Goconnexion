@@ -240,7 +240,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#1a2332' }}>Revenus</h1>
             <p className="text-[13px] mt-1" style={{ color: '#64748b' }}>
@@ -374,9 +374,10 @@ export default function EarningsPage({ user }: EarningsPageProps) {
         </div>
 
         {/* Earnings Table */}
+        <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(26,35,50,0.04)' }}>
         <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(26,35,50,0.04)' }}
+          className="rounded-2xl overflow-hidden min-w-[640px]"
+          style={{ background: '#fff' }}
         >
           {/* Table Header */}
           <div
@@ -498,6 +499,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
               })
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

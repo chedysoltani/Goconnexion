@@ -241,7 +241,7 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#1a2332' }}>Projets</h1>
             <p className="text-[13px] mt-1" style={{ color: '#64748b' }}>Gérez et suivez vos projets</p>

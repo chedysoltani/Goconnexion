@@ -12,6 +12,8 @@ interface DashboardSidebarProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   onUpgradeClick?: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 interface NavItem {
@@ -110,7 +112,7 @@ const labelVariants = {
   hide: { opacity: 0, x: -8, transition: { duration: 0.15, ease: 'easeIn' as const } },
 };
 
-export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgradeClick }: DashboardSidebarProps) {
+export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgradeClick, mobileOpen, onMobileClose }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const role = user?.role?.toLowerCase() ?? 'user';
@@ -136,11 +138,26 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
   const roleItems: NavItem[] = [];
 
   return (
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+
+      {/* Positioning wrapper: fixed on mobile, static on desktop */}
+      <div
+        className={`fixed md:relative inset-y-0 left-0 z-50 md:z-auto flex-shrink-0 transition-transform duration-300 ease-out md:transition-none ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
     <motion.aside
       variants={sidebarVariants}
       animate={collapsed ? 'collapsed' : 'expanded'}
-      className="sidebar-premium flex flex-col relative overflow-hidden flex-shrink-0"
-      style={{ height: '100vh' }}
+      className="sidebar-premium flex flex-col relative overflow-hidden h-full"
+      style={{ height: '100dvh' }}
     >
       {/* Ambient top accent */}
       <div
@@ -302,7 +319,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
                 transition={{ delay: index * 0.04, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
                 <motion.button
-                  onClick={() => setActiveTab(item.id as Tab)}
+                  onClick={() => { setActiveTab(item.id as Tab); onMobileClose?.(); }}
                   title={collapsed ? item.label : undefined}
                   whileHover={{ x: isActive ? 0 : 2 }}
                   whileTap={{ scale: 0.97 }}
@@ -528,5 +545,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
         </AnimatePresence>
       </div>
     </motion.aside>
+      </div>
+    </>
   );
 }

@@ -77,7 +77,7 @@ export default function UserProfileCard({ user }: Props) {
 
           {/* Panel */}
           <div
-            className="absolute right-0 top-full mt-2 w-72 z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-1rem)] z-50 overflow-hidden"
             style={{
               background: '#ffffff',
               border: '1px solid #e2e8f0',

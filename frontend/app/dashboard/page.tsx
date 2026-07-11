@@ -171,6 +171,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -237,6 +238,8 @@ export default function DashboardPage() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onUpgradeClick={() => setUpgradeOpen(true)}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -244,7 +247,18 @@ export default function DashboardPage() {
         <header className="topbar-glass flex-shrink-0 px-5 py-3 z-30">
           <div className="flex items-center justify-between gap-4">
 
-            {/* Left: breadcrumb + greeting */}
+            {/* Left: hamburger (mobile) + breadcrumb + greeting */}
+            <div className="flex items-center gap-2 min-w-0">
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Ouvrir le menu"
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, x: -8 }}
@@ -277,6 +291,7 @@ export default function DashboardPage() {
                 )}
               </div>
             </motion.div>
+            </div>
 
             {/* Center: Search */}
             <div className="hidden md:flex flex-1 max-w-xs relative">
