@@ -119,32 +119,24 @@ export default function VideoCallModal({
     pc.ontrack = (e) => {
       console.log('[WebRTC] ontrack fired !', e.track.kind, 'muted:', e.track.muted, 'streams:', e.streams.length);
       if (e.streams[0]) {
-        // Attach immediately so the element is ready when the track unmutes
-        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = e.streams[0];
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
 
-        const playAudio = () => {
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.play().catch(err => console.warn('[WebRTC] autoplay blocked:', err));
-          }
-        };
-
-        if (!e.track.muted) {
-          // Track already live — play immediately
-          console.log('[WebRTC] track already unmuted, playing now');
-          playAudio();
-          setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
-          startTimer();
-        } else {
-          // Track muted at start — wait for unmute (fires once ICE fully settles)
-          console.log('[WebRTC] track muted, waiting for unmute event...');
-          e.track.onunmute = () => {
-            console.log('[WebRTC] track unmuted, audio should play now');
-            playAudio();
-            setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
-            startTimer();
-          };
+        // Force audio tracks enabled and attach immediately regardless of muted state
+        if (remoteAudioRef.current) {
+          e.streams[0].getAudioTracks().forEach(t => { t.enabled = true; });
+          remoteAudioRef.current.srcObject = e.streams[0];
+          remoteAudioRef.current.play().catch(err => console.warn('[WebRTC] autoplay blocked:', err));
         }
+
+        // Update UI immediately — don't wait for onunmute
+        setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
+        startTimer();
+
+        // Backup: retry play on unmute in case browser deferred it
+        e.track.onunmute = () => {
+          console.log('[WebRTC] track unmuted');
+          remoteAudioRef.current?.play().catch(err => console.warn('[WebRTC] onunmute play blocked:', err));
+        };
       } else {
         console.warn('[WebRTC] ontrack: e.streams[0] is falsy — skipping');
       }
