@@ -190,6 +190,8 @@ export default function VideoCallModal({
 
       const pc = buildPeerConnection();
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      console.log('[WebRTC] caller local tracks added:', pc.getSenders().map(s => s.track?.kind));
+      console.log('[WebRTC] caller transceivers:', pc.getTransceivers().map(t => t.direction));
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
