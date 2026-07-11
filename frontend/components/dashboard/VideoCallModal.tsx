@@ -104,13 +104,13 @@ export default function VideoCallModal({
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        console.log('[WebRTC] sending ICE candidate:', e.candidate.type, e.candidate.protocol, e.candidate.address);
+        console.log(`[WebRTC][${direction}] sending ICE candidate:`, e.candidate.type, e.candidate.protocol, '→ target:', targetUser.id);
         socketRef.current.emit('ice-candidate', {
           targetUserId: targetUser.id,
           candidate: e.candidate,
         });
       } else {
-        console.log('[WebRTC] ICE gathering complete (null candidate)');
+        console.log(`[WebRTC][${direction}] ICE gathering complete (null candidate)`);
       }
     };
 
@@ -309,7 +309,7 @@ export default function VideoCallModal({
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
       if (!pc || !candidate || pc.signalingState === 'closed') return;
-      console.log('[WebRTC] received ICE candidate:', candidate.candidate?.split(' ')[7], candidate.candidate?.split(' ')[2]);
+      console.log(`[WebRTC][${direction}] received ICE candidate:`, candidate.candidate?.split(' ')[7], candidate.candidate?.split(' ')[2]);
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
       } else {
