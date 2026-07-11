@@ -101,10 +101,7 @@ export default function VideoCallModal({
   const buildPeerConnection = useCallback((): RTCPeerConnection => {
     const iceServers = ICE_SERVERS.iceServers ?? [];
     console.log('[WebRTC] creating RTCPeerConnection, TURN servers:', iceServers.length, JSON.stringify(iceServers));
-    const pc = new RTCPeerConnection({
-      iceServers,
-      iceTransportPolicy: 'relay', // temporaire pour debug
-    });
+    const pc = new RTCPeerConnection({ iceServers });
     pcRef.current = pc;
 
     pc.onicecandidate = (e) => {
