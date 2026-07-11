@@ -73,6 +73,8 @@ export default function VideoCallModal({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const closedRef = useRef(false);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  // Candidates that arrive before acceptIncomingCall creates the RTCPeerConnection
+  const earlyIceCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   // Always holds the latest socket — avoids stale closures when the prop changes between renders
   const socketRef = useRef(socket);
   useEffect(() => { socketRef.current = socket; }, [socket]);
@@ -156,13 +158,10 @@ export default function VideoCallModal({
       if (pc.connectionState === 'connected') {
         setCallStatus('connected');
         startTimer();
-      } else if (
-        pc.connectionState === 'disconnected' ||
-        pc.connectionState === 'failed' ||
-        pc.connectionState === 'closed'
-      ) {
+      } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
         endCall();
       }
+      // 'disconnected' is transient — browser may recover on its own, don't end call
     };
 
     // Fallback: iceConnectionState fires more reliably across browsers than connectionState
@@ -172,7 +171,10 @@ export default function VideoCallModal({
         setCallStatus((prev) => (prev === 'connected' ? prev : 'connected'));
         startTimer();
       } else if (pc.iceConnectionState === 'failed') {
-        endCall();
+        // Give 30s grace before hanging up — ICE may recover or candidates still in flight
+        setTimeout(() => {
+          if (pc.iceConnectionState === 'failed') endCall();
+        }, 30_000);
       }
     };
 
@@ -234,11 +236,14 @@ export default function VideoCallModal({
       console.log('[WebRTC] setRemoteDescription (offer)');
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer));
 
-      // Flush ICE candidates that arrived before the remote description was set
-      for (const c of pendingCandidatesRef.current) {
+      // Flush candidates that arrived before the PC was created (earlyIceCandidatesRef)
+      // and those that arrived after PC creation but before setRemoteDescription (pendingCandidatesRef)
+      const allQueued = [...earlyIceCandidatesRef.current, ...pendingCandidatesRef.current];
+      earlyIceCandidatesRef.current = [];
+      pendingCandidatesRef.current = [];
+      for (const c of allQueued) {
         try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore stale candidates */ }
       }
-      pendingCandidatesRef.current = [];
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -311,10 +316,14 @@ export default function VideoCallModal({
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
       console.log(`[WebRTC][${direction}] received ICE candidate from socket (socket.id=${s.id}):`, candidate.candidate?.split(' ')[7], candidate.candidate?.split(' ')[2]);
-      if (!pc || !candidate || pc.signalingState === 'closed') {
-        console.warn(`[WebRTC][${direction}] ICE candidate ignored — pc=${!!pc} signalingState=${pc?.signalingState}`);
+      if (!candidate) return;
+      if (!pc) {
+        // PC not yet created (callee hasn't clicked Accept) — queue for later
+        console.log('[WebRTC] queuing early ICE candidate (pc not created yet)');
+        earlyIceCandidatesRef.current.push(candidate);
         return;
       }
+      if (pc.signalingState === 'closed') return;
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
       } else {
