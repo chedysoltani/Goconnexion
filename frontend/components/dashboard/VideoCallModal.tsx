@@ -99,6 +99,7 @@ export default function VideoCallModal({
   }, [targetUser.id, cleanup, onClose]);
 
   const buildPeerConnection = useCallback((): RTCPeerConnection => {
+    console.log(`[WebRTC][${direction}] creating RTCPeerConnection, TURN servers:`, ICE_SERVERS.iceServers?.length);
     const pc = new RTCPeerConnection(ICE_SERVERS);
     pcRef.current = pc;
 
@@ -112,6 +113,10 @@ export default function VideoCallModal({
       } else {
         console.log(`[WebRTC][${direction}] ICE gathering complete (null candidate)`);
       }
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log(`[WebRTC][${direction}] ICE gathering state:`, pc.iceGatheringState);
     };
 
     const startTimer = () => {
