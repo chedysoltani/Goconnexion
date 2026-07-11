@@ -292,9 +292,7 @@ export default function VideoCallModal({
   // Wire remaining socket events (rejected / ended / ICE)
   useEffect(() => {
     const s = socketRef.current;
-    if (direction === 'outgoing') {
-      console.log('[WebRTC] caller socket wired, id=', s.id, 'connected=', s.connected);
-    }
+    console.log(`[WebRTC][${direction}] socket wired, id=`, s.id, 'connected=', s.connected);
 
     if (direction === 'outgoing') startOutgoingCall();
 
@@ -312,8 +310,11 @@ export default function VideoCallModal({
 
     const onIce = async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
-      if (!pc || !candidate || pc.signalingState === 'closed') return;
-      console.log(`[WebRTC][${direction}] received ICE candidate:`, candidate.candidate?.split(' ')[7], candidate.candidate?.split(' ')[2]);
+      console.log(`[WebRTC][${direction}] received ICE candidate from socket (socket.id=${s.id}):`, candidate.candidate?.split(' ')[7], candidate.candidate?.split(' ')[2]);
+      if (!pc || !candidate || pc.signalingState === 'closed') {
+        console.warn(`[WebRTC][${direction}] ICE candidate ignored — pc=${!!pc} signalingState=${pc?.signalingState}`);
+        return;
+      }
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
       } else {
@@ -325,6 +326,7 @@ export default function VideoCallModal({
     s.on('call-rejected', onRejected);
     s.on('call-ended', onEnded);
     s.on('ice-candidate', onIce);
+    console.log(`[WebRTC][${direction}] ice-candidate listener registered on socket.id=`, s.id);
 
     return () => {
       s.off('call-rejected', onRejected);
