@@ -18,7 +18,6 @@ const STEPS = [
 const ROLE_META: Record<string, { emoji: string; label: string; color: string }> = {
   freelancer: { emoji: '💻', label: 'Freelancer', color: '#3b82f6' },
   entrepreneur: { emoji: '🚀', label: 'Entrepreneur', color: '#8b5cf6' },
-  user: { emoji: '🌱', label: 'Explorateur', color: '#10b981' },
 };
 
 interface Errs {
@@ -30,7 +29,7 @@ interface Errs {
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [role, setRole] = useState<UserRole>('user');
+  const [role, setRole] = useState<UserRole>('freelancer');
   const [step, setStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Errs>({});
@@ -38,13 +37,13 @@ export default function SignupForm() {
 
   const [form, setForm] = useState<SignupData>({
     email: '', password: '', firstName: '', lastName: '',
-    role: 'user', profile: { bio: '' },
+    role: 'freelancer', profile: { bio: '' },
   });
   const [referralCode, setReferralCode] = useState('');
 
   useEffect(() => {
     const r = searchParams.get('role') as UserRole;
-    if (r && ['freelancer', 'entrepreneur', 'user'].includes(r)) {
+    if (r && ['freelancer', 'entrepreneur'].includes(r)) {
       setRole(r);
       setForm((p) => ({ ...p, role: r }));
     }
@@ -85,9 +84,6 @@ export default function SignupForm() {
         if (!form.profile.company) e.company = 'Entreprise requise';
         if (!form.profile.position) e.position = 'Poste requis';
         if (!form.profile.industry) e.industry = 'Secteur requis';
-      }
-      if (role === 'user') {
-        if (!form.profile.interests?.length) e.interests = 'Au moins un intérêt';
       }
     }
     setErrors(e);
@@ -321,23 +317,6 @@ export default function SignupForm() {
                   </>
                 )}
 
-                {role === 'user' && (
-                  <>
-                    <DarkField label="Centres d'intérêt *" error={errors.interests}>
-                      <input type="text" placeholder="Tech, Marketing, Design..."
-                        value={form.profile.interests?.join(', ') || ''}
-                        onChange={(e) => upd('profile.interests', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-                        className={`input-dark ${errors.interests ? 'error' : ''}`} />
-                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Séparez par des virgules</p>
-                    </DarkField>
-                    <DarkField label="Objectifs professionnels">
-                      <textarea rows={3} placeholder="Que cherchez-vous à accomplir ?"
-                        value={form.profile.goals || ''}
-                        onChange={(e) => upd('profile.goals', e.target.value)}
-                        className="input-dark resize-none" />
-                    </DarkField>
-                  </>
-                )}
               </div>
             )}
 

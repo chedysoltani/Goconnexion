@@ -415,6 +415,16 @@ function CreateEventModal({ onClose, onCreated, initial }: { onClose: () => void
               {!form.isFree && (
                 <input type="number" min="0" step="0.01" className={inputCls} value={form.price} onChange={e => setForm(p => ({...p, price: e.target.value}))} placeholder="Prix de base" />
               )}
+              {!form.isFree && parseFloat(form.price) > 0 && (
+                <div className="mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50">
+                  <p className="text-xs font-semibold text-amber-800 mb-1">💡 Note aux organisateurs</p>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">
+                    Les frais d'inscription collectés transitent par GoConnexions. Votre part sera reversée sur votre compte Wise ou bancaire sous 5–7 jours ouvrés après l'événement.
+                    Pour configurer votre compte de réception, contactez{' '}
+                    <a href="mailto:support@goconnexions.com" className="font-semibold underline">support@goconnexions.com</a>
+                  </p>
+                </div>
+              )}
             </div>
             <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all"
@@ -615,6 +625,16 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                         Mon billet
                       </a>
                     )}
+                  </div>
+                )}
+                {isOwner && !event.isFree && (event.price > 0 || (event.ticketTypes ?? []).some(tt => tt.price > 0)) && (
+                  <div className="p-3 rounded-xl border border-amber-200 bg-amber-50">
+                    <p className="text-xs font-semibold text-amber-800 mb-1">💡 Note aux organisateurs</p>
+                    <p className="text-[11px] text-amber-700 leading-relaxed">
+                      Les frais d'inscription collectés transitent par GoConnexions. Votre part sera reversée sur votre compte Wise ou bancaire sous 5–7 jours ouvrés après l'événement.
+                      Pour configurer votre compte de réception, contactez{' '}
+                      <a href="mailto:support@goconnexions.com" className="font-semibold underline">support@goconnexions.com</a>
+                    </p>
                   </div>
                 )}
               </div>

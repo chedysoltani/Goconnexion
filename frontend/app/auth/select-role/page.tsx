@@ -30,18 +30,6 @@ const roles = [
     glow: 'rgba(139,92,246,0.15)',
     dot: '#8b5cf6',
   },
-  {
-    id: 'user' as UserRole,
-    emoji: '🌱',
-    title: 'Explorateur',
-    subtitle: 'Je découvre la communauté',
-    description: 'Explorez le fil d\'actualités, rejoignez les discussions de l\'incubateur et construisez votre réseau à votre rythme.',
-    benefits: ['Fil d\'actualités', 'Incubateur d\'idées', 'Networking libre'],
-    gradient: 'from-emerald-500/20 to-teal-500/10',
-    border: 'rgba(16,185,129,0.5)',
-    glow: 'rgba(16,185,129,0.15)',
-    dot: '#10b981',
-  },
 ];
 
 export default function SelectRolePage() {
@@ -108,7 +96,7 @@ export default function SelectRolePage() {
           </div>
 
           {/* Role cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10 max-w-2xl mx-auto w-full">
             {roles.map((role, i) => {
               const isSelected = selected === role.id;
               const isHov = hovered === role.id;

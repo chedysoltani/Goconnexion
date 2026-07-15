@@ -279,6 +279,8 @@ export class SubscriptionService {
       throw new BadRequestException('Payload Wise invalide');
     }
 
+    this.logger.log(`Wise webhook received — event_type="${event.event_type}" ref="${(event as any)?.data?.reference_number}"`);
+
     if (event.event_type !== 'balances#credit') {
       return { received: true, ignored: true };
     }
