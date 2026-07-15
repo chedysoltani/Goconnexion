@@ -123,8 +123,8 @@ export default function SignupForm() {
           </div>
           <span className="font-semibold text-white/90 text-[15px]">GoConnexions</span>
         </Link>
-        <Link href="/auth/login" className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          Déjà un compte ?{' '}
+        <Link href="/auth/login" className="text-sm whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <span className="hidden sm:inline">Déjà un compte ?{' '}</span>
           <span className="text-accent font-medium hover:underline">Se connecter</span>
         </Link>
       </header>

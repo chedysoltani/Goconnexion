@@ -87,7 +87,7 @@ function Navbar() {
           <Link href="/auth/login" className="gc-desktop-nav" style={{ color: G.mutedMed, fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
             Connexion
           </Link>
-          <Link href="/auth/select-role" style={{
+          <Link href="/auth/select-role" className="gc-desktop-nav" style={{
             padding: '9px 20px', borderRadius: 24, background: G.accent, color: '#fff',
             fontSize: 13, fontWeight: 700, textDecoration: 'none',
             boxShadow: '0 0 0 0 rgba(29,158,117,0)', transition: 'background 0.2s, box-shadow 0.2s',
