@@ -48,38 +48,15 @@ export class WiseService {
     return `WC-${short}-${timestamp}`;
   }
 
-  async getAccountDetails(currency = 'EUR'): Promise<WiseAccountDetails> {
-    if (!this.isConfigured()) {
-      return this.getMockAccountDetails(currency);
-    }
-
-    try {
-      const response = await fetch(
-        `${this.apiUrl}/v2/profiles/${this.profileId}/account-details`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiToken}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Wise API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const account = Array.isArray(data) ? data.find((a) => a.currency === currency) ?? data[0] : data;
-
-      return {
-        currency: account.currency ?? currency,
-        accountHolderName: account.accountHolderName ?? 'GoConnexion',
-        details: account.details ?? {},
-      };
-    } catch (error) {
-      this.logger.error('Failed to fetch Wise account details', error);
-      return this.getMockAccountDetails(currency);
-    }
+  getAccountDetails(currency?: string): WiseAccountDetails {
+    return {
+      currency: process.env.WISE_CURRENCY ?? currency ?? 'CAD',
+      accountHolderName: process.env.WISE_ACCOUNT_HOLDER ?? 'GoConnexion',
+      details: {
+        email: process.env.WISE_ACCOUNT_EMAIL ?? '',
+        note: `Envoyez vers le compte Wise : ${process.env.WISE_ACCOUNT_EMAIL ?? ''}`,
+      },
+    };
   }
 
   async getBalances(): Promise<WiseBalance[]> {

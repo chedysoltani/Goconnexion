@@ -18,6 +18,7 @@ function WisePaymentContent() {
   const interval = params.get('interval') ?? 'monthly';
   const amount = params.get('amount') ?? '0';
   const currency = params.get('currency') ?? 'CAD';
+  const wiseEmail = params.get('email') ?? '';
 
   const [copied, setCopied] = useState<string | null>(null);
   const [showSteps, setShowSteps] = useState(true);
@@ -126,6 +127,32 @@ function WisePaymentContent() {
                 <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>Pas de frais supplémentaires</p>
               </div>
             </div>
+
+            {/* Wise account destination */}
+            {wiseEmail && (
+              <div className="flex items-center justify-between p-4 rounded-2xl"
+                style={{ background: '#f0f9ff', border: '1.5px solid #bae6fd' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium mb-0.5" style={{ color: '#0369a1' }}>
+                    Envoyez vers le compte Wise
+                  </p>
+                  <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+                    {wiseEmail}
+                  </p>
+                </div>
+                <button
+                  onClick={() => copy(wiseEmail, 'email')}
+                  className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold ml-3 transition-all"
+                  style={{
+                    background: copied === 'email' ? '#dcfce7' : '#e0f2fe',
+                    color: copied === 'email' ? '#16a34a' : '#0369a1',
+                  }}
+                >
+                  {copied === 'email' ? <Check size={12} /> : <Copy size={12} />}
+                  {copied === 'email' ? 'Copié' : 'Copier'}
+                </button>
+              </div>
+            )}
 
             {/* Reference — most important */}
             <div className="p-4 rounded-2xl" style={{ background: '#fef2f2', border: '2px solid #fca5a5' }}>

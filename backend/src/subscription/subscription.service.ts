@@ -261,7 +261,7 @@ export class SubscriptionService {
       accountDetails,
       plan,
       interval,
-      redirectUrl: `${baseUrl}/billing/wise?ref=${reference}&plan=${plan}&interval=${interval}&amount=${amount}&currency=${currency}`,
+      redirectUrl: `${baseUrl}/billing/wise?ref=${reference}&plan=${plan}&interval=${interval}&amount=${amount}&currency=${currency}&email=${encodeURIComponent(accountDetails.details.email ?? '')}`,
     };
   }
 
