@@ -6,6 +6,7 @@ import { WiseService, WiseCreditEvent } from './wise.service';
 import { MailService } from '../mail/mail.service';
 import { EventsService } from '../events/events.service';
 import { PlanType, PlanStatus, PaymentProvider } from '@prisma/client';
+import { getFrontendUrl } from '../common/frontend-url';
 
 export const PLAN_LIMITS = {
   FREE: {
@@ -192,7 +193,7 @@ export class SubscriptionService {
     }
 
     const priceId = this.stripeService.getPriceId(plan, interval);
-    const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const baseUrl = getFrontendUrl();
 
     const checkoutUrl = await this.stripeService.createCheckoutSession({
       customerId,
@@ -249,7 +250,7 @@ export class SubscriptionService {
     });
 
     const accountDetails = await this.wiseService.getAccountDetails(currency);
-    const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const baseUrl = getFrontendUrl();
 
     return {
       provider: 'wise',
@@ -409,7 +410,7 @@ export class SubscriptionService {
     if (!sub?.stripeCustomerId) {
       throw new BadRequestException('Aucun compte de facturation trouvé');
     }
-    const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const baseUrl = getFrontendUrl();
     const url = await this.stripeService.createPortalSession(
       sub.stripeCustomerId,
       `${baseUrl}/dashboard`,

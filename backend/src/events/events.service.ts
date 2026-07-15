@@ -8,6 +8,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { MailService } from '../mail/mail.service';
 import { StripeService } from '../subscription/stripe.service';
 import { WiseService } from '../subscription/wise.service';
+import { getFrontendUrl } from '../common/frontend-url';
 import { PaymentProvider } from '@prisma/client';
 import {
   CreateEventDto, UpdateEventDto,
@@ -259,8 +260,8 @@ export class EventsService {
           eventId,
           userId,
           boothId: booth?.id,
-          successUrl: `${process.env.FRONTEND_URL}/events/ticket/${registration.ticketCode}?payment=success`,
-          cancelUrl: `${process.env.FRONTEND_URL}/events/${eventId}?payment=cancelled`,
+          successUrl: `${getFrontendUrl()}/events/ticket/${registration.ticketCode}?payment=success`,
+          cancelUrl: `${getFrontendUrl()}/events/${eventId}?payment=cancelled`,
         });
         // Store session ID immediately so frontend can detect pending Stripe payment (vs capacity waitlist)
         await this.prisma.eventRegistration.update({
@@ -299,7 +300,7 @@ export class EventsService {
       amount: totalAmount,
       currency,
       accountDetails,
-      redirectUrl: `${process.env.FRONTEND_URL}/events/ticket/${registration.ticketCode}?provider=wise&ref=${reference}&amount=${totalAmount}&currency=${currency}`,
+      redirectUrl: `${getFrontendUrl()}/events/ticket/${registration.ticketCode}?provider=wise&ref=${reference}&amount=${totalAmount}&currency=${currency}`,
     };
   }
 

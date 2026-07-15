@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
+import { getFrontendUrl } from '../common/frontend-url';
 
 @Injectable()
 export class MailService {
@@ -39,7 +40,7 @@ export class MailService {
   // ── API publique ──────────────────────────────────────────────────────────
 
   async sendWelcome(user: { email: string; firstName: string }): Promise<void> {
-    const dashboardUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/dashboard`;
+    const dashboardUrl = `${getFrontendUrl()}/dashboard`;
     await this.send(
       user.email,
       'Bienvenue sur GoConnexions 🚀',
@@ -63,7 +64,7 @@ export class MailService {
     user: { email: string; firstName: string },
     token: string,
   ): Promise<void> {
-    const url = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/auth/verify-email?token=${token}`;
+    const url = `${getFrontendUrl()}/auth/verify-email?token=${token}`;
     await this.send(
       user.email,
       'Confirme ton adresse email — GoConnexions',
@@ -87,7 +88,7 @@ export class MailService {
     user: { email: string; firstName: string },
     token: string,
   ): Promise<void> {
-    const url = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/auth/reset-password?token=${token}`;
+    const url = `${getFrontendUrl()}/auth/reset-password?token=${token}`;
     await this.send(
       user.email,
       'Réinitialisation de ton mot de passe — GoConnexions',
@@ -115,7 +116,7 @@ export class MailService {
     periodEnd: Date,
   ): Promise<void> {
     const endDate = periodEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const dashboardUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/dashboard`;
+    const dashboardUrl = `${getFrontendUrl()}/dashboard`;
     await this.send(
       user.email,
       `Abonnement ${plan} activé — GoConnexions`,
@@ -151,7 +152,7 @@ export class MailService {
     periodEnd: Date,
   ): Promise<void> {
     const endDate = periodEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const pricingUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/pricing`;
+    const pricingUrl = `${getFrontendUrl()}/pricing`;
     await this.send(
       user.email,
       `Abonnement ${plan} annulé`,
@@ -175,7 +176,7 @@ export class MailService {
     user: { email: string; firstName: string },
     plan: string,
   ): Promise<void> {
-    const checkoutUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/billing/checkout`;
+    const checkoutUrl = `${getFrontendUrl()}/billing/checkout`;
     await this.send(
       user.email,
       '⚠️ Échec de paiement — GoConnexions',
@@ -302,7 +303,7 @@ export class MailService {
     senderName: string,
     recipientEmail: string,
   ): Promise<void> {
-    const signupUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/auth/signup`;
+    const signupUrl = `${getFrontendUrl()}/auth/signup`;
     await this.send(
       recipientEmail,
       `${this.esc(senderName)} vous envoie sa carte de visite — GoConnexions`,
@@ -334,7 +335,7 @@ export class MailService {
     ticketType?: { name: string; price: number; currency: string } | null,
     booth?: { number: string; type: string } | null,
   ): Promise<void> {
-    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const base = getFrontendUrl();
     const ticketUrl = `${base}/events/ticket/${ticketCode}`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -376,7 +377,7 @@ export class MailService {
     event: { title: string; startDate: Date; location?: string | null; address?: string | null },
     ticketCode: string,
   ): Promise<void> {
-    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const base = getFrontendUrl();
     const ticketUrl = `${base}/events/ticket/${ticketCode}`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -413,7 +414,7 @@ export class MailService {
     event: { title: string; startDate: Date; location?: string | null; address?: string | null },
     booth: { number: string; type: string; price: number; currency: string; surface?: number | null; description?: string | null },
   ): Promise<void> {
-    const base = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const base = getFrontendUrl();
     const eventsUrl = `${base}/dashboard`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
