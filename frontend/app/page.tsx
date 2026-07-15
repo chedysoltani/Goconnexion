@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const G = {
@@ -318,6 +317,85 @@ function FeaturesSection() {
   );
 }
 
+/* ─── Video ──────────────────────────────────────────────────── */
+const VIDEO_ID = 'vs-I-ZNV5ys';
+const THUMBNAIL = `https://img.youtube.com/vi/${VIDEO_ID}/maxresdefault.jpg`;
+const EMBED_URL = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`;
+
+function VideoSection() {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <section style={{ position: 'relative', padding: '96px 24px', overflow: 'hidden', background: '#080f1a' }}>
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle, rgba(74,144,217,0.10) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 700, height: 240, pointerEvents: 'none', background: 'radial-gradient(ellipse, rgba(74,144,217,0.12) 0%, transparent 70%)' }} />
+
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 900, margin: '0 auto' }}>
+        <RevealBox style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 100, background: 'rgba(74,144,217,0.12)', border: '1px solid rgba(74,144,217,0.25)', color: '#7eb8f0', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 20 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7eb8f0', display: 'inline-block' }} />
+            Voir en action
+          </div>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 16px', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+            Découvrez GoConnexions{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#7eb8f0', fontFamily: 'Georgia, serif' }}>en 2 minutes.</em>
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, maxWidth: 480, margin: '0 auto', lineHeight: 1.65 }}>
+            Regardez comment GoConnexions transforme votre façon de gérer et développer votre réseau professionnel.
+          </p>
+        </RevealBox>
+
+        <RevealBox delay={120}>
+          <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', border: '1px solid rgba(74,144,217,0.2)', boxShadow: '0 0 0 1px rgba(74,144,217,0.1), 0 32px 80px rgba(0,0,0,0.5)' }}>
+            <div style={{ position: 'relative', paddingBottom: '56.25%' }}>
+              {playing ? (
+                <iframe
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  src={EMBED_URL}
+                  title="GoConnexions — Présentation officielle"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <button onClick={() => setPlaying(true)} aria-label="Lancer la vidéo GoConnexions"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', padding: 0, cursor: 'pointer', background: 'none' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={THUMBNAIL} alt="Aperçu vidéo GoConnexions" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="#0f1f3d" style={{ marginLeft: 4 }}><path d="M8 5v14l11-7z" /></svg>
+                    </div>
+                  </div>
+                  <div style={{ position: 'absolute', bottom: 16, right: 16, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 100, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+                    <svg width="14" height="10" viewBox="0 0 24 17" fill="red"><path d="M23.5 2.6s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.6-.1 12 0 12 0S7.4-.1 4.7.5c-.6.1-1.9.1-3 1.3C.8.6.5 2.6.5 2.6S.2 4.9.2 7.2v2.2c0 2.3.3 4.6.3 4.6s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.2 18.2 12 18.2 12 18.2s4.6 0 7.3-.6c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.3.3-4.6V7.2c0-2.3-.3-4.6-.3-4.6zM9.7 12.1V4.9l8.1 3.7-8.1 3.5z" /></svg>
+                    YouTube
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+        </RevealBox>
+
+        <RevealBox delay={200} style={{ textAlign: 'center', marginTop: 40 }}>
+          <a href="/auth/select-role" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            padding: '14px 28px', borderRadius: 100, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            boxShadow: '0 4px 20px rgba(59,130,246,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(59,130,246,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(59,130,246,0.35)'; }}>
+            Commencer gratuitement
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
+          </a>
+          <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 12 }}>Sans carte bancaire · Gratuit pour commencer</p>
+        </RevealBox>
+      </div>
+    </section>
+  );
+}
+
 /* ─── How it works ───────────────────────────────────────────── */
 const STEPS = [
   { n: '01', title: 'Construisez votre carte relationnelle', desc: 'Importez vos contacts ou repartez de zéro. Taguez les personnes selon comment vous les connaissez et ce que vous souhaitez accomplir ensemble.', detail: 'Configuration en 5 minutes', color: G.accent },
@@ -554,18 +632,6 @@ function PricingSection() {
 
 /* ─── CTA ────────────────────────────────────────────────────── */
 function CtaSection() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-      setTimeout(() => router.push(`/auth/signup?email=${encodeURIComponent(email)}`), 1200);
-    }
-  };
-
   return (
     <section style={{ background: G.surface, padding: '96px 24px', position: 'relative', overflow: 'hidden', borderTop: `1px solid ${G.border}` }}>
       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(29,158,117,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
@@ -578,25 +644,18 @@ function CtaSection() {
         <p style={{ fontSize: 15, color: G.muted, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 40px' }}>
           Rejoignez plus de 2 400 entrepreneurs et freelances qui construisent des relations professionnelles significatives. Gratuit pour commencer, sans carte bancaire.
         </p>
-        {!submitted ? (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, maxWidth: 460, margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="votre@email.com" required
-              style={{ flex: '1 1 220px', padding: '14px 20px', borderRadius: 100, background: G.bg, border: `1px solid ${G.border}`, color: G.text, fontSize: 14, outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={e => (e.target.style.borderColor = G.accentBorder)}
-              onBlur={e => (e.target.style.borderColor = G.border)} />
-            <button type="submit" style={{ flexShrink: 0, padding: '14px 28px', borderRadius: 100, background: G.accent, color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(29,158,117,0.3)', transition: 'box-shadow 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(29,158,117,0.5)')}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(29,158,117,0.3)')}>
-              Obtenir l'accès anticipé
-            </button>
-          </form>
-        ) : (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 28px', borderRadius: 100, background: G.accentMuted, border: `1px solid ${G.accentBorder}` }}>
-            <svg width="18" height="18" fill="none" stroke={G.accent} strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span style={{ color: G.text, fontWeight: 600, fontSize: 14 }}>Vous êtes sur la liste — redirection en cours…</span>
-          </div>
-        )}
-        <p style={{ fontSize: 12, color: G.muted, marginTop: 20 }}>Pas de spam. Pas d'algorithme. Juste une plateforme qui vous aide à mieux vous connecter.</p>
+        <Link href="/auth/select-role" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 10,
+          padding: '16px 36px', borderRadius: 100, background: G.accent,
+          color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none',
+          boxShadow: '0 8px 30px rgba(29,158,117,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 40px rgba(29,158,117,0.5)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(29,158,117,0.35)'; }}>
+          Commencer gratuitement
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
+        </Link>
+        <p style={{ fontSize: 12, color: G.muted, marginTop: 20 }}>Sans carte bancaire · Gratuit pour commencer</p>
       </RevealBox>
     </section>
   );
@@ -700,6 +759,7 @@ export default function HomePage() {
         <LogosSection />
         <ProblemSection />
         <FeaturesSection />
+        <VideoSection />
         <HowItWorksSection />
         <TestimonialSection />
         <PricingSection />
