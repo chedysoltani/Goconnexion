@@ -150,8 +150,8 @@ export default function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
-                    style={{ color: 'rgba(255,255,255,0.35)' }}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
+                    style={{ color: 'rgba(255,255,255,0.65)' }}
                     tabIndex={-1}
                   >
                     {showPassword ? (
