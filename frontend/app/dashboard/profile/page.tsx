@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,7 @@ import { User } from '@/types/auth';
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; gradient: string }> = {
   freelancer:   { label: 'Freelancer',   color: '#60a5fa', bg: 'rgba(59,130,246,0.15)',  gradient: 'from-blue-600 to-blue-400' },
   entrepreneur: { label: 'Entrepreneur', color: '#c084fc', bg: 'rgba(139,92,246,0.15)',  gradient: 'from-violet-600 to-purple-400' },
-  user:         { label: 'Explorateur',  color: '#34d399', bg: 'rgba(16,185,129,0.15)',  gradient: 'from-emerald-600 to-teal-400' },
+  user:         { label: 'Explorateur',  color: '#60a5fa', bg: 'rgba(37,99,235,0.15)',  gradient: 'from-blue-600 to-teal-400' },
   admin:        { label: 'Admin',        color: '#fbbf24', bg: 'rgba(245,158,11,0.15)',  gradient: 'from-amber-500 to-yellow-400' },
 };
 
@@ -269,7 +269,7 @@ export default function ProfilePage() {
               </div>
               <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
               {/* Online badge */}
-              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white" />
+              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-blue-400 border-2 border-white" />
             </div>
 
             {/* Name + role */}
@@ -307,14 +307,14 @@ export default function ProfilePage() {
         {/* Alerts */}
         {saveSuccess && (
           <div className="mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl scale-in"
-            style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(16,185,129,0.2)' }}>
-              <svg width="12" height="12" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24">
+              style={{ background: 'rgba(37,99,235,0.2)' }}>
+              <svg width="12" height="12" fill="none" stroke="#2563eb" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-[13px] font-semibold" style={{ color: '#059669' }}>
+            <p className="text-[13px] font-semibold" style={{ color: '#1d4ed8' }}>
               Profil mis à jour avec succès !
             </p>
           </div>
@@ -574,8 +574,8 @@ export default function ProfilePage() {
                   ) : (
                     <div className="text-center py-8">
                       <div className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                        style={{ background: 'rgba(16,185,129,0.1)' }}>
-                        <svg width="22" height="22" fill="none" stroke="#10b981" strokeWidth="1.8" viewBox="0 0 24 24">
+                        style={{ background: 'rgba(37,99,235,0.1)' }}>
+                        <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="1.8" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
@@ -604,7 +604,7 @@ export default function ProfilePage() {
                   {[
                     { label: 'Type de compte', value: roleConfig.label, color: roleConfig.color },
                     { label: 'Membre depuis', value: 'Mai 2026', color: '#4a90d9' },
-                    { label: 'Publications', value: myPosts.length.toString(), color: '#10b981' },
+                    { label: 'Publications', value: myPosts.length.toString(), color: '#2563eb' },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between p-3 rounded-xl"
                       style={{ background: '#f8fafc' }}>

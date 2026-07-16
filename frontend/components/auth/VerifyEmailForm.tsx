@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -84,7 +84,7 @@ export default function VerifyEmailForm() {
 
             {status === 'success' && (
               <div className="px-4 py-3 rounded-xl text-sm font-medium"
-                style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#6ee7b7' }}>
+                style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: '#6ee7b7' }}>
                 ✓ Email vérifié avec succès. Redirection vers votre tableau de bord...
               </div>
             )}

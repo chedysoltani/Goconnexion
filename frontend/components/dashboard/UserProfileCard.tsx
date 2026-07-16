@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -11,8 +11,8 @@ interface Props { user: User | null }
 const ROLE_META: Record<string, { label: string; color: string; bg: string }> = {
   freelancer:   { label: 'Freelancer',  color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
   entrepreneur: { label: 'Entrepreneur', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
-  collaborator: { label: 'Explorateur', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-  user:         { label: 'Explorateur', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+  collaborator: { label: 'Explorateur', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
+  user:         { label: 'Explorateur', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
   admin:        { label: 'Admin',       color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
 };
 

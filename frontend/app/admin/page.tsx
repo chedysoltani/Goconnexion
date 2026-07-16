@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -26,7 +26,7 @@ const PLAN_COLORS: Record<string, string> = {
   FREE: '#94a3b8',
   PRO: '#3b82f6',
   BUSINESS: '#8b5cf6',
-  PREMIUM_ENTREPRENEUR: '#10b981',
+  PREMIUM_ENTREPRENEUR: '#2563eb',
   PREMIUM_FREELANCER: '#f59e0b',
   PREMIUM_INCUBATEUR: '#ec4899',
 };
@@ -34,7 +34,7 @@ const PLAN_COLORS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: '#ef4444',
   FREELANCER: '#3b82f6',
-  ENTREPRENEUR: '#10b981',
+  ENTREPRENEUR: '#2563eb',
   COLLABORATOR: '#f59e0b',
 };
 
@@ -109,7 +109,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
               {[
                 { label: 'Utilisateurs', value: stats?.totalUsers ?? 0, icon: '👥', color: '#3b82f6' },
-                { label: 'Projets', value: stats?.totalProjects ?? 0, icon: '🚀', color: '#10b981' },
+                { label: 'Projets', value: stats?.totalProjects ?? 0, icon: '🚀', color: '#2563eb' },
                 { label: 'Événements actifs', value: stats?.totalEvents ?? 0, icon: '📅', color: '#8b5cf6' },
                 { label: 'Conversations', value: stats?.totalConversations ?? 0, icon: '💬', color: '#6366f1' },
                 { label: 'Abonnés actifs', value: stats?.activeSubscriptions ?? 0, icon: '⭐', color: '#ec4899' },

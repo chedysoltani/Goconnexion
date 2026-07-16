@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -44,7 +44,7 @@ interface Conversation {
 const ROLE_AVATAR: Record<string, { bg: string; color: string }> = {
   FREELANCER:   { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
   ENTREPRENEUR: { bg: 'rgba(139,92,246,0.15)',  color: '#8b5cf6' },
-  USER:         { bg: 'rgba(16,185,129,0.15)',  color: '#10b981' },
+  USER:         { bg: 'rgba(37,99,235,0.15)',  color: '#2563eb' },
 };
 
 function getRoleAvatar(role: string) {
@@ -344,7 +344,7 @@ export default function MessagesPage({ user }: MessagesPageProps) {
                     </div>
                     <div
                       className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
-                      style={{ background: '#10b981', border: '2px solid #fff' }}
+                      style={{ background: '#2563eb', border: '2px solid #fff' }}
                     />
                   </div>
 
@@ -405,7 +405,7 @@ export default function MessagesPage({ user }: MessagesPageProps) {
                   {activeParticipant.firstName} {activeParticipant.lastName}
                 </h3>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#2563eb' }} />
                   <span className="text-[10px] capitalize" style={{ color: '#64748b' }}>
                     En ligne · {(activeParticipant.role || 'USER').toLowerCase()}
                   </span>

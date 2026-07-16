@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -145,7 +145,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
   const getCategoryBadgeColor = (cat: string) => {
     switch (cat.toLowerCase()) {
       case 'tech': return 'bg-blue-50 text-blue-700 border-blue-150';
-      case 'finance': return 'bg-emerald-50 text-emerald-700 border-emerald-150';
+      case 'finance': return 'bg-blue-50 text-blue-700 border-blue-150';
       case 'santé': return 'bg-rose-50 text-rose-700 border-rose-150';
       case 'social': return 'bg-purple-50 text-purple-700 border-purple-150';
       case 'éducation': return 'bg-amber-50 text-amber-700 border-amber-150';
@@ -157,7 +157,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
   const getCategoryGradientStrip = (cat: string) => {
     switch (cat.toLowerCase()) {
       case 'tech': return 'from-blue-400 to-blue-600';
-      case 'finance': return 'from-emerald-400 to-emerald-600';
+      case 'finance': return 'from-blue-400 to-blue-600';
       case 'santé': return 'from-rose-400 to-rose-600';
       case 'social': return 'from-purple-400 to-purple-600';
       case 'éducation': return 'from-amber-400 to-amber-600';
@@ -169,7 +169,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
   const getCategoryBadgeGradient = (cat: string) => {
     switch (cat.toLowerCase()) {
       case 'tech': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
-      case 'finance': return 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white';
+      case 'finance': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
       case 'santé': return 'bg-gradient-to-r from-rose-500 to-rose-600 text-white';
       case 'social': return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white';
       case 'éducation': return 'bg-gradient-to-r from-amber-500 to-amber-600 text-white';

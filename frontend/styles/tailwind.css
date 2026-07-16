@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -414,7 +414,7 @@ body {
   position: relative;
   border-radius: 1.5rem;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(139,92,246,0.25), rgba(16,185,129,0.2));
+  background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(139,92,246,0.25), rgba(37,99,235,0.2));
 }
 .gradient-border-inner {
   background: var(--surface);

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -210,7 +210,7 @@ export default function UpgradeModal({
                             Annuel
                             <span
                               className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                              style={{ background: 'rgba(16,185,129,0.3)', color: '#34d399' }}
+                              style={{ background: 'rgba(37,99,235,0.3)', color: '#60a5fa' }}
                             >
                               -30%
                             </span>
@@ -310,7 +310,7 @@ export default function UpgradeModal({
                       {billing === 'yearly' && (
                         <p className="text-[10px] mb-3 -mt-1" style={{ color: '#94a3b8' }}>
                           Facturé {plan.price.yearly}€/an
-                          <span className="ml-1 font-bold" style={{ color: '#10b981' }}>
+                          <span className="ml-1 font-bold" style={{ color: '#2563eb' }}>
                             (-{yearlyDiscount(plan)}%)
                           </span>
                         </p>

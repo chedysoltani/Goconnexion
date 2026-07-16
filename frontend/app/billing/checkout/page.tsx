@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -111,7 +111,7 @@ function CheckoutForm() {
             </div>
             {interval === 'yearly' && (
               <span className="text-xs px-2 py-1 rounded-full font-bold"
-                style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399' }}>
+                style={{ background: 'rgba(37,99,235,0.2)', color: '#60a5fa' }}>
                 Facturé annuellement · Économisez 30%
               </span>
             )}
@@ -217,9 +217,9 @@ function CheckoutForm() {
                 style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0' }}
               >
                 <div className="flex items-start gap-3">
-                  <Globe size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <Globe size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-emerald-800 mb-1">
+                    <p className="text-sm font-semibold text-blue-800 mb-1">
                       Virement bancaire via Wise
                     </p>
                     <p className="text-xs text-slate-600 leading-relaxed">

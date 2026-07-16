@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -21,7 +21,7 @@ interface Earning {
 }
 
 const STATUS_CONFIG = {
-  paid:    { label: 'Acceptée',   color: '#10b981', bg: 'rgba(16,185,129,0.1)',  dot: '#10b981' },
+  paid:    { label: 'Acceptée',   color: '#2563eb', bg: 'rgba(37,99,235,0.1)',  dot: '#2563eb' },
   pending: { label: 'En attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  dot: '#f59e0b' },
   overdue: { label: 'En retard',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   dot: '#ef4444' },
 };
@@ -43,7 +43,7 @@ function exportPDF(
         <td>${e.client.name}</td>
         <td style="font-weight:600">${fmt(e.amount)}</td>
         <td>${fmtDate(e.date)}</td>
-        <td style="color:${e.status === 'paid' ? '#10b981' : e.status === 'overdue' ? '#ef4444' : '#f59e0b'}">${statusLabels[e.status]}</td>
+        <td style="color:${e.status === 'paid' ? '#2563eb' : e.status === 'overdue' ? '#ef4444' : '#f59e0b'}">${statusLabels[e.status]}</td>
       </tr>`,
     )
     .join('');
@@ -80,7 +80,7 @@ function exportPDF(
   <div class="stats">
     <div class="stat">
       <p class="stat-label">${isEntrepreneur ? 'Budget engagé' : 'Missions décrochées'}</p>
-      <p class="stat-value" style="color:#10b981">${fmt(totalPaid)}</p>
+      <p class="stat-value" style="color:#2563eb">${fmt(totalPaid)}</p>
     </div>
     <div class="stat">
       <p class="stat-label">En attente</p>
@@ -136,10 +136,10 @@ const STAT_CARDS = (
       value: fmt(total),
       sub: growthPct === null ? 'Pas encore de comparaison' : `${growthLabel} ce mois`,
       subPositive: growthPositive,
-      icon: <DollarSign size={20} color="#10b981" />,
-      iconBg: 'rgba(16,185,129,0.12)',
-      accent: '#10b981',
-      gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))',
+      icon: <DollarSign size={20} color="#2563eb" />,
+      iconBg: 'rgba(37,99,235,0.12)',
+      accent: '#2563eb',
+      gradient: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.02))',
     },
     {
       label: isEntrepreneur ? 'Projets en recherche' : 'Candidatures en attente',
@@ -228,7 +228,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
 
   const FILTERS: { key: 'all' | 'paid' | 'pending'; label: string; accent: string }[] = [
     { key: 'all',     label: 'Tous',       accent: '#4a90d9' },
-    { key: 'paid',    label: 'Acceptées',  accent: '#10b981' },
+    { key: 'paid',    label: 'Acceptées',  accent: '#2563eb' },
     { key: 'pending', label: 'En attente', accent: '#f59e0b' },
   ];
 
@@ -295,7 +295,7 @@ export default function EarningsPage({ user }: EarningsPageProps) {
                   <p className="text-2xl font-bold" style={{ color: '#1a2332' }}>{card.value}</p>
                   <p
                     className="text-[11px] font-medium mt-1"
-                    style={{ color: card.subPositive ? '#10b981' : '#94a3b8' }}
+                    style={{ color: card.subPositive ? '#2563eb' : '#94a3b8' }}
                   >
                     {card.subPositive ? '↑ ' : ''}{card.sub}
                   </p>

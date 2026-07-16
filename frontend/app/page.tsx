@@ -1,21 +1,21 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const G = {
-  bg: '#0A0F0D',
-  surface: '#111A14',
-  surfaceAlt: '#0D1610',
-  accent: '#1D9E75',
-  accentHover: '#23BE8C',
-  accentMuted: 'rgba(29,158,117,0.12)',
-  accentBorder: 'rgba(29,158,117,0.22)',
-  text: '#E2EDE7',
-  muted: 'rgba(226,237,231,0.48)',
-  mutedMed: 'rgba(226,237,231,0.68)',
-  border: 'rgba(226,237,231,0.08)',
+  bg: '#09090B',
+  surface: '#0F172A',
+  surfaceAlt: '#0B1526',
+  accent: '#2563EB',
+  accentHover: '#1D4ED8',
+  accentMuted: 'rgba(37,99,235,0.12)',
+  accentBorder: 'rgba(37,99,235,0.25)',
+  text: '#F0F6FF',
+  muted: 'rgba(219,234,254,0.5)',
+  mutedMed: 'rgba(219,234,254,0.75)',
+  border: 'rgba(147,197,253,0.1)',
 };
 
 /* ─── RevealBox — scroll-triggered fade-up ───────────────────── */
@@ -61,13 +61,13 @@ function Navbar() {
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
       transition: 'background 0.4s, border-color 0.4s, backdrop-filter 0.4s',
-      background: scrolled ? 'rgba(10,15,13,0.88)' : 'transparent',
+      background: scrolled ? 'rgba(9,9,11,0.88)' : 'transparent',
       borderBottom: scrolled ? `1px solid ${G.border}` : '1px solid transparent',
       backdropFilter: scrolled ? 'blur(20px)' : 'none',
     }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: G.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(29,158,117,0.4)' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: G.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(37,99,235,0.4)' }}>
             <span style={{ color: '#fff', fontWeight: 800, fontSize: 13, letterSpacing: '-0.5px' }}>GC</span>
           </div>
           <span style={{ color: G.text, fontWeight: 700, fontSize: 15, letterSpacing: '-0.3px' }}>GoConnexions</span>
@@ -90,10 +90,10 @@ function Navbar() {
           <Link href="/auth/select-role" className="gc-desktop-nav" style={{
             padding: '9px 20px', borderRadius: 24, background: G.accent, color: '#fff',
             fontSize: 13, fontWeight: 700, textDecoration: 'none',
-            boxShadow: '0 0 0 0 rgba(29,158,117,0)', transition: 'background 0.2s, box-shadow 0.2s',
+            boxShadow: '0 0 0 0 rgba(37,99,235,0)', transition: 'background 0.2s, box-shadow 0.2s',
           }}
-            onMouseEnter={e => { e.currentTarget.style.background = G.accentHover; e.currentTarget.style.boxShadow = '0 6px 20px rgba(29,158,117,0.35)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = G.accent; e.currentTarget.style.boxShadow = '0 0 0 0 rgba(29,158,117,0)'; }}>
+            onMouseEnter={e => { e.currentTarget.style.background = G.accentHover; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,99,235,0.35)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = G.accent; e.currentTarget.style.boxShadow = '0 0 0 0 rgba(37,99,235,0)'; }}>
             Commencer gratuitement
           </Link>
           <button className="gc-hamburger" onClick={() => setMenuOpen(!menuOpen)}
@@ -108,7 +108,7 @@ function Navbar() {
       </div>
 
       {menuOpen && (
-        <div style={{ background: 'rgba(10,15,13,0.98)', borderTop: `1px solid ${G.border}`, padding: '16px 24px 24px' }}>
+        <div style={{ background: 'rgba(9,9,11,0.98)', borderTop: `1px solid ${G.border}`, padding: '16px 24px 24px' }}>
           {navLinks.map(l => (
             <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)}
               style={{ display: 'block', color: G.text, fontSize: 16, fontWeight: 500, padding: '12px 0', textDecoration: 'none', borderBottom: `1px solid ${G.border}` }}>
@@ -133,10 +133,10 @@ function Navbar() {
 
 /* ─── Hero ───────────────────────────────────────────────────── */
 function Hero() {
-  const avatarColors = ['#4a90d9', '#e67e22', '#9b59b6', '#27ae60', '#e74c3c'];
+  const avatarColors = ['#4a90d9', '#e67e22', '#9b59b6', '#0ea5e9', '#e74c3c'];
   return (
     <section style={{ minHeight: '100vh', background: G.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', paddingTop: 80 }}>
-      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(29,158,117,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${G.border} 1px, transparent 1px), linear-gradient(90deg, ${G.border} 1px, transparent 1px)`, backgroundSize: '60px 60px', opacity: 0.35, pointerEvents: 'none' }} />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 24px 100px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -168,10 +168,10 @@ function Hero() {
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '15px 32px', borderRadius: 100, background: G.accent,
               color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none',
-              boxShadow: '0 8px 30px rgba(29,158,117,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: '0 8px 30px rgba(37,99,235,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
             }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 40px rgba(29,158,117,0.45)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(29,158,117,0.35)'; }}>
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 40px rgba(37,99,235,0.45)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(37,99,235,0.35)'; }}>
               Commencer gratuitement
               <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
             </Link>
@@ -227,7 +227,7 @@ function LogosSection() {
           <p style={{ fontSize: 11, color: G.muted, textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600, marginBottom: 24 }}>Utilisé par des professionnels de</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '10px 40px' }}>
             {logos.map(name => (
-              <span key={name} style={{ color: 'rgba(226,237,231,0.22)', fontSize: 14, fontWeight: 700, letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>{name}</span>
+              <span key={name} style={{ color: 'rgba(219,234,254,0.22)', fontSize: 14, fontWeight: 700, letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>{name}</span>
             ))}
           </div>
         </div>
@@ -557,10 +557,10 @@ function PlanCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; delay:
   return (
     <RevealBox delay={delay}>
       <div style={{
-        background: plan.highlight ? `linear-gradient(160deg, ${G.surface} 0%, rgba(29,158,117,0.06) 100%)` : G.surface,
+        background: plan.highlight ? `linear-gradient(160deg, ${G.surface} 0%, rgba(37,99,235,0.06) 100%)` : G.surface,
         border: `${plan.highlight ? '1.5px' : '1px'} solid ${plan.highlight || hov ? G.accentBorder : G.border}`,
         borderRadius: 24, padding: '36px 32px', position: 'relative',
-        boxShadow: plan.highlight ? '0 0 40px rgba(29,158,117,0.1)' : 'none',
+        boxShadow: plan.highlight ? '0 0 40px rgba(37,99,235,0.1)' : 'none',
         transition: 'border-color 0.3s',
         height: '100%',
       }}
@@ -593,7 +593,7 @@ function PlanCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; delay:
           border: plan.highlight ? 'none' : `1px solid ${G.border}`,
           color: plan.highlight ? '#fff' : G.mutedMed,
           fontSize: 14, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s',
-          boxShadow: plan.highlight ? '0 4px 20px rgba(29,158,117,0.3)' : 'none',
+          boxShadow: plan.highlight ? '0 4px 20px rgba(37,99,235,0.3)' : 'none',
         }}>
           {plan.cta}
         </Link>
@@ -618,7 +618,7 @@ function PricingSection() {
             <button onClick={() => setYearly(false)} style={{ padding: '7px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.25s', background: !yearly ? G.accent : 'transparent', color: !yearly ? '#fff' : G.muted }}>Mensuel</button>
             <button onClick={() => setYearly(true)} style={{ padding: '7px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.25s', background: yearly ? G.accent : 'transparent', color: yearly ? '#fff' : G.muted, display: 'flex', alignItems: 'center', gap: 6 }}>
               Annuel
-              <span style={{ background: 'rgba(29,158,117,0.2)', color: G.accent, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100 }}>-17%</span>
+              <span style={{ background: 'rgba(37,99,235,0.2)', color: G.accent, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100 }}>-17%</span>
             </button>
           </div>
         </RevealBox>
@@ -634,7 +634,7 @@ function PricingSection() {
 function CtaSection() {
   return (
     <section style={{ background: G.surface, padding: '96px 24px', position: 'relative', overflow: 'hidden', borderTop: `1px solid ${G.border}` }}>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(29,158,117,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(37,99,235,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
       <RevealBox style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 100, border: `1px solid ${G.accentBorder}`, color: G.accent, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 28 }}>Accès Anticipé Ouvert</span>
         <h2 style={{ fontSize: 'clamp(2rem, 6vw, 3.6rem)', fontWeight: 800, color: G.text, margin: '0 0 20px', lineHeight: 1.06, letterSpacing: '-0.03em' }}>
@@ -648,10 +648,10 @@ function CtaSection() {
           display: 'inline-flex', alignItems: 'center', gap: 10,
           padding: '16px 36px', borderRadius: 100, background: G.accent,
           color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none',
-          boxShadow: '0 8px 30px rgba(29,158,117,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
+          boxShadow: '0 8px 30px rgba(37,99,235,0.35)', transition: 'transform 0.2s, box-shadow 0.2s',
         }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 40px rgba(29,158,117,0.5)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(29,158,117,0.35)'; }}>
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 40px rgba(37,99,235,0.5)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(37,99,235,0.35)'; }}>
           Commencer gratuitement
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
         </Link>
@@ -718,9 +718,9 @@ function GlobalStyles() {
     <style>{`
       *, *::before, *::after { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
-      body { background: #0A0F0D; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+      body { background: #09090B; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
       input, button { font-family: inherit; }
-      input::placeholder { color: rgba(226,237,231,0.35); }
+      input::placeholder { color: rgba(219,234,254,0.35); }
 
       @keyframes gc-pulse {
         0%, 100% { opacity: 1; transform: scale(1); }

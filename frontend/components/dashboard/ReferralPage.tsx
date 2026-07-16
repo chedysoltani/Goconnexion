@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -140,7 +140,7 @@ export default function ReferralPage({ user }: Props) {
               const d = new Date(r.createdAt);
               const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
               return d >= weekAgo;
-            }).length ?? 0, icon: '⚡', color: '#10b981', bg: '#d1fae5' },
+            }).length ?? 0, icon: '⚡', color: '#2563eb', bg: '#dbeafe' },
           ].map(stat => (
             <motion.div
               key={stat.label}
@@ -194,7 +194,7 @@ export default function ReferralPage({ user }: Props) {
                         {new Date(ref.createdAt).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
                       +1
                     </span>
                   </motion.div>

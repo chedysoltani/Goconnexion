@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -52,7 +52,7 @@ function SuccessContent() {
           key={i}
           className="fixed w-3 h-3 rounded-full pointer-events-none"
           style={{
-            background: ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'][i],
+            background: ['#3b82f6','#8b5cf6','#2563eb','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'][i],
             left: `${10 + i * 11}%`,
             top: '-10px',
           }}

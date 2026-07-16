@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -6,7 +6,7 @@ import QRCode from 'react-qr-code';
 import { api } from '@/lib/api';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  REGISTERED: { label: 'Inscrit', color: '#059669', bg: '#d1fae5', icon: '✅' },
+  REGISTERED: { label: 'Inscrit', color: '#1d4ed8', bg: '#dbeafe', icon: '✅' },
   WAITLISTED: { label: 'Liste d\'attente', color: '#d97706', bg: '#fef3c7', icon: '⏳' },
   CANCELLED:  { label: 'Annulé', color: '#dc2626', bg: '#fee2e2', icon: '❌' },
   ATTENDED:   { label: 'Présent — Bienvenue !', color: '#7c3aed', bg: '#ede9fe', icon: '🎉' },
@@ -85,8 +85,8 @@ export default function TicketPage() {
 
         {/* Payment success banner */}
         {paymentSuccess && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-            <p className="text-emerald-700 font-semibold text-sm">🎉 Paiement confirmé ! Votre billet est prêt.</p>
+          <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
+            <p className="text-blue-700 font-semibold text-sm">🎉 Paiement confirmé ! Votre billet est prêt.</p>
           </div>
         )}
 

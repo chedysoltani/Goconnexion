@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -42,7 +42,7 @@ interface ApiApplication {
 
 // ── Config affichage ───────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  OPEN:        { label: 'Ouvert',        color: '#10b981', bg: 'rgba(16,185,129,0.1)',  accent: '#10b981', progress: 15 },
+  OPEN:        { label: 'Ouvert',        color: '#2563eb', bg: 'rgba(37,99,235,0.1)',  accent: '#2563eb', progress: 15 },
   IN_PROGRESS: { label: 'En cours',      color: '#4a90d9', bg: 'rgba(74,144,217,0.1)', accent: '#4a90d9', progress: 60 },
   COMPLETED:   { label: 'Terminé',       color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', accent: '#8b5cf6', progress: 100 },
   CANCELLED:   { label: 'Annulé',        color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  accent: '#ef4444', progress: 0  },
@@ -50,7 +50,7 @@ const STATUS_CONFIG = {
 
 const APP_STATUS_CONFIG = {
   PENDING:  { label: 'En attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  icon: Clock        },
-  ACCEPTED: { label: 'Accepté',    color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: CheckCircle  },
+  ACCEPTED: { label: 'Accepté',    color: '#2563eb', bg: 'rgba(37,99,235,0.1)', icon: CheckCircle  },
   REJECTED: { label: 'Refusé',     color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  icon: XCircle      },
 };
 
@@ -69,7 +69,7 @@ const CATEGORIES = [
   { id: 'marketing', name: 'Marketing', icon: TrendingUp },
 ];
 
-const AVATAR_COLORS = ['#4a90d9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+const AVATAR_COLORS = ['#4a90d9', '#8b5cf6', '#2563eb', '#f59e0b', '#ef4444'];
 
 function initials(firstName: string, lastName: string) {
   return `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase();
@@ -231,7 +231,7 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
 
   const FILTERS = [
     { key: 'all',       label: `Tous (${counts.all})`,           accent: '#4a90d9' },
-    { key: 'open',      label: `Ouverts (${counts.open})`,       accent: '#10b981' },
+    { key: 'open',      label: `Ouverts (${counts.open})`,       accent: '#2563eb' },
     { key: 'progress',  label: `En cours (${counts.progress})`,  accent: '#4a90d9' },
     { key: 'completed', label: `Terminés (${counts.completed})`, accent: '#8b5cf6' },
   ];
@@ -377,8 +377,8 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
                     {/* Budget + date */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
-                          <DollarSign size={13} style={{ color: '#10b981' }} />
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.1)' }}>
+                          <DollarSign size={13} style={{ color: '#2563eb' }} />
                         </div>
                         <div>
                           <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: '#94a3b8' }}>Budget</p>
@@ -436,7 +436,7 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
                       {isFreelancer && (
                         appliedProjectIds.has(project.id) ? (
                           <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold flex-shrink-0"
-                            style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}>
+                            style={{ background: 'rgba(37,99,235,0.08)', color: '#2563eb' }}>
                             <CheckCircle size={11} />
                             Déjà postulé
                           </span>
@@ -610,7 +610,7 @@ export default function ProjectsPage({ user }: ProjectsPageProps) {
                           </button>
                           <button onClick={() => handleUpdateStatus(app.id, 'ACCEPTED')}
                             className="flex-1 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:scale-[1.02]"
-                            style={{ background: 'linear-gradient(135deg,#10b981,#059669)', boxShadow: '0 4px 10px rgba(16,185,129,0.25)' }}
+                            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 10px rgba(37,99,235,0.25)' }}
                           >
                             Accepter
                           </button>

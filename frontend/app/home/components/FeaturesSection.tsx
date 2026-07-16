@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef } from 'react';
 import AppImage from '@/components/ui/AppImage';
@@ -67,7 +67,7 @@ const features: Feature[] = [
     description: "Enregistrez vos cafés, appels et présentations. Suivez qui vous a présenté à qui. Visualisez la carte complète de vos relations — pas juste une liste de noms.",
     tag: 'Suivre les Progrès',
     span: 'col-span-12 md:col-span-7',
-    accentColor: '#10b981',
+    accentColor: '#2563eb',
     icon: (
       <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

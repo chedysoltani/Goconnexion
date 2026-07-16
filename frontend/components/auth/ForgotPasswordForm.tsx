@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -75,7 +75,7 @@ export default function ForgotPasswordForm() {
           <div className="auth-card p-8 slide-up slide-up-1">
             {sent ? (
               <div className="px-4 py-3 rounded-xl text-sm font-medium"
-                style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#6ee7b7' }}>
+                style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: '#6ee7b7' }}>
                 ✓ Si ce compte existe, un email a été envoyé.
               </div>
             ) : (

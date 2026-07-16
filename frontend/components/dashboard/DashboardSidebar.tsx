@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ interface NavItem {
 const ROLE_CONFIG: Record<string, { color: string; bg: string; label: string; dot: string; gradient: string }> = {
   freelancer:   { color: '#60a5fa', bg: 'rgba(59,130,246,0.12)',  label: 'Freelancer',   dot: '#3b82f6', gradient: 'linear-gradient(135deg,#3b82f6,#2563eb)' },
   entrepreneur: { color: '#c084fc', bg: 'rgba(139,92,246,0.12)', label: 'Entrepreneur', dot: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
-  user:         { color: '#34d399', bg: 'rgba(16,185,129,0.12)', label: 'Explorateur',  dot: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#059669)' },
+  user:         { color: '#60a5fa', bg: 'rgba(37,99,235,0.12)', label: 'Explorateur',  dot: '#2563eb', gradient: 'linear-gradient(135deg,#2563eb,#1d4ed8)' },
   admin:        { color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', label: 'Admin',        dot: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)' },
 };
 
@@ -276,7 +276,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
                     <motion.div
                       animate={{ opacity: [1, 0.4, 1] }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                      className="w-1.5 h-1.5 rounded-full bg-blue-400"
                     />
                     <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       En ligne · Disponible

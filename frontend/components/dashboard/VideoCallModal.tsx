@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
@@ -488,7 +488,7 @@ export default function VideoCallModal({
                 onClick={acceptIncomingCall}
                 className="w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                 title="Accepter"
-                style={{ background: '#10b981', boxShadow: '0 4px 16px rgba(16,185,129,0.4)' }}
+                style={{ background: '#2563eb', boxShadow: '0 4px 16px rgba(37,99,235,0.4)' }}
               >
                 <Phone size={22} color="#fff" />
               </button>

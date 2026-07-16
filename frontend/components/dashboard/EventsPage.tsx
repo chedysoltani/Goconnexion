@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,11 +11,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   FORMATION: 'Formation', INCUBATEUR: 'Incubateur', SALON: 'Salon', CONFERENCE: 'Conférence', HACKATHON: 'Hackathon',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  NETWORKING: '#3b82f6', STARTUP: '#8b5cf6', INVESTISSEMENT: '#f59e0b', FORMATION: '#10b981',
+  NETWORKING: '#3b82f6', STARTUP: '#8b5cf6', INVESTISSEMENT: '#f59e0b', FORMATION: '#2563eb',
   INCUBATEUR: '#ec4899', SALON: '#0ea5e9', CONFERENCE: '#6366f1', HACKATHON: '#f97316',
 };
 const BOOTH_STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  AVAILABLE: { bg: '#d1fae5', text: '#065f46', label: 'Disponible' },
+  AVAILABLE: { bg: '#dbeafe', text: '#1e3a8a', label: 'Disponible' },
   RESERVED:  { bg: '#fef3c7', text: '#92400e', label: 'Réservé' },
   OCCUPIED:  { bg: '#fee2e2', text: '#991b1b', label: 'Occupé' },
 };
@@ -170,7 +170,7 @@ function CheckoutModal({ event, onClose, onSuccess }: {
         <motion.div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
           initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}>
           <div className="text-center mb-4">
-            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3 text-2xl">🏦</div>
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3 text-2xl">🏦</div>
             <h3 className="font-bold text-slate-800 text-lg">Instructions Wise</h3>
             <p className="text-sm text-slate-500 mt-1">Effectuez votre virement avec la référence ci-dessous</p>
           </div>
@@ -468,7 +468,7 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
   const isRealWaitlist = myRegistration?.status === 'WAITLISTED' && !myRegistration?.paymentId;
 
   const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-    REGISTERED:       { label: 'Inscrit', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    REGISTERED:       { label: 'Inscrit', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
     WAITLISTED:       { label: 'Liste d\'attente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
     PENDING_PAYMENT:  { label: 'Paiement en attente', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
     CANCELLED:        { label: 'Annulé', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
@@ -553,11 +553,11 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide" style={{ background: `${catColor}14`, color: catColor }}>
                   {CATEGORY_LABELS[event.category]}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#2563eb14', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#2563eb' }}>
                   {event.type === 'VIRTUAL' ? 'Virtuel' : 'Physique'}
                 </span>
                 {event.isFree
-                  ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
+                  ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">Gratuit</span>
                   : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">À partir de {event.price} {event.currency}</span>
                 }
               </div>
@@ -609,9 +609,9 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                   </div>
                 </div>
                 {myRegistration && !isOwner && (
-                  <div className={`p-3 rounded-xl border flex items-center justify-between ${isPendingPayment ? 'bg-orange-50 border-orange-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${isPendingPayment ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
                     <div>
-                      <p className={`text-xs font-semibold ${isPendingPayment ? 'text-orange-700' : 'text-emerald-700'}`}>Votre inscription</p>
+                      <p className={`text-xs font-semibold ${isPendingPayment ? 'text-orange-700' : 'text-blue-700'}`}>Votre inscription</p>
                       {(() => { const sc = STATUS_LABELS[myStatusKey]; return (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                       ); })()}
@@ -621,7 +621,7 @@ function EventDetailModal({ event, currentUserId, myRegistration, onClose, onRef
                     </div>
                     {isRegistered && myRegistration.ticketCode && (
                       <a href={`/events/ticket/${myRegistration.ticketCode}`} target="_blank" rel="noreferrer"
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold">
+                        className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">
                         Mon billet
                       </a>
                     )}
@@ -824,11 +824,11 @@ function EventCard({ event, currentUserId, myRegistration, onOpen }: {
             {CATEGORY_LABELS[event.category]}
           </span>
           <div className="flex items-center gap-1 flex-wrap justify-end">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#2563eb14', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#2563eb' }}>
               {event.type === 'VIRTUAL' ? 'Virtuel' : 'Physique'}
             </span>
             {event.isFree
-              ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">Gratuit</span>
+              ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">Gratuit</span>
               : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">{event.price} {event.currency}</span>
             }
           </div>
@@ -858,7 +858,7 @@ function EventCard({ event, currentUserId, myRegistration, onOpen }: {
             <span className="text-[11px] text-slate-500">{event.organizer.firstName} {event.organizer.lastName}</span>
           </div>
           {isOwner && <span className="text-[11px] font-semibold" style={{ color: catColor }}>Mon événement →</span>}
-          {!isOwner && isRegistered && <span className="text-[11px] font-semibold text-emerald-600">Inscrit ✓</span>}
+          {!isOwner && isRegistered && <span className="text-[11px] font-semibold text-blue-600">Inscrit ✓</span>}
           {!isOwner && isPendingPayment && <span className="text-[11px] font-semibold text-orange-500">⏳ Paiement en attente</span>}
           {!isOwner && isRealWaitlist && <span className="text-[11px] font-semibold text-amber-600">Liste d'attente</span>}
           {!isOwner && !isRegistered && !isPendingPayment && !isRealWaitlist && (
@@ -959,7 +959,7 @@ export default function EventsPage({ user }: Props) {
             ))}
             <button onClick={() => setUpcomingOnly(!upcomingOnly)}
               className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-              style={upcomingOnly ? { background: '#10b981', color: '#fff' } : { background: '#f1f5f9', color: '#64748b' }}>
+              style={upcomingOnly ? { background: '#2563eb', color: '#fff' } : { background: '#f1f5f9', color: '#64748b' }}>
               À venir
             </button>
           </div>

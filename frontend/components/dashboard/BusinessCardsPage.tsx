@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +37,7 @@ interface Stats {
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   PENDING:  { label: 'En attente', bg: '#fef3c714', color: '#f59e0b' },
   SENT:     { label: 'Envoyée',    bg: '#dbeafe',   color: '#3b82f6' },
-  ACCEPTED: { label: 'Acceptée',   bg: '#d1fae5',   color: '#10b981' },
+  ACCEPTED: { label: 'Acceptée',   bg: '#dbeafe',   color: '#2563eb' },
   EXPIRED:  { label: 'Expirée',    bg: '#f1f5f9',   color: '#94a3b8' },
 };
 
@@ -175,7 +175,7 @@ export default function BusinessCardsPage({ user }: Props) {
           {[
             { label: 'Total', value: stats.total, color: '#3b82f6', bg: '#dbeafe' },
             { label: 'Envoyées', value: stats.sent, color: '#8b5cf6', bg: '#ede9fe' },
-            { label: 'Acceptées', value: stats.accepted, color: '#10b981', bg: '#d1fae5' },
+            { label: 'Acceptées', value: stats.accepted, color: '#2563eb', bg: '#dbeafe' },
             { label: 'En attente', value: stats.pending, color: '#f59e0b', bg: '#fef3c7' },
           ].map(stat => (
             <div key={stat.label} className="bg-white rounded-xl border border-slate-100 p-3">
@@ -332,7 +332,7 @@ export default function BusinessCardsPage({ user }: Props) {
                         <button
                           onClick={() => handleAccept(inv.id, false)}
                           title="Marquer comme acceptée"
-                          className="p-1.5 rounded-lg text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          className="p-1.5 rounded-lg text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                         >
                           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -357,7 +357,7 @@ export default function BusinessCardsPage({ user }: Props) {
           /* Received tab */
           received.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-2xl">📬</div>
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 text-2xl">📬</div>
               <p className="text-slate-500 font-medium">Aucune carte reçue</p>
               <p className="text-slate-400 text-sm mt-1">Les invitations envoyées à votre email apparaîtront ici</p>
             </div>
@@ -371,7 +371,7 @@ export default function BusinessCardsPage({ user }: Props) {
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-xl border border-slate-100 p-4 flex items-center gap-4"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {card.sender.firstName.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -395,7 +395,7 @@ export default function BusinessCardsPage({ user }: Props) {
                       <button
                         onClick={() => handleAccept(card.id, true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-all flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}
+                        style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
                       >
                         <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
@@ -60,7 +60,7 @@ export default function NotificationCenter() {
     const lowerType = type.toLowerCase();
     if (lowerType.includes('connection')) {
       return (
-        <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
+        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 flex-shrink-0">
           <UserCheck size={16} />
         </div>
       );

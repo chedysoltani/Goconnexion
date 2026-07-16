@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
@@ -12,11 +12,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   FORMATION: 'Formation', INCUBATEUR: 'Incubateur', SALON: 'Salon', CONFERENCE: 'Conférence', HACKATHON: 'Hackathon',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  NETWORKING: '#3b82f6', STARTUP: '#8b5cf6', INVESTISSEMENT: '#f59e0b', FORMATION: '#10b981',
+  NETWORKING: '#3b82f6', STARTUP: '#8b5cf6', INVESTISSEMENT: '#f59e0b', FORMATION: '#2563eb',
   INCUBATEUR: '#ec4899', SALON: '#0ea5e9', CONFERENCE: '#6366f1', HACKATHON: '#f97316',
 };
 const BOOTH_STATUS: Record<string, { bg: string; text: string }> = {
-  AVAILABLE: { bg: '#d1fae5', text: '#065f46' },
+  AVAILABLE: { bg: '#dbeafe', text: '#1e3a8a' },
   RESERVED:  { bg: '#fef3c7', text: '#92400e' },
   OCCUPIED:  { bg: '#fee2e2', text: '#991b1b' },
 };
@@ -123,10 +123,10 @@ export default function EventPublicPage() {
               <span className="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide" style={{ background: `${catColor}14`, color: catColor }}>
                 {CATEGORY_LABELS[event.category] ?? event.category}
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#10b98114', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#10b981' }}>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: event.type === 'VIRTUAL' ? '#8b5cf614' : '#2563eb14', color: event.type === 'VIRTUAL' ? '#8b5cf6' : '#2563eb' }}>
                 {event.type === 'VIRTUAL' ? 'Virtuel' : 'Physique'}
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ background: event.isFree ? '#d1fae5' : '#fef3c7', color: event.isFree ? '#065f46' : '#92400e' }}>
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ background: event.isFree ? '#dbeafe' : '#fef3c7', color: event.isFree ? '#1e3a8a' : '#92400e' }}>
                 {event.isFree || minPrice === 0 ? 'Gratuit' : `À partir de ${minPrice} ${event.currency}`}
               </span>
             </div>

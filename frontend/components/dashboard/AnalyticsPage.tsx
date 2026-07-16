@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -81,7 +81,7 @@ export default function AnalyticsPage({ user }: AnalyticsPageProps) {
         makeStatCard('Candidatures soumises', stats.stats.totalApplications, 'Total plateforme', <Briefcase size={18} color="#4a90d9" />, 'rgba(74,144,217,0.12)', '#4a90d9'),
         makeStatCard('Candidatures acceptées', stats.stats.acceptedApplications,
           `Taux: ${stats.stats.totalApplications ? Math.round((stats.stats.acceptedApplications / stats.stats.totalApplications) * 100) : 0}%`,
-          <CheckCircle size={18} color="#10b981" />, 'rgba(16,185,129,0.12)', '#10b981'),
+          <CheckCircle size={18} color="#2563eb" />, 'rgba(37,99,235,0.12)', '#2563eb'),
         makeStatCard('Compétences déclarées', stats.stats.skillsCount, 'Ajoutées au profil', <Award size={18} color="#8b5cf6" />, 'rgba(139,92,246,0.12)', '#8b5cf6'),
         makeStatCard('Tarif journalier', `${stats.stats.hourlyRate} €`,
           stats.stats.isAvailable ? 'Disponible pour missions' : 'Indisponible',
@@ -90,16 +90,16 @@ export default function AnalyticsPage({ user }: AnalyticsPageProps) {
     } else if (stats.role === 'ENTREPRENEUR') {
       cards.push(
         makeStatCard('Projets publiés', stats.stats.totalProjects, 'Total sur votre entreprise', <Briefcase size={18} color="#4a90d9" />, 'rgba(74,144,217,0.12)', '#4a90d9'),
-        makeStatCard('Candidatures reçues', stats.stats.totalApplicationsReceived, 'Postulations freelancers', <Users size={18} color="#10b981" />, 'rgba(16,185,129,0.12)', '#10b981'),
+        makeStatCard('Candidatures reçues', stats.stats.totalApplicationsReceived, 'Postulations freelancers', <Users size={18} color="#2563eb" />, 'rgba(37,99,235,0.12)', '#2563eb'),
         makeStatCard('Entreprise', stats.stats.companyName || 'Non renseigné', 'Active sur GoConnexions', <CheckCircle size={18} color="#8b5cf6" />, 'rgba(139,92,246,0.12)', '#8b5cf6'),
         makeStatCard('Site internet', stats.stats.website ? 'Configuré' : 'Non configuré', 'Lien public', <Globe size={18} color="#f59e0b" />, 'rgba(245,158,11,0.12)', '#f59e0b'),
       );
     } else if (stats.role === 'ADMIN') {
       cards.push(
         makeStatCard('Membres inscrits', stats.stats.totalUsers, 'Total plateforme', <Users size={18} color="#4a90d9" />, 'rgba(74,144,217,0.12)', '#4a90d9'),
-        makeStatCard('Projets publiés', stats.stats.totalProjects, 'Missions de recrutement', <Briefcase size={18} color="#10b981" />, 'rgba(16,185,129,0.12)', '#10b981'),
+        makeStatCard('Projets publiés', stats.stats.totalProjects, 'Missions de recrutement', <Briefcase size={18} color="#2563eb" />, 'rgba(37,99,235,0.12)', '#2563eb'),
         makeStatCard('Conversations actives', stats.stats.totalConversations, 'Messages échangés', <MessageCircle size={18} color="#8b5cf6" />, 'rgba(139,92,246,0.12)', '#8b5cf6'),
-        makeStatCard('Statut plateforme', 'En ligne', 'Serveur opérationnel', <Activity size={18} color="#10b981" />, 'rgba(16,185,129,0.12)', '#10b981'),
+        makeStatCard('Statut plateforme', 'En ligne', 'Serveur opérationnel', <Activity size={18} color="#2563eb" />, 'rgba(37,99,235,0.12)', '#2563eb'),
       );
     }
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
@@ -134,7 +134,7 @@ export default function AdsPage({ user }: AdsPageProps) {
         {[
           { label: 'Total annonces', value: ads.length, color: '#f59e0b' },
           { label: 'Total impressions', value: totalImpressions.toLocaleString('fr-FR'), color: '#3b82f6' },
-          { label: 'Total clics', value: totalClicks.toLocaleString('fr-FR'), color: '#10b981' },
+          { label: 'Total clics', value: totalClicks.toLocaleString('fr-FR'), color: '#2563eb' },
           { label: 'CTR', value: `${ctr}%`, color: '#8b5cf6' },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
@@ -167,7 +167,7 @@ export default function AdsPage({ user }: AdsPageProps) {
             {ads.map(ad => {
               const adCtr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(2) : '0.00';
               const status = ad.isActive
-                ? { label: 'Actif', bg: '#d1fae5', color: '#065f46' }
+                ? { label: 'Actif', bg: '#dbeafe', color: '#1e3a8a' }
                 : { label: 'Inactif', bg: '#f1f5f9', color: '#475569' };
               return (
                 <div key={ad.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">

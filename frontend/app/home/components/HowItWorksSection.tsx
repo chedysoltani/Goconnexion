@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef } from 'react';
 
@@ -34,8 +34,8 @@ const steps = [
     title: 'Regardez vos relations se multiplier',
     description: "Introductions chaleureuses, suivis qui portent leurs fruits, réunions qui mènent quelque part. Votre réseau devient un véritable atout — pas une métrique de vanité.",
     detail: 'Résultats réels, mesurables',
-    color: '#10b981',
-    bg: 'rgba(16,185,129,0.12)',
+    color: '#2563eb',
+    bg: 'rgba(37,99,235,0.12)',
     icon: (
       <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />

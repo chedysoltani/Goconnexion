@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -106,7 +106,7 @@ export default function LoginForm() {
           {/* Success */}
           {successMessage && (
             <div className="mb-5 px-4 py-3 rounded-xl text-sm font-medium slide-up"
-              style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#6ee7b7' }}>
+              style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: '#6ee7b7' }}>
               ✓ {successMessage}
             </div>
           )}

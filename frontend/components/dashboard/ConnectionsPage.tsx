@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -25,7 +25,7 @@ interface Connection {
 const ROLE_AVATAR: Record<string, { bg: string; color: string }> = {
   freelancer: { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },
   entrepreneur: { bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
-  user: { bg: 'rgba(16,185,129,0.15)',         color: '#10b981' },
+  user: { bg: 'rgba(37,99,235,0.15)',         color: '#2563eb' },
 };
 const getRoleAvatar = (role: string) => ROLE_AVATAR[role?.toLowerCase()] ?? { bg: 'rgba(74,144,217,0.15)', color: '#4a90d9' };
 
@@ -162,7 +162,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
           </div>
           <div className="flex items-center gap-3">
             {[
-              { label: 'Connexions', value: connectedCount, color: '#10b981' },
+              { label: 'Connexions', value: connectedCount, color: '#2563eb' },
               { label: 'Suggestions', value: suggestedCount, color: '#4a90d9' },
             ].map(s => (
               <div key={s.label} className="text-center px-4 py-2.5 rounded-xl"
@@ -230,7 +230,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
                     <div className="flex gap-2 ml-3">
                       <button onClick={() => handleAcceptRequest(req.id)}
                         className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
-                        style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                        style={{ background: 'rgba(37,99,235,0.15)', color: '#2563eb' }}>
                         <Check size={14} />
                       </button>
                       <button onClick={() => handleDeclineRequest(req.id)}
@@ -329,7 +329,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
                       </div>
                       {conn.status === 'connected' && (
                         <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                          style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                          style={{ background: 'rgba(37,99,235,0.12)', color: '#2563eb' }}>
                           <Sparkles size={9} /> Connecté
                         </span>
                       )}
@@ -374,7 +374,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
                         <div className="flex gap-2">
                           <button onClick={() => handleAcceptRequest(conn.requestId!)}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                            style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
                             <Check size={13} /> Accepter
                           </button>
                           <button onClick={() => handleDeclineRequest(conn.requestId!)}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -317,7 +317,7 @@ export default function PricingPage() {
                     {billing === 'yearly' && plan.price.yearly > 0 && (
                       <p className="text-[11px] mb-4" style={{ color: '#94a3b8' }}>
                         Facturé {plan.price.yearly} CAD/an
-                        <span className="ml-1.5 font-bold" style={{ color: '#10b981' }}>
+                        <span className="ml-1.5 font-bold" style={{ color: '#2563eb' }}>
                           (-{discount}%)
                         </span>
                       </p>
@@ -499,7 +499,7 @@ export default function PricingPage() {
                     {billing === 'yearly' && (
                       <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
                         Facturé 890 CAD/an
-                        <span className="ml-1.5 font-bold" style={{ color: '#10b981' }}>(-25%)</span>
+                        <span className="ml-1.5 font-bold" style={{ color: '#2563eb' }}>(-25%)</span>
                       </p>
                     )}
                     {billing === 'monthly' && <div className="mb-4" />}

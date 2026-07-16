@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
@@ -50,8 +50,8 @@ const ROLE_BADGE: Record<string, { label: string; color: string; bg: string }> =
   entrepreneur: { label: 'Entrepreneur', color: '#6d28d9', bg: 'rgba(139,92,246,0.1)' },
   freelancer: { label: 'Freelancer', color: '#1d4ed8', bg: 'rgba(59,130,246,0.1)' },
   freelance: { label: 'Freelancer', color: '#1d4ed8', bg: 'rgba(59,130,246,0.1)' },
-  investor: { label: 'Investisseur', color: '#065f46', bg: 'rgba(16,185,129,0.1)' },
-  investisseur: { label: 'Investisseur', color: '#065f46', bg: 'rgba(16,185,129,0.1)' },
+  investor: { label: 'Investisseur', color: '#1e3a8a', bg: 'rgba(37,99,235,0.1)' },
+  investisseur: { label: 'Investisseur', color: '#1e3a8a', bg: 'rgba(37,99,235,0.1)' },
   mentor: { label: 'Mentor', color: '#92400e', bg: 'rgba(245,158,11,0.1)' },
   user: { label: 'Membre', color: '#3730a3', bg: 'rgba(99,102,241,0.1)' },
 };
@@ -67,7 +67,7 @@ const getAvatarGradient = (role: string) => {
   if (r === 'entrepreneur') return 'linear-gradient(135deg,#8b5cf6,#6d28d9)';
   if (r === 'freelancer' || r === 'freelance') return 'linear-gradient(135deg,#60a5fa,#1d4ed8)';
   if (r === 'mentor') return 'linear-gradient(135deg,#fbbf24,#92400e)';
-  if (r === 'investor' || r === 'investisseur') return 'linear-gradient(135deg,#34d399,#065f46)';
+  if (r === 'investor' || r === 'investisseur') return 'linear-gradient(135deg,#60a5fa,#1e3a8a)';
   return 'linear-gradient(135deg,#818cf8,#3730a3)';
 };
 
@@ -212,8 +212,8 @@ function PostCard({
     {
       label: shareToast ? 'Lien copié !' : 'Partager',
       active: shareToast,
-      activeColor: '#10b981',
-      icon: <Share2 size={15} className={shareToast ? 'text-emerald-500' : 'text-slate-400'} />,
+      activeColor: '#2563eb',
+      icon: <Share2 size={15} className={shareToast ? 'text-blue-500' : 'text-slate-400'} />,
       onClick: handleShare,
     },
     {
