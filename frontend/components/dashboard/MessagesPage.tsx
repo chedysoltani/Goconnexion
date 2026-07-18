@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
-import { io, Socket } from 'socket.io-client';
 import { Search, Send, Phone, Video, MoreHorizontal, Circle, UserPlus, MessageSquare } from 'lucide-react';
 import VideoCallModal, { IncomingCall } from './VideoCallModal';
+import { useGlobalSocket } from '@/context/GlobalSocketContext';
 
 interface MessagesPageProps {
   user: User | null;
@@ -52,6 +52,14 @@ function getRoleAvatar(role: string) {
 }
 
 export default function MessagesPage({ user }: MessagesPageProps) {
+  // Use the global socket — single connection shared across the whole app.
+  const {
+    socket,
+    setIsInMessages,
+    remoteAnswer,
+    consumeRemoteAnswer,
+  } = useGlobalSocket();
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -67,14 +75,18 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     offer?: RTCSessionDescriptionInit;
   } | null>(null);
 
-  const socketRef = useRef<Socket | null>(null);
+  // Alias so the rest of the component can still use socketRef.current
+  const socketRef = { current: socket };
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const selectedConversationIdRef = useRef<string | null>(null);
   useEffect(() => { selectedConversationIdRef.current = selectedConversationId; }, [selectedConversationId]);
 
-  // call-answered is lifted here so it always fires on the stable socket,
-  // regardless of VideoCallModal re-renders or stale closures.
-  const [remoteAnswer, setRemoteAnswer] = useState<{ answer: RTCSessionDescriptionInit } | null>(null);
+  // Tell the global context that we are actively viewing Messages.
+  // This suppresses the floating bubble and lets this page handle incoming calls.
+  useEffect(() => {
+    setIsInMessages(true);
+    return () => setIsInMessages(false);
+  }, [setIsInMessages]);
 
   const fetchConversations = async () => {
     try {
@@ -99,53 +111,46 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     fetchUsers();
   }, [user]);
 
+  // Add MessagesPage-specific listeners to the shared global socket.
+  // incoming-call here handles the case where the user IS in Messages;
+  // GlobalCallHandler handles it when the user is elsewhere.
+  // newMessage here updates the conversation list / active thread.
+  // call-answered is now handled centrally in GlobalSocketContext.
   useEffect(() => {
-    // Le cookie gc_access est envoyé automatiquement dans le handshake WebSocket
-    const socket = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001', {
-      withCredentials: true,
-      transports: ['websocket'],
-    });
+    if (!socket) return;
 
-    socketRef.current = socket;
-
-    socket.on('incoming-call', (call: IncomingCall) => {
-      // Find or create participant info from available users
-      const callerInfo: Participant = {
-        id: call.callerId,
-        firstName: call.callerFirstName,
-        lastName: call.callerLastName,
-        role: call.callerRole,
-      };
+    const onIncomingCall = (call: IncomingCall) => {
       setActiveCall({
         type: call.callType,
         direction: 'incoming',
-        target: callerInfo,
+        target: {
+          id:        call.callerId,
+          firstName: call.callerFirstName,
+          lastName:  call.callerLastName,
+          role:      call.callerRole,
+        },
         offer: call.offer,
       });
-    });
+    };
 
-    socket.on('newMessage', (msg: Message) => {
-      // Le message arrive sur le canal personnel de l'utilisateur (toutes ses conversations
-      // confondues) — on ne l'affiche dans le fil ouvert que s'il appartient à cette conversation.
+    const onNewMessage = (msg: Message) => {
       if (msg.conversationId === selectedConversationIdRef.current) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
       }
       fetchConversations();
-    });
+    };
 
-    // call-answered lives here (not in VideoCallModal) so it always fires on the
-    // active socket, regardless of VideoCallModal re-renders or stale closures.
-    socket.on('call-answered', (data: { answer: RTCSessionDescriptionInit }) => {
-      console.log('[WebRTC] call-answered received !!!', data);
-      setRemoteAnswer(data);
-    });
-    console.log('[WebRTC] call-answered listener registered on socket.id=', socket.id, 'connected=', socket.connected);
+    socket.on('incoming-call', onIncomingCall);
+    socket.on('newMessage',    onNewMessage);
 
-    return () => { socket.disconnect(); };
-  }, []);
+    return () => {
+      socket.off('incoming-call', onIncomingCall);
+      socket.off('newMessage',    onNewMessage);
+    };
+  }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedConversationId) return;
@@ -602,8 +607,8 @@ export default function MessagesPage({ user }: MessagesPageProps) {
           direction={activeCall.direction}
           incomingOffer={activeCall.offer}
           remoteAnswer={remoteAnswer}
-          onRemoteAnswerConsumed={() => setRemoteAnswer(null)}
-          onClose={() => { setActiveCall(null); setRemoteAnswer(null); }}
+          onRemoteAnswerConsumed={consumeRemoteAnswer}
+          onClose={() => { setActiveCall(null); consumeRemoteAnswer(); }}
         />,
         document.body
       )}

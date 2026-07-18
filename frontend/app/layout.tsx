@@ -4,6 +4,7 @@ import { DM_Sans, Fraunces } from 'next/font/google';
 import '../styles/index.css';
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n/I18nContext';
+import GlobalProvider from '@/components/global/GlobalProvider';
 import { getSiteUrl } from '@/lib/site-url';
 
 const dmSans = DM_Sans({
@@ -44,7 +45,9 @@ export default function RootLayout({
     <html lang="fr" className={`${dmSans.variable} ${fraunces.variable}`}>
       <body>
         <I18nProvider>
-          {children}
+          <GlobalProvider>
+            {children}
+          </GlobalProvider>
         </I18nProvider>
       </body>
     </html>
