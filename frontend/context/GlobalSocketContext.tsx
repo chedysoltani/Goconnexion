@@ -61,19 +61,13 @@ const GlobalSocketCtx = createContext<CtxValue>(defaultCtx);
 export function GlobalSocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const isInMessagesRef = useRef(false);
-  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [messageBubble, setMessageBubble] = useState<GlobalMessageBubble | null>(null);
   const [pendingCall, setPendingCall]     = useState<GlobalPendingCall | null>(null);
   const [remoteAnswer, setRemoteAnswer]   = useState<{ answer: RTCSessionDescriptionInit } | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────────
-  const clearBubbleTimer = () => {
-    if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-  };
-
   const dismissBubble = useCallback(() => {
-    clearBubbleTimer();
     setMessageBubble(null);
   }, []);
 
@@ -94,12 +88,27 @@ export function GlobalSocketProvider({ children }: { children: React.ReactNode }
 
   // ── Socket lifecycle ───────────────────────────────────────────
   useEffect(() => {
-    const sock = io(process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001', {
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001';
+    console.log('[Global] connecting socket to:', wsUrl);
+
+    const sock = io(wsUrl, {
       withCredentials: true,
       transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 3000,
       reconnectionAttempts: 5,
+    });
+
+    sock.on('connect', () => {
+      console.log('[Global] socket connected — id:', sock.id, '— url:', wsUrl);
+    });
+
+    sock.on('connect_error', (err) => {
+      console.error('[Global] socket connect_error:', err.message, '— url:', wsUrl);
+    });
+
+    sock.on('disconnect', (reason) => {
+      console.warn('[Global] socket disconnected:', reason);
     });
 
     // ── newMessage ──────────────────────────────────────────────
@@ -113,7 +122,6 @@ export function GlobalSocketProvider({ children }: { children: React.ReactNode }
       if (!isInMessagesRef.current) {
         playMessageSound();
 
-        clearBubbleTimer();
         const raw = msg.content ?? '';
         setMessageBubble({
           id: msg.id,
@@ -123,12 +131,12 @@ export function GlobalSocketProvider({ children }: { children: React.ReactNode }
           conversationId:  msg.conversationId,
           preview:         raw.length > 30 ? raw.slice(0, 30) + '…' : raw,
         });
-        bubbleTimerRef.current = setTimeout(() => setMessageBubble(null), 5000);
       }
     });
 
     // ── incoming-call ───────────────────────────────────────────
     sock.on('incoming-call', (call: GlobalPendingCall) => {
+      console.log('[Global] incoming-call received — isInMessages:', isInMessagesRef.current, call.callerId);
       // Only take over when user is NOT already in Messages
       // (MessagesPage has its own listener for the in-Messages case)
       if (!isInMessagesRef.current) {
@@ -148,7 +156,6 @@ export function GlobalSocketProvider({ children }: { children: React.ReactNode }
     return () => {
       sock.disconnect();
       stopRingtone();
-      clearBubbleTimer();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

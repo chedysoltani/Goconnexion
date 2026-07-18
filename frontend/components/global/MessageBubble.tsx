@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGlobalSocket } from '@/context/GlobalSocketContext';
 
 const ROLE_COLOR: Record<string, string> = {
@@ -16,36 +17,22 @@ function avatarColor(role: string) {
 export default function MessageBubble() {
   const { messageBubble, dismissBubble } = useGlobalSocket();
   const [visible, setVisible] = useState(false);
-  const [progress, setProgress] = useState(100);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const router = useRouter();
 
-  // Animate in/out when bubble changes
   useEffect(() => {
-    if (messageBubble) {
-      setVisible(true);
-      setProgress(100);
-      progressRef.current = setInterval(() => {
-        setProgress(p => {
-          const next = p - 2; // 100 steps × 50ms = 5 000ms
-          if (next <= 0) {
-            clearInterval(progressRef.current!);
-            return 0;
-          }
-          return next;
-        });
-      }, 50);
-    } else {
-      setVisible(false);
-      if (progressRef.current) clearInterval(progressRef.current);
-    }
-    return () => { if (progressRef.current) clearInterval(progressRef.current); };
+    setVisible(!!messageBubble);
   }, [messageBubble?.id]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!messageBubble) return null;
 
-  const { senderFirstName, senderLastName, preview, senderRole } = messageBubble;
+  const { senderFirstName, senderLastName, preview, senderRole, conversationId } = messageBubble;
   const initials = `${senderFirstName[0] ?? ''}${senderLastName[0] ?? ''}`.toUpperCase();
   const color = avatarColor(senderRole);
+
+  const handleReply = () => {
+    dismissBubble();
+    router.push(`/dashboard?tab=messages&conv=${conversationId}`);
+  };
 
   return (
     <div
@@ -68,16 +55,6 @@ export default function MessageBubble() {
         border: '1px solid #e2e8f0',
         overflow: 'hidden',
       }}>
-        {/* Progress bar */}
-        <div style={{ height: 3, background: '#f1f5f9' }}>
-          <div style={{
-            height: '100%',
-            width: `${progress}%`,
-            background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-            transition: 'width 50ms linear',
-          }} />
-        </div>
-
         <div style={{ padding: '14px 16px 16px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           {/* Avatar */}
           <div style={{
@@ -113,7 +90,7 @@ export default function MessageBubble() {
 
             {/* Reply button */}
             <button
-              onClick={dismissBubble}
+              onClick={handleReply}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 padding: '6px 12px', borderRadius: 8,

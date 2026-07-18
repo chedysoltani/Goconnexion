@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import ActivityFeed from '@/components/dashboard/EnhancedActivityFeed';
@@ -165,8 +165,10 @@ const pageVariants = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('feed');
+  const [initialConvId, setInitialConvId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [greeting, setGreeting] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -179,6 +181,13 @@ export default function DashboardPage() {
     else if (h < 18) setGreeting('Bon après-midi');
     else setGreeting('Bonsoir');
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as Tab | null;
+    const conv = searchParams.get('conv');
+    if (tab) setActiveTab(tab);
+    if (conv) setInitialConvId(conv);
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -357,7 +366,7 @@ export default function DashboardPage() {
               >
                 {activeTab === 'feed'           && <ActivityFeed user={user} />}
                 {activeTab === 'connections'    && <ConnectionsPage user={user} setActiveTab={setActiveTab} />}
-                {activeTab === 'messages'       && <MessagesPage user={user} />}
+                {activeTab === 'messages'       && <MessagesPage user={user} initialConvId={initialConvId} />}
                 {activeTab === 'projects'       && <ProjectsPage user={user} />}
                 {activeTab === 'earnings'       && <EarningsPage user={user} />}
                 {activeTab === 'analytics'      && <AnalyticsPage user={user} />}

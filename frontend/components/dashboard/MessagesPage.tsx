@@ -10,6 +10,7 @@ import { useGlobalSocket } from '@/context/GlobalSocketContext';
 
 interface MessagesPageProps {
   user: User | null;
+  initialConvId?: string | null;
 }
 
 interface Message {
@@ -51,7 +52,7 @@ function getRoleAvatar(role: string) {
   return ROLE_AVATAR[(role || 'USER').toUpperCase()] || ROLE_AVATAR.USER;
 }
 
-export default function MessagesPage({ user }: MessagesPageProps) {
+export default function MessagesPage({ user, initialConvId }: MessagesPageProps) {
   // Use the global socket — single connection shared across the whole app.
   const {
     socket,
@@ -110,6 +111,13 @@ export default function MessagesPage({ user }: MessagesPageProps) {
     fetchConversations();
     fetchUsers();
   }, [user]);
+
+  // Auto-select a conversation when arriving via "Répondre" button
+  useEffect(() => {
+    if (initialConvId && conversations.length > 0) {
+      setSelectedConversationId(initialConvId);
+    }
+  }, [initialConvId, conversations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Add MessagesPage-specific listeners to the shared global socket.
   // incoming-call here handles the case where the user IS in Messages;
