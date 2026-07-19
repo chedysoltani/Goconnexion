@@ -143,6 +143,28 @@ export default function SellPage() {
           </p>
         </div>
 
+        {/* Commission notice */}
+        <div style={{
+          display: 'flex', gap: 14, alignItems: 'flex-start',
+          background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+          border: '1px solid #fcd34d', borderRadius: 14,
+          padding: '16px 20px', marginBottom: 28,
+        }}>
+          <span style={{ fontSize: 22, flexShrink: 0, lineHeight: 1 }}>💡</span>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 800, color: '#92400e' }}>
+              Information importante
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: '#78350f', lineHeight: 1.65 }}>
+              Les paiements reçus transitent par GoConnexions. Votre part <strong>(moins la commission de 10%)</strong> sera reversée sur votre compte Wise ou bancaire sous <strong>5-7 jours ouvrés</strong> après chaque vente.
+              Pour configurer votre compte de réception, contactez{' '}
+              <a href="mailto:support@goconnexions.com" style={{ color: '#b45309', fontWeight: 700, textDecoration: 'none' }}>
+                support@goconnexions.com
+              </a>
+            </p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit}>
           {/* Title */}
           {fieldCard(<>

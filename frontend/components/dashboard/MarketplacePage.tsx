@@ -185,6 +185,28 @@ export default function MarketplacePage({ user }: Props) {
         </div>
       </div>
 
+      {/* ── Commission notice ── */}
+      <div style={{
+        display: 'flex', gap: 14, alignItems: 'flex-start',
+        background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+        border: '1px solid #fcd34d', borderRadius: 14,
+        padding: '14px 18px', marginBottom: 22,
+      }}>
+        <span style={{ fontSize: 20, flexShrink: 0, lineHeight: 1.2 }}>💡</span>
+        <div>
+          <p style={{ margin: '0 0 3px', fontSize: 12, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Information importante
+          </p>
+          <p style={{ margin: 0, fontSize: 13, color: '#78350f', lineHeight: 1.65 }}>
+            Les paiements reçus transitent par GoConnexions. Votre part <strong>(moins la commission de 10%)</strong> sera reversée sur votre compte Wise ou bancaire sous <strong>5-7 jours ouvrés</strong> après chaque vente.
+            Pour configurer votre compte de réception, contactez{' '}
+            <a href="mailto:support@goconnexions.com" style={{ color: '#b45309', fontWeight: 700, textDecoration: 'none' }}>
+              support@goconnexions.com
+            </a>
+          </p>
+        </div>
+      </div>
+
       {/* ── Stat cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 28 }}>
         {STAT_CARDS.map(s => (
