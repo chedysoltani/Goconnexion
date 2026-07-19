@@ -344,6 +344,27 @@ export const api = {
     registerReferral: (code: string) => request(`/referral/register/${code}`, { method: 'POST' }),
   },
 
+  marketplace: {
+    listServices: (params: { category?: string; search?: string; minPrice?: number; maxPrice?: number; page?: number } = {}) => {
+      const q = new URLSearchParams();
+      if (params.category) q.set('category', params.category);
+      if (params.search)   q.set('search',   params.search);
+      if (params.minPrice !== undefined) q.set('minPrice', String(params.minPrice));
+      if (params.maxPrice !== undefined) q.set('maxPrice', String(params.maxPrice));
+      if (params.page)     q.set('page',     String(params.page));
+      return request(`/marketplace/services?${q.toString()}`);
+    },
+    getService:    (id: string)        => request(`/marketplace/services/${id}`),
+    myServices:    ()                  => request('/marketplace/my-services'),
+    myOrders:      ()                  => request('/marketplace/my-orders'),
+    mySales:       ()                  => request('/marketplace/my-sales'),
+    createService: (data: any)         => request('/marketplace/services', { method: 'POST', body: JSON.stringify(data) }),
+    updateService: (id: string, data: any) => request(`/marketplace/services/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteService: (id: string)        => request(`/marketplace/services/${id}`, { method: 'DELETE' }),
+    createOrder:   (serviceId: string) => request(`/marketplace/services/${serviceId}/order`, { method: 'POST' }),
+    completeOrder: (orderId: string)   => request(`/marketplace/orders/${orderId}/complete`, { method: 'PATCH' }),
+  },
+
   advertisements: {
     list: (placement?: string) => {
       const query = placement ? `?placement=${placement}` : '';

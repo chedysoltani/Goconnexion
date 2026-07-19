@@ -17,6 +17,7 @@ import EventsPage from '@/components/dashboard/EventsPage';
 import BusinessCardsPage from '@/components/dashboard/BusinessCardsPage';
 import ReferralPage from '@/components/dashboard/ReferralPage';
 import AdsPage from '@/components/dashboard/AdsPage';
+import MarketplacePage from '@/components/dashboard/MarketplacePage';
 import { User } from '@/types/auth';
 import { api } from '@/lib/api';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
@@ -24,7 +25,7 @@ import SupportChatWidget from '@/components/dashboard/SupportChatWidget';
 import PlanBadge from '@/components/ui/PlanBadge';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
-type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads';
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads' | 'marketplace';
 
 const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: string; description: string }> = {
   events: {
@@ -138,6 +139,16 @@ const TAB_META: Record<Tab, { label: string; icon: React.ReactNode; color: strin
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+      </svg>
+    ),
+  },
+  marketplace: {
+    label: 'Marketplace',
+    description: 'Vendez et achetez des services professionnels',
+    color: '#10b981',
+    icon: (
+      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
       </svg>
     ),
   },
@@ -375,6 +386,7 @@ export default function DashboardPage() {
                 {activeTab === 'business-cards' && <BusinessCardsPage user={user} />}
                 {activeTab === 'referral'       && <ReferralPage user={user} />}
                 {activeTab === 'ads'            && <AdsPage user={user} />}
+                {activeTab === 'marketplace'    && <MarketplacePage user={user} />}
               </motion.div>
             </AnimatePresence>
           </div>

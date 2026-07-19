@@ -153,6 +153,10 @@ model User {
   referralCode         ReferralCode?            @relation("ReferralCode")
   referredBy           Referral?                @relation("ReferredByUser")
   advertisements       Advertisement[]          @relation("Advertisements")
+
+  // Marketplace
+  services             MarketplaceService[]     @relation("ServiceSeller")
+  marketplaceOrders    MarketplaceOrder[]       @relation("OrderBuyer")
 }
 
 model FreelancerProfile {
@@ -554,4 +558,37 @@ model Advertisement {
   endDate      DateTime?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+}
+
+// ── Marketplace ────────────────────────────────────────────────────
+
+model MarketplaceService {
+  id          String               @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  currency    String               @default("CAD")
+  category    String
+  delivery    String
+  images      String[]
+  status      String               @default("ACTIVE")
+  sellerId    String
+  seller      User                 @relation("ServiceSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  orders      MarketplaceOrder[]   @relation("ServiceOrders")
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model MarketplaceOrder {
+  id              String             @id @default(uuid())
+  serviceId       String
+  service         MarketplaceService @relation("ServiceOrders", fields: [serviceId], references: [id])
+  buyerId         String
+  buyer           User               @relation("OrderBuyer", fields: [buyerId], references: [id])
+  status          String             @default("PENDING")
+  amount          Float
+  currency        String
+  stripeSessionId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }

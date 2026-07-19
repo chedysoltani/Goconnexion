@@ -447,6 +447,14 @@ export class SubscriptionService {
           break;
         }
 
+        if (meta.type === 'marketplace' && meta.orderId) {
+          await this.prisma.marketplaceOrder.update({
+            where: { id: meta.orderId },
+            data: { status: 'PAID', stripeSessionId: session.id },
+          });
+          break;
+        }
+
         const { userId, plan, interval } = meta;
         if (userId && plan) {
           await this.activatePlan(

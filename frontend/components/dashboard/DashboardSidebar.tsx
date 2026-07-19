@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@/types/auth';
 
-type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads';
+type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads' | 'marketplace';
 
 interface DashboardSidebarProps {
   user: User | null;
@@ -96,6 +96,11 @@ const IconAds = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
   </svg>
 );
+const IconMarketplace = () => (
+  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+  </svg>
+);
 const IconChevron = ({ collapsed }: { collapsed: boolean }) => (
   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d={collapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
@@ -131,6 +136,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
     { id: 'business-cards', label: 'Cartes visite',    icon: <IconCard /> },
     { id: 'referral',       label: 'Parrainage',       icon: <IconReferral /> },
     { id: 'ads',            label: 'Publicités',       icon: <IconAds /> },
+    { id: 'marketplace',    label: 'Marketplace',      icon: <IconMarketplace /> },
     { id: 'earnings',       label: 'Revenus',          icon: <IconEarnings /> },
     { id: 'analytics',      label: 'Analytiques',      icon: <IconAnalytics /> },
   ];
