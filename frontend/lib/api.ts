@@ -103,6 +103,7 @@ export const api = {
           firstName: signupData.firstName,
           lastName: signupData.lastName,
           role: roleMap[signupData.role] ?? 'COLLABORATOR',
+          industry: signupData.profile?.industry,
         }),
       });
       if (data.user && typeof window !== 'undefined') {
@@ -143,9 +144,10 @@ export const api = {
   },
 
   freelancers: {
-    list: (params: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string } = {}) => {
+    list: (params: { skills?: string; industry?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string } = {}) => {
       const query = new URLSearchParams();
       if (params.skills) query.set('skills', params.skills);
+      if (params.industry) query.set('industry', params.industry);
       if (params.minRate) query.set('minRate', String(params.minRate));
       if (params.maxRate) query.set('maxRate', String(params.maxRate));
       if (params.availableOnly) query.set('availableOnly', 'true');
@@ -158,7 +160,12 @@ export const api = {
   },
 
   entrepreneurs: {
-    list: () => request('/entrepreneurs'),
+    list: (params: { industry?: string; search?: string } = {}) => {
+      const query = new URLSearchParams();
+      if (params.industry) query.set('industry', params.industry);
+      if (params.search) query.set('search', params.search);
+      return request(`/entrepreneurs?${query.toString()}`);
+    },
     getProfile: () => request('/entrepreneurs/profile'),
     updateProfile: (data: any) =>
       request('/entrepreneurs/profile', { method: 'PUT', body: JSON.stringify(data) }),

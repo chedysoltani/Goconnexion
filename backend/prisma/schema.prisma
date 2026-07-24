@@ -165,6 +165,7 @@ model FreelancerProfile {
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   title        String?
   bio          String?
+  industry     String?
   skills       String[]
   portfolioUrl String?
   cvUrl        String?
@@ -180,6 +181,7 @@ model EntrepreneurProfile {
   userId      String    @unique
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName String?
+  industry    String?
   website     String?
   bio         String?
   projects    Project[]

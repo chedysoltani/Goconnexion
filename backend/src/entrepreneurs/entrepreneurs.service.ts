@@ -33,6 +33,7 @@ export class EntrepreneursService {
     companyName?: string;
     website?: string;
     bio?: string;
+    industry?: string;
   }) {
     return this.prisma.entrepreneurProfile.update({
       where: { userId },
@@ -40,8 +41,31 @@ export class EntrepreneursService {
     });
   }
 
-  async findAll() {
+  async findAll(filters: { industry?: string; search?: string } = {}) {
+    const where: any = {};
+
+    if (filters.industry) {
+      where.industry = { contains: filters.industry.trim(), mode: 'insensitive' };
+    }
+
+    if (filters.search) {
+      const searchWord = filters.search.trim();
+      where.OR = [
+        { companyName: { contains: searchWord, mode: 'insensitive' } },
+        { bio: { contains: searchWord, mode: 'insensitive' } },
+        {
+          user: {
+            OR: [
+              { firstName: { contains: searchWord, mode: 'insensitive' } },
+              { lastName: { contains: searchWord, mode: 'insensitive' } },
+            ],
+          },
+        },
+      ];
+    }
+
     return this.prisma.entrepreneurProfile.findMany({
+      where,
       include: {
         user: {
           select: {

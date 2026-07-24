@@ -12,6 +12,7 @@ export class FreelancersController {
   @Get()
   async findAll(
     @Query('skills') skills?: string,
+    @Query('industry') industry?: string,
     @Query('minRate') minRate?: number,
     @Query('maxRate') maxRate?: number,
     @Query('availableOnly') availableOnly?: string,
@@ -19,6 +20,7 @@ export class FreelancersController {
   ) {
     return this.freelancersService.findAll({
       skills,
+      industry,
       minRate,
       maxRate,
       availableOnly: availableOnly === 'true',
@@ -40,6 +42,7 @@ export class FreelancersController {
     @Body() body: {
       title?: string;
       bio?: string;
+      industry?: string;
       skills?: string[];
       portfolioUrl?: string;
       cvUrl?: string;

@@ -22,6 +22,10 @@ export class RegisterDto {
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
+
+  @IsString()
+  @IsOptional()
+  industry?: string;
 }
 
 export class LoginDto {

@@ -18,6 +18,7 @@ export interface FreelancerProfile extends BaseUser {
   profile: {
     skills: string[];
     experience: string;
+    industry?: string;
     hourlyRate?: number;
     portfolio?: string;
     linkedin?: string;
@@ -30,8 +31,8 @@ export interface EntrepreneurProfile extends BaseUser {
   profile: {
     company: string;
     position: string;
-    industry: string;
-    companySize: '1-10' | '11-50' | '51-200' | '200+';
+    industry?: string;
+    companySize?: '1-10' | '11-50' | '51-200' | '200+';
     website?: string;
     linkedin?: string;
     bio: string;
@@ -70,6 +71,7 @@ export interface SignupData {
   profile: {
     bio: string;
     linkedin?: string;
+    industry?: string;
     // Freelancer specific
     skills?: string[];
     experience?: string;
@@ -78,7 +80,6 @@ export interface SignupData {
     // Entrepreneur specific
     company?: string;
     position?: string;
-    industry?: string;
     companySize?: '1-10' | '11-50' | '51-200' | '200+';
     website?: string;
     // User specific

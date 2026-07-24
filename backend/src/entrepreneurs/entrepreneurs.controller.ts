@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Put, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Body, Put, UseGuards, Request, Query } from '@nestjs/common';
 import { EntrepreneursService } from './entrepreneurs.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -10,8 +10,11 @@ export class EntrepreneursController {
   constructor(private readonly entrepreneursService: EntrepreneursService) {}
 
   @Get()
-  async findAll() {
-    return this.entrepreneursService.findAll();
+  async findAll(
+    @Query('industry') industry?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.entrepreneursService.findAll({ industry, search });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -29,6 +32,7 @@ export class EntrepreneursController {
       companyName?: string;
       website?: string;
       bio?: string;
+      industry?: string;
     },
   ) {
     return this.entrepreneursService.updateProfile(req.user.id, body);

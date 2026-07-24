@@ -32,6 +32,7 @@ export class FreelancersService {
   async updateProfile(userId: string, data: {
     title?: string;
     bio?: string;
+    industry?: string;
     skills?: string[];
     portfolioUrl?: string;
     cvUrl?: string;
@@ -44,8 +45,12 @@ export class FreelancersService {
     });
   }
 
-  async findAll(filters: { skills?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string }) {
+  async findAll(filters: { skills?: string; industry?: string; minRate?: number; maxRate?: number; availableOnly?: boolean; search?: string }) {
     const where: any = {};
+
+    if (filters.industry) {
+      where.industry = { contains: filters.industry.trim(), mode: 'insensitive' };
+    }
 
     if (filters.skills) {
       // Split comma separated skills and clean them

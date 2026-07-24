@@ -50,11 +50,11 @@ export class AuthService {
 
       if (role === UserRole.FREELANCER) {
         await tx.freelancerProfile.create({
-          data: { userId: user.id, skills: [] },
+          data: { userId: user.id, skills: [], industry: dto.industry },
         });
       } else if (role === UserRole.ENTREPRENEUR) {
         await tx.entrepreneurProfile.create({
-          data: { userId: user.id, companyName: `${dto.firstName}'s Ventures` },
+          data: { userId: user.id, companyName: `${dto.firstName}'s Ventures`, industry: dto.industry },
         });
       }
 

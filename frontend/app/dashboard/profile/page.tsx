@@ -1,10 +1,12 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { User } from '@/types/auth';
+import SearchableSelect from '@/components/ui/SearchableSelect';
+import { INDUSTRIES } from '@/lib/constants/industries';
 
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; gradient: string }> = {
   freelancer:   { label: 'Freelancer',   color: '#60a5fa', bg: 'rgba(59,130,246,0.15)',  gradient: 'from-blue-600 to-blue-400' },
@@ -79,9 +81,9 @@ export default function ProfilePage() {
 
   const [basicData, setBasicData] = useState({ firstName: '', lastName: '', birthDate: '' });
   const [freelancerData, setFreelancerData] = useState({
-    title: '', bio: '', skills: [] as string[], portfolioUrl: '', hourlyRate: 0, isAvailable: true, cvUrl: '',
+    title: '', bio: '', industry: '', skills: [] as string[], portfolioUrl: '', hourlyRate: 0, isAvailable: true, cvUrl: '',
   });
-  const [entrepreneurData, setEntrepreneurData] = useState({ companyName: '', website: '', bio: '' });
+  const [entrepreneurData, setEntrepreneurData] = useState({ companyName: '', website: '', bio: '', industry: '' });
   const [myPosts, setMyPosts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -99,12 +101,12 @@ export default function ProfilePage() {
         if (me.role?.toLowerCase() === 'freelancer') {
           try {
             const p = await api.freelancers.getProfile();
-            if (p) setFreelancerData({ title: p.title || '', bio: p.bio || '', skills: p.skills || [], portfolioUrl: p.portfolioUrl || '', hourlyRate: p.hourlyRate || 0, isAvailable: p.isAvailable ?? true, cvUrl: p.cvUrl || '' });
+            if (p) setFreelancerData({ title: p.title || '', bio: p.bio || '', industry: p.industry || '', skills: p.skills || [], portfolioUrl: p.portfolioUrl || '', hourlyRate: p.hourlyRate || 0, isAvailable: p.isAvailable ?? true, cvUrl: p.cvUrl || '' });
           } catch {}
         } else if (me.role?.toLowerCase() === 'entrepreneur') {
           try {
             const p = await api.entrepreneurs.getProfile();
-            if (p) setEntrepreneurData({ companyName: p.companyName || '', website: p.website || '', bio: p.bio || '' });
+            if (p) setEntrepreneurData({ companyName: p.companyName || '', website: p.website || '', bio: p.bio || '', industry: p.industry || '' });
           } catch {}
         }
 
@@ -283,6 +285,13 @@ export default function ProfilePage() {
                   <span className="w-1.5 h-1.5 rounded-full" style={{ background: roleConfig.color }} />
                   {roleConfig.label}
                 </span>
+                {(role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry) && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                    style={{ background: 'rgba(74,144,217,0.1)', color: '#4a90d9', border: '1px solid rgba(74,144,217,0.2)' }}>
+                    {INDUSTRIES.find(i => i.label === (role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry))?.icon ?? '🏢'}{' '}
+                    {role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry}
+                  </span>
+                )}
                 <span className="text-[12px]" style={{ color: '#94a3b8' }}>{user?.email}</span>
               </div>
             </div>
@@ -431,6 +440,15 @@ export default function ProfilePage() {
                         />
                       </FieldGroup>
 
+                      <FieldGroup label="Secteur d'activité">
+                        <SearchableSelect
+                          theme="light"
+                          value={freelancerData.industry}
+                          onChange={(val) => setFreelancerData({ ...freelancerData, industry: val })}
+                          placeholder="Sélectionnez votre secteur..."
+                        />
+                      </FieldGroup>
+
                       <div className="grid grid-cols-2 gap-4">
                         <FieldGroup label="Tarif horaire (€)">
                           <div className="relative">
@@ -540,6 +558,14 @@ export default function ProfilePage() {
                           onChange={(e) => setEntrepreneurData({ ...entrepreneurData, companyName: e.target.value })}
                           required />
                       </FieldGroup>
+                      <FieldGroup label="Secteur d'activité">
+                        <SearchableSelect
+                          theme="light"
+                          value={entrepreneurData.industry}
+                          onChange={(val) => setEntrepreneurData({ ...entrepreneurData, industry: val })}
+                          placeholder="Sélectionnez votre secteur..."
+                        />
+                      </FieldGroup>
                       <FieldGroup label="Site web (optionnel)">
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#94a3b8' }}>
@@ -552,7 +578,7 @@ export default function ProfilePage() {
                             className="pl-10" />
                         </div>
                       </FieldGroup>
-                      <FieldGroup label="Mission / Secteur d'activité">
+                      <FieldGroup label="Mission / Description">
                         <Textarea
                           placeholder="Présentez votre vision et les talents que vous recherchez..."
                           value={entrepreneurData.bio}

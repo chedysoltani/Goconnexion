@@ -71,12 +71,22 @@ export class UsersService {
     const user = await this.findOne(userId);
 
     let userSkills: string[] = [];
+    let userIndustry: string | null = null;
+
     if (user.role === 'FREELANCER') {
       const flProfile = await this.prisma.freelancerProfile.findUnique({
         where: { userId },
       });
-      if (flProfile && flProfile.skills) {
-        userSkills = flProfile.skills;
+      if (flProfile) {
+        userSkills = flProfile.skills || [];
+        userIndustry = flProfile.industry || null;
+      }
+    } else if (user.role === 'ENTREPRENEUR') {
+      const entProfile = await this.prisma.entrepreneurProfile.findUnique({
+        where: { userId },
+      });
+      if (entProfile) {
+        userIndustry = entProfile.industry || null;
       }
     }
 
@@ -104,6 +114,15 @@ export class UsersService {
 
     const score = (candidate: (typeof candidates)[number]) => {
       let s = candidate.role === complementaryRole ? 1000 : 0;
+
+      // Bonus de matching par secteur d'activité / industrie
+      if (userIndustry) {
+        const candidateIndustry = candidate.freelancerProfile?.industry || candidate.entrepreneurProfile?.industry;
+        if (candidateIndustry && candidateIndustry.toLowerCase() === userIndustry.toLowerCase()) {
+          s += 500;
+        }
+      }
+
       if (userSkills.length > 0) {
         const candidateSkills = candidate.freelancerProfile?.skills || [];
         s += candidateSkills.filter((skill) => userSkills.includes(skill)).length;

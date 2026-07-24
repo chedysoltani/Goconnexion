@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { UserRole, SignupData } from '@/types/auth';
 import { api } from '@/lib/api';
 
+import SearchableSelect from '@/components/ui/SearchableSelect';
+
 type Step = 1 | 2 | 3 | 4;
 
 const STEPS = [
@@ -80,11 +82,12 @@ export default function SignupForm() {
       if (role === 'freelancer') {
         if (!form.profile.skills?.length) e.skills = 'Au moins une compétence';
         if (!form.profile.experience) e.experience = 'Expérience requise';
+        if (!form.profile.industry) e.industry = 'Secteur d\'activité requis';
       }
       if (role === 'entrepreneur') {
         if (!form.profile.company) e.company = 'Entreprise requise';
         if (!form.profile.position) e.position = 'Poste requis';
-        if (!form.profile.industry) e.industry = 'Secteur requis';
+        if (!form.profile.industry) e.industry = 'Secteur d\'activité requis';
       }
     }
     setErrors(e);
@@ -283,6 +286,16 @@ export default function SignupForm() {
                         onChange={(e) => upd('profile.experience', e.target.value)}
                         className={`input-dark resize-none ${errors.experience ? 'error' : ''}`} />
                     </DarkField>
+                    <DarkField label="Secteur d'activité *" error={errors.industry}>
+                      <div className={errors.industry ? 'ring-1 ring-red-400 rounded-xl' : ''}>
+                        <SearchableSelect
+                          theme="dark"
+                          value={form.profile.industry || ''}
+                          onChange={(val) => upd('profile.industry', val)}
+                          placeholder="Sélectionnez votre secteur..."
+                        />
+                      </div>
+                    </DarkField>
                     <div className="grid grid-cols-2 gap-4">
                       <DarkField label="Taux horaire (€)">
                         <input type="number" placeholder="50" value={form.profile.hourlyRate || ''}
@@ -312,15 +325,15 @@ export default function SignupForm() {
                           className={`input-dark ${errors.position ? 'error' : ''}`} />
                       </DarkField>
                     </div>
-                    <DarkField label="Secteur *" error={errors.industry}>
-                      <select value={form.profile.industry || ''}
-                        onChange={(e) => upd('profile.industry', e.target.value)}
-                        className={`input-dark ${errors.industry ? 'error' : ''}`}>
-                        <option value="">Sélectionnez un secteur</option>
-                        {['Technologie','Finance','Santé','Éducation','Commerce','Autre'].map((s) => (
-                          <option key={s} value={s.toLowerCase()}>{s}</option>
-                        ))}
-                      </select>
+                    <DarkField label="Secteur d'activité *" error={errors.industry}>
+                      <div className={errors.industry ? 'ring-1 ring-red-400 rounded-xl' : ''}>
+                        <SearchableSelect
+                          theme="dark"
+                          value={form.profile.industry || ''}
+                          onChange={(val) => upd('profile.industry', val)}
+                          placeholder="Sélectionnez votre secteur..."
+                        />
+                      </div>
                     </DarkField>
                     <div className="grid grid-cols-2 gap-4">
                       <DarkField label="Taille">
@@ -356,6 +369,9 @@ export default function SignupForm() {
                   <SumRow label="Email" value={form.email} />
                   <SumRow label="Nom" value={`${form.firstName} ${form.lastName}`} />
                   <SumRow label="Profil" value={`${meta.emoji} ${meta.label}`} color={meta.color} />
+                  {form.profile.industry && (
+                    <SumRow label="Secteur" value={form.profile.industry} />
+                  )}
                   {role === 'freelancer' && form.profile.skills?.length && (
                     <SumRow label="Compétences" value={form.profile.skills.slice(0, 4).join(', ')} />
                   )}
