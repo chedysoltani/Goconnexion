@@ -25,7 +25,7 @@ export class UsersController {
   @Put('profile')
   async update(
     @Request() req: any,
-    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: string },
+    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: string; country?: string },
   ) {
     const updateData: any = { ...body };
     if (body.birthDate) {

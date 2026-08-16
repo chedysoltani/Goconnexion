@@ -101,6 +101,7 @@ export class FreelancersService {
             email: true,
             avatarUrl: true,
             role: true,
+            country: true,
           },
         },
       },

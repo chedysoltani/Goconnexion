@@ -112,6 +112,7 @@ model User {
   passwordResetToken       String?
   passwordResetExpires     DateTime?
   birthDate                DateTime?
+  country                  String?
   plan                     PlanType  @default(FREE)
   lastActiveAt             DateTime  @default(now())
   createdAt                DateTime  @default(now())

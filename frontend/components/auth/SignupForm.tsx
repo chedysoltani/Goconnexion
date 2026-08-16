@@ -7,6 +7,7 @@ import { UserRole, SignupData } from '@/types/auth';
 import { api } from '@/lib/api';
 
 import SearchableSelect from '@/components/ui/SearchableSelect';
+import { COUNTRIES } from '@/lib/constants/countries';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -24,7 +25,7 @@ const ROLE_META: Record<string, { emoji: string; label: string; color: string }>
 
 interface Errs {
   email?: string; password?: string; firstName?: string; lastName?: string;
-  bio?: string; skills?: string; experience?: string;
+  bio?: string; skills?: string; experience?: string; country?: string;
   company?: string; position?: string; industry?: string; interests?: string;
 }
 
@@ -39,7 +40,7 @@ export default function SignupForm() {
 
   const [form, setForm] = useState<SignupData>({
     email: '', password: '', firstName: '', lastName: '',
-    role: 'freelancer', profile: { bio: '' },
+    role: 'freelancer', country: '', profile: { bio: '' },
   });
   const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -77,6 +78,7 @@ export default function SignupForm() {
       if (!form.firstName) e.firstName = 'Prénom requis';
       if (!form.lastName) e.lastName = 'Nom requis';
       if (!form.profile.bio || form.profile.bio.length < 10) e.bio = 'Bio requise (min. 10 car.)';
+      if (!form.country) e.country = 'Pays requis';
     }
     if (step === 3) {
       if (role === 'freelancer') {
@@ -255,6 +257,19 @@ export default function SignupForm() {
                     onChange={(e) => upd('profile.bio', e.target.value)}
                     className={`input-dark resize-none ${errors.bio ? 'error' : ''}`} />
                 </DarkField>
+                <DarkField label="Pays *" error={errors.country}>
+                  <div className={errors.country ? 'ring-1 ring-red-400 rounded-xl' : ''}>
+                    <SearchableSelect
+                      theme="dark"
+                      value={form.country || ''}
+                      onChange={(val) => upd('country', val)}
+                      options={COUNTRIES}
+                      placeholder="Sélectionnez votre pays..."
+                      searchPlaceholder="Rechercher un pays..."
+                      emptyLabel="Aucun pays trouvé"
+                    />
+                  </div>
+                </DarkField>
                 <DarkField label="LinkedIn (optionnel)">
                   <input type="url" placeholder="https://linkedin.com/in/..."
                     value={form.profile.linkedin || ''}
@@ -369,6 +384,9 @@ export default function SignupForm() {
                   <SumRow label="Email" value={form.email} />
                   <SumRow label="Nom" value={`${form.firstName} ${form.lastName}`} />
                   <SumRow label="Profil" value={`${meta.emoji} ${meta.label}`} color={meta.color} />
+                  {form.country && (
+                    <SumRow label="Pays" value={form.country} />
+                  )}
                   {form.profile.industry && (
                     <SumRow label="Secteur" value={form.profile.industry} />
                   )}

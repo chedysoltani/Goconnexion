@@ -9,6 +9,7 @@ export interface BaseUser {
   role: UserRole;
   plan?: PlanType;
   avatarUrl?: string;
+  country?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,7 @@ export interface SignupData {
   firstName: string;
   lastName: string;
   role: UserRole;
+  country?: string;
   profile: {
     bio: string;
     linkedin?: string;

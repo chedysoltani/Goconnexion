@@ -104,6 +104,7 @@ export const api = {
           lastName: signupData.lastName,
           role: roleMap[signupData.role] ?? 'COLLABORATOR',
           industry: signupData.profile?.industry,
+          country: signupData.country,
         }),
       });
       if (data.user && typeof window !== 'undefined') {

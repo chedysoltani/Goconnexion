@@ -85,7 +85,7 @@ export default function ConnectionsPage({ user, setActiveTab }: ConnectionsPageP
             role: p.title || 'Professionnel GoConnexions',
             avatar: p.user.avatarUrl || '',
             company: p.user.role === 'FREELANCER' ? 'Freelancer' : 'Entrepreneur',
-            location: 'France',
+            location: p.user.country || undefined,
             status,
             requestId,
           };

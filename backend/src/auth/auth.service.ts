@@ -43,6 +43,7 @@ export class AuthService {
           firstName: dto.firstName,
           lastName: dto.lastName,
           role,
+          country: dto.country,
           emailVerificationToken: verificationToken,
           emailVerificationExpires: verificationExpires,
         },
@@ -76,6 +77,7 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          country: user.country,
         },
         ...tokens,
       };
@@ -108,6 +110,7 @@ export class AuthService {
         plan: user.plan ?? 'FREE',
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
+        country: user.country,
       },
       ...tokens,
     };

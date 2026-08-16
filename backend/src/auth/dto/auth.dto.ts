@@ -26,6 +26,10 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   industry?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Country is required' })
+  country!: string;
 }
 
 export class LoginDto {

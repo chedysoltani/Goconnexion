@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { User } from '@/types/auth';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { INDUSTRIES } from '@/lib/constants/industries';
+import { COUNTRIES } from '@/lib/constants/countries';
 
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; gradient: string }> = {
   freelancer:   { label: 'Freelancer',   color: '#60a5fa', bg: 'rgba(59,130,246,0.15)',  gradient: 'from-blue-600 to-blue-400' },
@@ -79,7 +80,7 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'profile' | 'posts'>('profile');
 
-  const [basicData, setBasicData] = useState({ firstName: '', lastName: '', birthDate: '' });
+  const [basicData, setBasicData] = useState({ firstName: '', lastName: '', birthDate: '', country: '' });
   const [freelancerData, setFreelancerData] = useState({
     title: '', bio: '', industry: '', skills: [] as string[], portfolioUrl: '', hourlyRate: 0, isAvailable: true, cvUrl: '',
   });
@@ -96,6 +97,7 @@ export default function ProfilePage() {
           firstName: me.firstName || '',
           lastName: me.lastName || '',
           birthDate: me.birthDate ? me.birthDate.slice(0, 10) : '',
+          country: me.country || '',
         });
 
         if (me.role?.toLowerCase() === 'freelancer') {
@@ -397,6 +399,17 @@ export default function ProfilePage() {
                           onChange={(e) => setBasicData({ ...basicData, birthDate: e.target.value })} />
                       </FieldGroup>
                     </div>
+                    <FieldGroup label="Pays">
+                      <SearchableSelect
+                        theme="light"
+                        value={basicData.country}
+                        onChange={(val) => setBasicData({ ...basicData, country: val })}
+                        options={COUNTRIES}
+                        placeholder="Sélectionnez votre pays..."
+                        searchPlaceholder="Rechercher un pays..."
+                        emptyLabel="Aucun pays trouvé"
+                      />
+                    </FieldGroup>
                     <button type="submit" disabled={isSaving}
                       className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all duration-200 disabled:opacity-50"
                       style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 16px rgba(74,144,217,0.3)' }}>

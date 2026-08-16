@@ -7,29 +7,35 @@ interface Props {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   error?: string;
   theme?: 'dark' | 'light';
   required?: boolean;
+  options?: IndustryOption[];
+  emptyLabel?: string;
 }
 
 export default function SearchableSelect({
   value,
   onChange,
   placeholder = 'Sélectionnez un secteur d\'activité...',
+  searchPlaceholder = 'Rechercher un secteur...',
   error,
   theme = 'light',
   required = false,
+  options = INDUSTRIES,
+  emptyLabel = 'Aucun secteur trouvé',
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const selectedOption = INDUSTRIES.find(
+  const selectedOption = options.find(
     (opt) => opt.label === value || opt.labelFr === value || opt.id === value
   );
 
-  const filteredOptions = INDUSTRIES.filter((opt) => {
+  const filteredOptions = options.filter((opt) => {
     const term = searchTerm.toLowerCase().trim();
     return (
       opt.label.toLowerCase().includes(term) ||
@@ -159,7 +165,7 @@ export default function SearchableSelect({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Rechercher un secteur..."
+                placeholder={searchPlaceholder}
                 className={`w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl outline-none transition-all ${
                   isDark
                     ? 'bg-white/5 text-white placeholder-white/40 border border-white/10 focus:border-accent'
@@ -209,7 +215,7 @@ export default function SearchableSelect({
               })
             ) : (
               <div className={`p-4 text-center text-xs ${isDark ? 'text-white/40' : 'text-slate-400'}`}>
-                Aucun secteur trouvé pour "{searchTerm}"
+                {emptyLabel} pour "{searchTerm}"
               </div>
             )}
           </div>
