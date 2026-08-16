@@ -40,4 +40,4 @@ RUN mkdir -p /app/public/uploads
 EXPOSE 3001
 
 # Run DB migrations then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
