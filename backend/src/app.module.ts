@@ -22,6 +22,7 @@ import { ReferralModule } from './referral/referral.module';
 import { AdvertisementsModule } from './advertisements/advertisements.module';
 import { MailModule } from './mail/mail.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { AgentModule } from './agent/agent.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -56,6 +57,7 @@ import { LastActiveInterceptor } from './auth/interceptors/last-active.intercept
     AdvertisementsModule,
     MailModule,
     MarketplaceModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [

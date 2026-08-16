@@ -99,64 +99,67 @@ enum PaymentProvider {
 }
 
 model User {
-  id                   String               @id @default(uuid())
-  email                String               @unique
-  password             String
-  firstName            String
-  lastName             String
-  avatarUrl            String?
-  role                 UserRole             @default(FREELANCER)
-  isEmailVerified           Boolean    @default(false)
-  emailVerificationToken    String?
-  emailVerificationExpires  DateTime?
-  passwordResetToken        String?
-  passwordResetExpires      DateTime?
-  birthDate            DateTime?
-  plan                 PlanType             @default(FREE)
-  lastActiveAt         DateTime             @default(now())
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                       String    @id @default(uuid())
+  email                    String    @unique
+  password                 String
+  firstName                String
+  lastName                 String
+  avatarUrl                String?
+  role                     UserRole  @default(FREELANCER)
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+  birthDate                DateTime?
+  plan                     PlanType  @default(FREE)
+  lastActiveAt             DateTime  @default(now())
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   // Subscription
-  subscription         Subscription?
+  subscription Subscription?
 
   // Profile relations
-  freelancerProfile    FreelancerProfile?
-  entrepreneurProfile  EntrepreneurProfile?
+  freelancerProfile   FreelancerProfile?
+  entrepreneurProfile EntrepreneurProfile?
 
   // Messenger relations
-  conversations        ConversationParticipant[]
-  messages             Message[]
+  conversations ConversationParticipant[]
+  messages      Message[]
 
   // Other relations
-  notifications        Notification[]
-  incubatorPosts       IncubatorPost[]
-  uploadedFiles        File[]
-  incubatorComments    IncubatorComment[]
-  incubatorLikes       IncubatorLike[]
-  feedPosts            FeedPost[]
-  feedPostLikes        FeedPostLike[]
-  feedPostComments     FeedPostComment[]
-  savedPosts           SavedPost[]
-  
+  notifications     Notification[]
+  incubatorPosts    IncubatorPost[]
+  uploadedFiles     File[]
+  incubatorComments IncubatorComment[]
+  incubatorLikes    IncubatorLike[]
+  feedPosts         FeedPost[]
+  feedPostLikes     FeedPostLike[]
+  feedPostComments  FeedPostComment[]
+  savedPosts        SavedPost[]
+
   // Connection relations
-  sentRequests         ConnectionRequest[]  @relation("SentRequests")
-  receivedRequests     ConnectionRequest[]  @relation("ReceivedRequests")
-  relations            UserRelation[]       @relation("UserRelations")
-  friendRelations      UserRelation[]       @relation("FriendRelations")
+  sentRequests     ConnectionRequest[] @relation("SentRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
+  relations        UserRelation[]      @relation("UserRelations")
+  friendRelations  UserRelation[]      @relation("FriendRelations")
 
   // New feature relations
-  organizedEvents      Event[]                  @relation("OrganizedEvents")
-  eventRegistrations   EventRegistration[]      @relation("EventRegistrations")
-  boothReservations    Booth[]                  @relation("BoothReservations")
-  sentInvitations      BusinessCardInvitation[] @relation("SentInvitations")
-  referralCode         ReferralCode?            @relation("ReferralCode")
-  referredBy           Referral?                @relation("ReferredByUser")
-  advertisements       Advertisement[]          @relation("Advertisements")
+  organizedEvents    Event[]                  @relation("OrganizedEvents")
+  eventRegistrations EventRegistration[]      @relation("EventRegistrations")
+  boothReservations  Booth[]                  @relation("BoothReservations")
+  sentInvitations    BusinessCardInvitation[] @relation("SentInvitations")
+  referralCode       ReferralCode?            @relation("ReferralCode")
+  referredBy         Referral?                @relation("ReferredByUser")
+  advertisements     Advertisement[]          @relation("Advertisements")
 
   // Marketplace
-  services             MarketplaceService[]     @relation("ServiceSeller")
-  marketplaceOrders    MarketplaceOrder[]       @relation("OrderBuyer")
+  services          MarketplaceService[] @relation("ServiceSeller")
+  marketplaceOrders MarketplaceOrder[]   @relation("OrderBuyer")
+
+  // Agent IA marketing
+  reviewedAgentContent AgentContent[] @relation("AgentContentReviewer")
 }
 
 model FreelancerProfile {
@@ -197,17 +200,17 @@ enum ProjectStatus {
 }
 
 model Project {
-  id            String              @id @default(uuid())
-  title         String
-  description   String
-  budget        Float?
-  skills        String[]
-  status        ProjectStatus       @default(OPEN)
-  ownerId       String
-  owner         EntrepreneurProfile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  applications  ProjectApplication[]
+  id           String               @id @default(uuid())
+  title        String
+  description  String
+  budget       Float?
+  skills       String[]
+  status       ProjectStatus        @default(OPEN)
+  ownerId      String
+  owner        EntrepreneurProfile  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  applications ProjectApplication[]
 }
 
 enum ApplicationStatus {
@@ -230,7 +233,7 @@ model ProjectApplication {
 
 model Conversation {
   id           String                    @id @default(uuid())
-  name         String?                   // Group chat name, null for private direct message
+  name         String? // Group chat name, null for private direct message
   isGroup      Boolean                   @default(false)
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
@@ -266,7 +269,7 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
-  type      String   // e.g. "MESSAGE", "PROJECT_APPLICATION", "SYSTEM"
+  type      String // e.g. "MESSAGE", "PROJECT_APPLICATION", "SYSTEM"
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
@@ -275,7 +278,7 @@ model IncubatorPost {
   id        String             @id @default(uuid())
   title     String
   content   String
-  category  String             // e.g. "Idea Validation", "Mentorship", "Collaboration"
+  category  String // e.g. "Idea Validation", "Mentorship", "Collaboration"
   authorId  String
   author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments  IncubatorComment[]
@@ -295,26 +298,26 @@ model IncubatorComment {
 }
 
 model IncubatorLike {
-  id        String        @id @default(uuid())
-  postId    String
-  post      IncubatorPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String        @id @default(uuid())
+  postId String
+  post   IncubatorPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
 
 model File {
-  id         String   @id @default(uuid())
-  name       String
-  path       String
-  mimeType   String
-  size       Int
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messageId  String?
-  message    Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  name      String
+  path      String
+  mimeType  String
+  size      Int
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
 }
 
 model FeedPost {
@@ -342,11 +345,11 @@ model SavedPost {
 }
 
 model FeedPostLike {
-  id        String   @id @default(uuid())
-  postId    String
-  post      FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String   @id @default(uuid())
+  postId String
+  post   FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
@@ -368,27 +371,27 @@ enum RequestStatus {
 }
 
 model ConnectionRequest {
-  id          String        @id @default(uuid())
-  senderId    String
-  sender      User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId  String
-  receiver    User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
-  status      RequestStatus @default(PENDING)
-  message     String?
-  isCoffee    Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id         String        @id @default(uuid())
+  senderId   String
+  sender     User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     RequestStatus @default(PENDING)
+  message    String?
+  isCoffee   Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   @@unique([senderId, receiverId])
 }
 
 model UserRelation {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation("UserRelations", fields: [userId], references: [id], onDelete: Cascade)
-  friendId    String
-  friend      User     @relation("FriendRelations", fields: [friendId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserRelations", fields: [userId], references: [id], onDelete: Cascade)
+  friendId  String
+  friend    User     @relation("FriendRelations", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userId, friendId])
 }
@@ -460,24 +463,24 @@ model TicketType {
 }
 
 model Booth {
-  id              String            @id @default(uuid())
+  id              String             @id @default(uuid())
   eventId         String
-  event           Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event           Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
   number          String
   type            BoothType
   price           Float
-  currency        String            @default("CAD")
+  currency        String             @default("CAD")
   surface         Float?
   description     String?
-  status          BoothStatus       @default(AVAILABLE)
+  status          BoothStatus        @default(AVAILABLE)
   reservedById    String?
-  reservedBy      User?             @relation("BoothReservations", fields: [reservedById], references: [id])
+  reservedBy      User?              @relation("BoothReservations", fields: [reservedById], references: [id])
   paymentId       String?
   paymentProvider PaymentProvider?
   paidAt          DateTime?
   registration    EventRegistration?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model EventRegistration {
@@ -565,20 +568,20 @@ model Advertisement {
 // ── Marketplace ────────────────────────────────────────────────────
 
 model MarketplaceService {
-  id          String               @id @default(uuid())
+  id          String             @id @default(uuid())
   title       String
   description String
   price       Float
-  currency    String               @default("CAD")
+  currency    String             @default("CAD")
   category    String
   delivery    String
   images      String[]
-  status      String               @default("ACTIVE")
+  status      String             @default("ACTIVE")
   sellerId    String
-  seller      User                 @relation("ServiceSeller", fields: [sellerId], references: [id], onDelete: Cascade)
-  orders      MarketplaceOrder[]   @relation("ServiceOrders")
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  seller      User               @relation("ServiceSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  orders      MarketplaceOrder[] @relation("ServiceOrders")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 model MarketplaceOrder {
@@ -593,4 +596,73 @@ model MarketplaceOrder {
   stripeSessionId String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+// ── Agent IA marketing ────────────────────────────────────────────────────
+
+enum AgentContentType {
+  LINKEDIN_POST
+  FACEBOOK_POST
+  BLOG_ARTICLE
+}
+
+enum AgentContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+}
+
+model AgentContent {
+  id             String             @id @default(uuid())
+  type           AgentContentType
+  status         AgentContentStatus @default(DRAFT)
+  title          String?
+  body           String
+  targetAudience String?
+  prompt         String?
+  model          String
+  reviewedById   String?
+  reviewedBy     User?              @relation("AgentContentReviewer", fields: [reviewedById], references: [id])
+  publishedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+enum AgentChatSenderRole {
+  VISITOR
+  AGENT
+}
+
+enum AgentChatSessionStatus {
+  ACTIVE
+  ENDED
+  CONVERTED
+}
+
+model AgentChatSession {
+  id              String                 @id @default(uuid())
+  visitorId       String
+  convertedUserId String?
+  sourceUrl       String?
+  utmSource       String?
+  utmCampaign     String?
+  status          AgentChatSessionStatus @default(ACTIVE)
+  messages        AgentChatMessage[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([visitorId])
+}
+
+model AgentChatMessage {
+  id        String              @id @default(uuid())
+  sessionId String
+  session   AgentChatSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      AgentChatSenderRole
+  content   String
+  createdAt DateTime            @default(now())
+
+  @@index([sessionId])
 }

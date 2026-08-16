@@ -109,6 +109,12 @@ export const api = {
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
         setClientSessionMarker();
+
+        // Rattache la session du chatbot marketing (si le visiteur y a discuté avant de s'inscrire)
+        const chatSessionId = localStorage.getItem('gc_chat_session_id');
+        if (chatSessionId) {
+          api.agentChatbot.convertSession(chatSessionId, data.user.id).catch(() => {});
+        }
       }
       return data;
     },
@@ -383,5 +389,25 @@ export const api = {
     stats: (id: string) => request(`/advertisements/${id}/stats`),
     trackImpression: (id: string) => request(`/advertisements/${id}/impression`, { method: 'POST' }),
     trackClick: (id: string) => request(`/advertisements/${id}/click`, { method: 'POST' }),
+  },
+
+  // Chatbot marketing (widget public — visiteurs anonymes, pas de cookie requis)
+  agentChatbot: {
+    startSession: (data: { visitorId?: string; sourceUrl?: string; utmSource?: string; utmCampaign?: string }) =>
+      request('/agent/chatbot/sessions', { method: 'POST', body: JSON.stringify(data) }),
+    sendMessage: (sessionId: string, message: string) =>
+      request('/agent/chatbot/messages', { method: 'POST', body: JSON.stringify({ sessionId, message }) }),
+    convertSession: (sessionId: string, userId: string) =>
+      request(`/agent/chatbot/sessions/${sessionId}/convert`, { method: 'POST', body: JSON.stringify({ userId }) }),
+  },
+
+  // Génération et validation du contenu marketing IA (admin uniquement)
+  agentContent: {
+    generate: (data: { type: string; topic: string; targetAudience?: string }) =>
+      request('/agent/content/generate', { method: 'POST', body: JSON.stringify(data) }),
+    list: (status?: string) => request(`/agent/content${status ? `?status=${status}` : ''}`),
+    getOne: (id: string) => request(`/agent/content/${id}`),
+    update: (id: string, data: { title?: string; body?: string; status?: string }) =>
+      request(`/agent/content/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   },
 };

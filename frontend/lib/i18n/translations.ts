@@ -76,6 +76,18 @@ export const translations = {
         evening: 'Bonsoir',
       },
     },
+    // Chatbot marketing
+    chatbot: {
+      title: 'Assistant GoConnexions',
+      openLabel: "Ouvrir l'assistant",
+      closeLabel: "Fermer l'assistant",
+      placeholder: 'Écris ton message...',
+      send: 'Envoyer',
+      greeting:
+        "Bonjour 👋 Je suis l'assistant GoConnexions. Pose-moi tes questions sur la plateforme, je suis là pour t'aider !",
+      disclaimer: 'Assistant propulsé par IA — tes échanges peuvent être conservés pour améliorer nos services.',
+      error: "Désolé, je ne suis pas disponible pour le moment. Écris-nous à support@goconnexions.com.",
+    },
   },
 
   en: {
@@ -150,6 +162,16 @@ export const translations = {
         evening: 'Good evening',
       },
     },
+    chatbot: {
+      title: 'GoConnexions Assistant',
+      openLabel: 'Open assistant',
+      closeLabel: 'Close assistant',
+      placeholder: 'Type your message...',
+      send: 'Send',
+      greeting: "Hi 👋 I'm the GoConnexions assistant. Ask me anything about the platform!",
+      disclaimer: 'AI-powered assistant — your messages may be stored to improve our services.',
+      error: "Sorry, I'm not available right now. Reach us at support@goconnexions.com.",
+    },
   },
 
   ar: {
@@ -223,6 +245,16 @@ export const translations = {
         afternoon: 'مساء الخير',
         evening: 'مساء الخير',
       },
+    },
+    chatbot: {
+      title: 'مساعد GoConnexions',
+      openLabel: 'فتح المساعد',
+      closeLabel: 'إغلاق المساعد',
+      placeholder: 'اكتب رسالتك...',
+      send: 'إرسال',
+      greeting: 'مرحباً 👋 أنا مساعد GoConnexions. اسألني أي شيء عن المنصة!',
+      disclaimer: 'مساعد مدعوم بالذكاء الاصطناعي — قد يتم الاحتفاظ برسائلك لتحسين خدماتنا.',
+      error: 'عذراً، أنا غير متاح حالياً. تواصل معنا عبر support@goconnexions.com.',
     },
   },
 };

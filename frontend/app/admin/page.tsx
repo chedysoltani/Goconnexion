@@ -1,6 +1,7 @@
 ﻿'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 
 interface AdminStats {
@@ -91,12 +92,21 @@ export default function AdminPage() {
     <div className="min-h-screen p-8" style={{ background: '#f8fafc' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>A</div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Panel Administration</h1>
-            <p className="text-sm text-slate-500">GoConnexions — Vue d'ensemble en temps réel</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>A</div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Panel Administration</h1>
+              <p className="text-sm text-slate-500">GoConnexions — Vue d'ensemble en temps réel</p>
+            </div>
           </div>
+          <Link
+            href="/admin/content"
+            className="text-sm font-semibold px-4 py-2 rounded-lg text-white"
+            style={{ background: '#2563eb' }}
+          >
+            ✍️ Contenu marketing IA
+          </Link>
         </div>
 
         {loading ? (
