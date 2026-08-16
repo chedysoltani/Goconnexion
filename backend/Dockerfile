@@ -25,6 +25,7 @@ WORKDIR /app
 # Install prod deps only
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Regenerate Prisma client for this image
