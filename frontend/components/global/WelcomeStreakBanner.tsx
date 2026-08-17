@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Flame } from 'lucide-react';
 
@@ -35,6 +36,11 @@ function milestoneMessage(current: number): string {
 // rappel de streak au retour, pour donner envie de revenir régulièrement.
 export default function WelcomeStreakBanner() {
   const [flash, setFlash] = useState<StreakFlash | null>(null);
+  // GlobalProvider est monté une seule fois au niveau du layout racine — il ne se
+  // remonte pas lors d'une navigation client-side (ex: /auth/signup → /dashboard).
+  // On réagit donc aux changements de route plutôt qu'au seul montage initial,
+  // sinon le flag posé par lib/api.ts juste après la redirection n'est jamais relu.
+  const pathname = usePathname();
 
   useEffect(() => {
     const raw = sessionStorage.getItem('gc_streak_flash');
@@ -50,7 +56,7 @@ export default function WelcomeStreakBanner() {
     } catch {
       // ignore
     }
-  }, []);
+  }, [pathname]);
 
   const particles = useMemo<Particle[]>(
     () =>
