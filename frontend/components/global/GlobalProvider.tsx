@@ -5,6 +5,7 @@ import { GlobalSocketProvider } from '@/context/GlobalSocketContext';
 import MessageBubble from './MessageBubble';
 import GlobalCallHandler from './GlobalCallHandler';
 import ChatbotWidget from './ChatbotWidget';
+import WelcomeStreakBanner from './WelcomeStreakBanner';
 
 export default function GlobalProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export default function GlobalProvider({ children }: { children: React.ReactNode
       <MessageBubble />
       <GlobalCallHandler />
       <ChatbotWidget />
+      <WelcomeStreakBanner />
     </GlobalSocketProvider>
   );
 }

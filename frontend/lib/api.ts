@@ -85,6 +85,9 @@ export const api = {
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
         setClientSessionMarker();
+        if (data.streak) {
+          sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
+        }
       }
       return data;
     },
@@ -110,6 +113,9 @@ export const api = {
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
         setClientSessionMarker();
+        if (data.streak) {
+          sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
+        }
 
         // Rattache la session du chatbot marketing (si le visiteur y a discuté avant de s'inscrire)
         const chatSessionId = localStorage.getItem('gc_chat_session_id');

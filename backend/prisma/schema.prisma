@@ -118,6 +118,11 @@ model User {
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
+  // Streak de connexion (re-engagement)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastStreakDate DateTime?
+
   // Subscription
   subscription Subscription?
 
@@ -160,7 +165,8 @@ model User {
   marketplaceOrders MarketplaceOrder[]   @relation("OrderBuyer")
 
   // Agent IA marketing
-  reviewedAgentContent AgentContent[] @relation("AgentContentReviewer")
+  reviewedAgentContent AgentContent[]  @relation("AgentContentReviewer")
+  followUps            AgentFollowUp[]
 }
 
 model FreelancerProfile {
@@ -666,4 +672,18 @@ model AgentChatMessage {
   createdAt DateTime            @default(now())
 
   @@index([sessionId])
+}
+
+enum FollowUpReason {
+  INACTIVITY
+}
+
+model AgentFollowUp {
+  id     String         @id @default(uuid())
+  userId String
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason FollowUpReason
+  sentAt DateTime       @default(now())
+
+  @@index([userId, reason])
 }

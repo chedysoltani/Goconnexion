@@ -11,10 +11,13 @@ export class MailService {
   constructor() {
     const apiKey = process.env.RESEND_API_KEY ?? '';
     this.resend = new Resend(apiKey || 're_placeholder');
-    this.from = process.env.MAIL_FROM ?? 'GoConnexions <no-reply@goconnexions.com>';
+    this.from =
+      process.env.MAIL_FROM ?? 'GoConnexions <no-reply@goconnexions.com>';
 
     if (!this.isConfigured()) {
-      this.logger.warn('⚠️  RESEND_API_KEY non configurée — emails en mode log seulement');
+      this.logger.warn(
+        '⚠️  RESEND_API_KEY non configurée — emails en mode log seulement',
+      );
     }
   }
 
@@ -29,7 +32,12 @@ export class MailService {
       return;
     }
     try {
-      const { error } = await this.resend.emails.send({ from: this.from, to, subject, html });
+      const { error } = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html,
+      });
       if (error) throw error;
       this.logger.log(`Email envoyé à ${to}: ${subject}`);
     } catch (err) {
@@ -56,6 +64,30 @@ export class MailService {
           Commence par compléter ton profil pour maximiser ta visibilité.
         </p>
         ${this.btn('Accéder à mon tableau de bord', dashboardUrl)}
+      `),
+    );
+  }
+
+  async sendReengagement(user: {
+    email: string;
+    firstName: string;
+  }): Promise<void> {
+    const dashboardUrl = `${getFrontendUrl()}/dashboard`;
+    await this.send(
+      user.email,
+      "On ne t'a pas vu récemment sur GoConnexions 👋",
+      this.wrap(`
+        <h1 style="margin:0 0 16px;font-size:24px;font-weight:700;color:#0f172a">
+          Tu nous manques, ${this.esc(user.firstName)} !
+        </h1>
+        <p style="margin:0 0 16px;color:#475569">
+          Ton réseau continue de grandir pendant ton absence — de nouveaux freelances et
+          entrepreneurs rejoignent GoConnexions chaque semaine.
+        </p>
+        <p style="margin:0 0 24px;color:#475569">
+          Reviens jeter un œil, ça ne prend que deux minutes.
+        </p>
+        ${this.btn('Retourner sur GoConnexions', dashboardUrl)}
       `),
     );
   }
@@ -115,7 +147,11 @@ export class MailService {
     plan: string,
     periodEnd: Date,
   ): Promise<void> {
-    const endDate = periodEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const endDate = periodEnd.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
     const dashboardUrl = `${getFrontendUrl()}/dashboard`;
     await this.send(
       user.email,
@@ -151,7 +187,11 @@ export class MailService {
     plan: string,
     periodEnd: Date,
   ): Promise<void> {
-    const endDate = periodEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const endDate = periodEnd.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
     const pricingUrl = `${getFrontendUrl()}/pricing`;
     await this.send(
       user.email,
@@ -210,17 +250,26 @@ export class MailService {
     currency: string,
     reference: string,
     periodEnd: Date,
-    accountDetails: { accountHolderName: string; details: Record<string, string> },
+    accountDetails: {
+      accountHolderName: string;
+      details: Record<string, string>;
+    },
   ): Promise<void> {
-    const endDate = periodEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const endDate = periodEnd.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
     const detailRows = Object.entries(accountDetails.details)
       .filter(([, v]) => v)
-      .map(([k, v]) => `
+      .map(
+        ([k, v]) => `
         <tr>
           <td style="padding:8px 12px;color:#64748b;font-size:13px;white-space:nowrap">${this.esc(k)}</td>
           <td style="padding:8px 12px;color:#0f172a;font-size:13px;font-weight:600">${this.esc(v)}</td>
         </tr>
-      `)
+      `,
+      )
       .join('');
 
     await this.send(
@@ -330,7 +379,12 @@ export class MailService {
 
   async sendEventTicket(
     user: { email: string; firstName: string },
-    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
+    event: {
+      title: string;
+      startDate: Date;
+      location?: string | null;
+      address?: string | null;
+    },
     ticketCode: string,
     ticketType?: { name: string; price: number; currency: string } | null,
     booth?: { number: string; type: string } | null,
@@ -338,7 +392,12 @@ export class MailService {
     const base = getFrontendUrl();
     const ticketUrl = `${base}/events/ticket/${ticketCode}`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
     const lieu = event.address ?? event.location ?? 'À confirmer';
 
@@ -374,13 +433,23 @@ export class MailService {
 
   async sendEventReminder(
     user: { email: string; firstName: string },
-    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
+    event: {
+      title: string;
+      startDate: Date;
+      location?: string | null;
+      address?: string | null;
+    },
     ticketCode: string,
   ): Promise<void> {
     const base = getFrontendUrl();
     const ticketUrl = `${base}/events/ticket/${ticketCode}`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
     const lieu = event.address ?? event.location ?? 'À confirmer';
 
@@ -411,13 +480,30 @@ export class MailService {
 
   async sendBoothReservationConfirmation(
     user: { email: string; firstName: string },
-    event: { title: string; startDate: Date; location?: string | null; address?: string | null },
-    booth: { number: string; type: string; price: number; currency: string; surface?: number | null; description?: string | null },
+    event: {
+      title: string;
+      startDate: Date;
+      location?: string | null;
+      address?: string | null;
+    },
+    booth: {
+      number: string;
+      type: string;
+      price: number;
+      currency: string;
+      surface?: number | null;
+      description?: string | null;
+    },
   ): Promise<void> {
     const base = getFrontendUrl();
     const eventsUrl = `${base}/dashboard`;
     const date = new Date(event.startDate).toLocaleDateString('fr-CA', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
     const lieu = event.address ?? event.location ?? 'À confirmer';
 

@@ -8,7 +8,12 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UserRole } from '@prisma/client';
@@ -55,15 +60,31 @@ export class AuthService {
         });
       } else if (role === UserRole.ENTREPRENEUR) {
         await tx.entrepreneurProfile.create({
-          data: { userId: user.id, companyName: `${dto.firstName}'s Ventures`, industry: dto.industry },
+          data: {
+            userId: user.id,
+            companyName: `${dto.firstName}'s Ventures`,
+            industry: dto.industry,
+          },
         });
       }
+
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          currentStreak: 1,
+          longestStreak: 1,
+          lastStreakDate: new Date(),
+        },
+      });
 
       const tokens = await this.generateTokens(user.id, user.email, user.role);
 
       // Emails envoyés en dehors de la transaction pour ne pas la bloquer
       setImmediate(() => {
-        this.mailService.sendWelcome({ email: user.email, firstName: user.firstName });
+        this.mailService.sendWelcome({
+          email: user.email,
+          firstName: user.firstName,
+        });
         this.mailService.sendEmailVerification(
           { email: user.email, firstName: user.firstName },
           verificationToken,
@@ -79,6 +100,7 @@ export class AuthService {
           role: user.role,
           country: user.country,
         },
+        streak: { current: 1, longest: 1, isFirstVisit: true },
         ...tokens,
       };
     });
@@ -98,6 +120,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const streak = await this.updateLoginStreak(user);
     const tokens = await this.generateTokens(user.id, user.email, user.role);
 
     return {
@@ -112,6 +135,7 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
         country: user.country,
       },
+      streak,
       ...tokens,
     };
   }
@@ -119,7 +143,9 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken);
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
       if (!user) throw new UnauthorizedException('User not found');
 
       const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -200,7 +226,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
+      throw new BadRequestException(
+        'Lien de réinitialisation invalide ou expiré',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -220,14 +248,18 @@ export class AuthService {
   async resendVerificationEmail(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-    if (user.isEmailVerified) throw new BadRequestException('Email déjà vérifié');
+    if (user.isEmailVerified)
+      throw new BadRequestException('Email déjà vérifié');
 
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { emailVerificationToken: token, emailVerificationExpires: expires },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationExpires: expires,
+      },
     });
 
     await this.mailService.sendEmailVerification(
@@ -238,10 +270,71 @@ export class AuthService {
     return { message: 'Email de vérification renvoyé' };
   }
 
+  /**
+   * Incrémente le streak si la dernière connexion comptabilisée date d'hier,
+   * le réinitialise à 1 en cas de trou (>1 jour), ne change rien si déjà
+   * compté aujourd'hui. `lastStreakDate` est dédié à ce calcul — distinct de
+   * `lastActiveAt` qui est rafraîchi en continu par LastActiveInterceptor.
+   */
+  private async updateLoginStreak(user: {
+    id: string;
+    currentStreak: number;
+    longestStreak: number;
+    lastStreakDate: Date | null;
+  }) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (!user.lastStreakDate) {
+      const longest = Math.max(user.longestStreak, 1);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { currentStreak: 1, longestStreak: longest, lastStreakDate: now },
+      });
+      return { current: 1, longest, isNewDay: true };
+    }
+
+    const last = user.lastStreakDate;
+    const lastDay = new Date(
+      last.getFullYear(),
+      last.getMonth(),
+      last.getDate(),
+    );
+    const dayDiff = Math.round(
+      (today.getTime() - lastDay.getTime()) / 86_400_000,
+    );
+
+    if (dayDiff === 0) {
+      return {
+        current: user.currentStreak,
+        longest: user.longestStreak,
+        isNewDay: false,
+      };
+    }
+
+    const current = dayDiff === 1 ? user.currentStreak + 1 : 1;
+    const longest = Math.max(user.longestStreak, current);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        currentStreak: current,
+        longestStreak: longest,
+        lastStreakDate: now,
+      },
+    });
+
+    return { current, longest, isNewDay: true };
+  }
+
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '1d' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '1d',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
     return { accessToken, refreshToken };
   }
 }
