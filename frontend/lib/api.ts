@@ -146,6 +146,7 @@ export const api = {
   users: {
     list: () => request('/users'),
     suggestions: () => request('/users/suggestions'),
+    completion: () => request('/users/me/completion'),
     updateProfile: (data: any) =>
       request('/users/profile', { method: 'PUT', body: JSON.stringify(data) }),
   },

@@ -68,6 +68,40 @@ export class UsersService {
     });
   }
 
+  // Complétion du profil — unifiée freelancer/entrepreneur, sert la barre de progression du dashboard
+  async getCompletion(userId: string) {
+    const user = await this.findOne(userId);
+
+    const checks: { key: string; label: string; done: boolean }[] = [
+      { key: 'avatar', label: 'Photo de profil', done: !!user.avatarUrl },
+      { key: 'country', label: 'Pays', done: !!user.country },
+    ];
+
+    if (user.role === 'FREELANCER') {
+      const profile = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
+      checks.push(
+        { key: 'bio', label: 'Bio', done: !!profile?.bio },
+        { key: 'industry', label: 'Secteur d\'activité', done: !!profile?.industry },
+        { key: 'skills', label: 'Compétences', done: !!profile?.skills?.length },
+      );
+    } else if (user.role === 'ENTREPRENEUR') {
+      const profile = await this.prisma.entrepreneurProfile.findUnique({ where: { userId } });
+      checks.push(
+        { key: 'bio', label: 'Bio', done: !!profile?.bio },
+        { key: 'industry', label: 'Secteur d\'activité', done: !!profile?.industry },
+        { key: 'companyName', label: 'Nom de l\'entreprise', done: !!profile?.companyName },
+      );
+    }
+
+    const done = checks.filter((c) => c.done).length;
+    const percent = Math.round((done / checks.length) * 100);
+
+    return {
+      percent,
+      missing: checks.filter((c) => !c.done).map((c) => c.label),
+    };
+  }
+
   // Networking Suggestions
   async getSuggestions(userId: string) {
     const user = await this.findOne(userId);

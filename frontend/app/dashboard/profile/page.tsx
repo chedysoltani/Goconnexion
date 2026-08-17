@@ -86,6 +86,7 @@ export default function ProfilePage() {
   });
   const [entrepreneurData, setEntrepreneurData] = useState({ companyName: '', website: '', bio: '', industry: '' });
   const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [completion, setCompletion] = useState<{ percent: number; missing: string[] } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -116,6 +117,8 @@ export default function ProfilePage() {
           const posts = await api.feed.list();
           setMyPosts(posts.filter((p: any) => p.author.id === me.id));
         } catch {}
+
+        refreshCompletion();
       } catch {
         router.push('/auth/login');
       } finally {
@@ -124,6 +127,13 @@ export default function ProfilePage() {
     };
     fetchProfile();
   }, [router]);
+
+  const refreshCompletion = async () => {
+    try {
+      const c = await api.users.completion();
+      setCompletion(c);
+    } catch {}
+  };
 
   const handleBasicSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +148,7 @@ export default function ProfilePage() {
       }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
+      refreshCompletion();
     } catch (err: any) {
       setSaveError(err.message || 'Erreur lors de la sauvegarde.');
     } finally { setIsSaving(false); }
@@ -150,6 +161,7 @@ export default function ProfilePage() {
       await api.freelancers.updateProfile({ ...freelancerData, hourlyRate: Number(freelancerData.hourlyRate) });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
+      refreshCompletion();
     } catch (err: any) {
       setSaveError(err.message || 'Erreur lors de la sauvegarde.');
     } finally { setIsSaving(false); }
@@ -162,6 +174,7 @@ export default function ProfilePage() {
       await api.entrepreneurs.updateProfile(entrepreneurData);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
+      refreshCompletion();
     } catch (err: any) {
       setSaveError(err.message || 'Erreur lors de la sauvegarde.');
     } finally { setIsSaving(false); }
@@ -184,6 +197,7 @@ export default function ProfilePage() {
       }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
+      refreshCompletion();
     } catch (err: any) {
       setSaveError(err.message || "Erreur lors du téléversement.");
     } finally { setIsSaving(false); }
@@ -655,27 +669,26 @@ export default function ProfilePage() {
               </div>
 
               {/* Completion card */}
-              {role === 'freelancer' && (
+              {completion && (
                 <div className="rounded-2xl p-5"
                   style={{ background: 'linear-gradient(135deg, #0a1628, #0e1f36)', border: '1px solid rgba(74,144,217,0.2)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-[13px] font-bold text-white">Complétion du profil</h3>
-                    <span className="text-[13px] font-bold" style={{ color: '#4a90d9' }}>
-                      {Math.round(
-                        ([freelancerData.title, freelancerData.bio, freelancerData.portfolioUrl, freelancerData.cvUrl].filter(Boolean).length / 4) * 100
-                      )}%
-                    </span>
+                    <span className="text-[13px] font-bold" style={{ color: '#4a90d9' }}>{completion.percent}%</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
                     <div className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${Math.round(([freelancerData.title, freelancerData.bio, freelancerData.portfolioUrl, freelancerData.cvUrl].filter(Boolean).length / 4) * 100)}%`,
-                        background: 'linear-gradient(90deg, #4a90d9, #60a5fa)',
-                      }} />
+                      style={{ width: `${completion.percent}%`, background: 'linear-gradient(90deg, #4a90d9, #60a5fa)' }} />
                   </div>
-                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Un profil complet augmente votre visibilité de 3×
-                  </p>
+                  {completion.missing.length > 0 ? (
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Il manque : {completion.missing.join(', ')}
+                    </p>
+                  ) : (
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      Profil complet — visibilité maximale 🎉
+                    </p>
+                  )}
                 </div>
               )}
             </div>
