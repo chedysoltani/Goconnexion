@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { User as UserIcon, Briefcase, BarChart3, Target, Heart, MessageCircle as MessageIcon, Users, Calendar } from 'lucide-react';
 import { api } from '@/lib/api';
 import { User } from '@/types/auth';
 import SearchableSelect from '@/components/ui/SearchableSelect';
@@ -16,6 +17,25 @@ const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; gr
   user:         { label: 'Explorateur',  color: '#60a5fa', bg: 'rgba(37,99,235,0.15)',  gradient: 'from-blue-600 to-teal-400' },
   admin:        { label: 'Admin',        color: '#fbbf24', bg: 'rgba(245,158,11,0.15)',  gradient: 'from-amber-500 to-yellow-400' },
 };
+
+function SectionHeader({
+  icon, title, subtitle, gradient, shadow,
+}: { icon: React.ReactNode; title: string; subtitle: string; gradient: string; shadow: string }) {
+  return (
+    <div className="flex items-center gap-3.5">
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+        style={{ background: gradient, boxShadow: `0 4px 14px ${shadow}` }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h2 className="text-[15px] font-bold text-foreground leading-tight">{title}</h2>
+        <p className="text-[11px] font-medium mt-0.5" style={{ color: '#94a3b8' }}>{subtitle}</p>
+      </div>
+    </div>
+  );
+}
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -327,18 +347,24 @@ export default function ProfilePage() {
           {/* Stats row */}
           <div className="flex items-center gap-3 pb-2">
             {[
-              { value: myPosts.length.toString(), label: 'Publications' },
-              { value: '—', label: 'Connexions' },
-              { value: 'Mai 2026', label: 'Membre depuis' },
+              { value: myPosts.length.toString(), label: 'Publications', icon: MessageIcon, color: '#3b82f6' },
+              { value: '—', label: 'Connexions', icon: Users, color: '#8b5cf6' },
+              { value: 'Mai 2026', label: 'Membre depuis', icon: Calendar, color: '#22c55e' },
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 + idx * 0.06 }}
-                className="text-center px-4 py-2 rounded-xl hover-lift"
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl hover-lift"
                 style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(26,35,50,0.06)' }}>
-                <p className="text-[15px] font-bold text-foreground">{stat.value}</p>
-                <p className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>{stat.label}</p>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${stat.color}18`, color: stat.color }}>
+                  <stat.icon size={13} />
+                </div>
+                <div className="text-left">
+                  <p className="text-[14px] font-bold text-foreground leading-none">{stat.value}</p>
+                  <p className="text-[10px] font-medium mt-1" style={{ color: '#94a3b8' }}>{stat.label}</p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -416,18 +442,17 @@ export default function ProfilePage() {
               {/* Personal info card */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="rounded-2xl overflow-hidden hover-lift"
+                className="relative rounded-2xl overflow-hidden hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                      style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-[14px] font-bold text-foreground">Informations personnelles</h2>
-                  </div>
+                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'linear-gradient(90deg,#3b82f6,#60a5fa)' }} />
+                <div className="px-6 py-5" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <SectionHeader
+                    icon={<UserIcon size={18} />}
+                    title="Informations personnelles"
+                    subtitle="Ton identité, visible par ton réseau"
+                    gradient="linear-gradient(135deg,#3b82f6,#2563eb)"
+                    shadow="rgba(59,130,246,0.35)"
+                  />
                 </div>
                 <div className="p-6">
                   <form onSubmit={handleBasicSubmit} className="space-y-5">
@@ -481,19 +506,19 @@ export default function ProfilePage() {
 
               <motion.div
                 initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="rounded-2xl overflow-hidden hover-lift"
+                className="relative rounded-2xl overflow-hidden hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
+                <div className="absolute top-0 left-0 right-0 h-[3px]"
+                  style={{ background: role === 'entrepreneur' ? 'linear-gradient(90deg,#8b5cf6,#c084fc)' : 'linear-gradient(90deg,#3b82f6,#60a5fa)' }} />
                 {/* Card header */}
-                <div className="px-6 py-4" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                      style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-[14px] font-bold text-foreground">Informations professionnelles</h2>
-                  </div>
+                <div className="px-6 py-5" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <SectionHeader
+                    icon={<Briefcase size={18} />}
+                    title="Informations professionnelles"
+                    subtitle={role === 'entrepreneur' ? 'Ton entreprise et ta mission' : role === 'freelancer' ? 'Ton expertise et tes services' : 'Complète ce profil pour en profiter pleinement'}
+                    gradient={role === 'entrepreneur' ? 'linear-gradient(135deg,#8b5cf6,#7c3aed)' : 'linear-gradient(135deg,#3b82f6,#2563eb)'}
+                    shadow={role === 'entrepreneur' ? 'rgba(139,92,246,0.35)' : 'rgba(59,130,246,0.35)'}
+                  />
                 </div>
 
                 <div className="p-6">
@@ -692,20 +717,23 @@ export default function ProfilePage() {
                 className="rounded-2xl p-5 hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
                 <h3 className="text-[13px] font-bold text-foreground mb-4 flex items-center gap-2">
-                  <svg width="15" height="15" fill="none" stroke="#3b82f6" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
+                    <BarChart3 size={13} />
+                  </div>
                   Statistiques réseau
                 </h3>
                 <div className="space-y-2">
                   {[
-                    { label: 'Type de compte', value: roleConfig.label, color: roleConfig.color },
-                    { label: 'Membre depuis', value: 'Mai 2026', color: '#3b82f6' },
-                    { label: 'Publications', value: myPosts.length.toString(), color: '#2563eb' },
+                    { label: 'Type de compte', value: roleConfig.label, color: roleConfig.color, icon: UserIcon },
+                    { label: 'Membre depuis', value: 'Mai 2026', color: '#3b82f6', icon: Calendar },
+                    { label: 'Publications', value: myPosts.length.toString(), color: '#2563eb', icon: MessageIcon },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between p-3 rounded-xl"
                       style={{ background: '#f8fafc' }}>
-                      <span className="text-[12px] font-medium" style={{ color: '#64748b' }}>{item.label}</span>
+                      <span className="flex items-center gap-2 text-[12px] font-medium" style={{ color: '#64748b' }}>
+                        <item.icon size={13} style={{ color: item.color }} />
+                        {item.label}
+                      </span>
                       <span className="text-[12px] font-bold" style={{ color: item.color }}>{item.value}</span>
                     </div>
                   ))}
@@ -716,10 +744,17 @@ export default function ProfilePage() {
               {completion && (
                 <motion.div
                   initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="rounded-2xl p-5 hover-lift"
+                  className="relative rounded-2xl p-5 overflow-hidden hover-lift"
                   style={{ background: 'linear-gradient(135deg, #0a1628, #0e1f36)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[13px] font-bold text-white">Complétion du profil</h3>
+                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-20 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
+                  <div className="relative flex items-center justify-between mb-3">
+                    <h3 className="text-[13px] font-bold text-white flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa' }}>
+                        <Target size={13} />
+                      </div>
+                      Complétion du profil
+                    </h3>
                     <span className="text-[13px] font-bold" style={{ color: '#3b82f6' }}>{completion.percent}%</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
@@ -753,7 +788,7 @@ export default function ProfilePage() {
             {myPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
                 style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-                <div className="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center"
+                <div className="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center float-anim"
                   style={{ background: 'rgba(59,130,246,0.08)' }}>
                   <svg width="24" height="24" fill="none" stroke="#3b82f6" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
