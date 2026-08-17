@@ -1,7 +1,9 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
 
 interface AdminStats {
@@ -89,29 +91,61 @@ export default function AdminPage() {
     d ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d)) : '—';
 
   return (
-    <div className="min-h-screen p-8" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen p-8" style={{ background: 'var(--bg, #f8fafc)' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>A</div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">Panel Administration</h1>
-              <p className="text-sm text-slate-500">GoConnexions — Vue d'ensemble en temps réel</p>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 mb-6"
+        >
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>A</div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Panel Administration</h1>
+            <p className="text-sm text-slate-500">GoConnexions — Vue d'ensemble en temps réel</p>
           </div>
-          <Link
-            href="/admin/content"
-            className="text-sm font-semibold px-4 py-2 rounded-lg text-white"
-            style={{ background: '#2563eb' }}
-          >
-            ✍️ Contenu marketing IA
+        </motion.div>
+
+        {/* Bannière — Contenu marketing IA */}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <Link href="/admin/content">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="relative rounded-2xl p-6 mb-8 text-white overflow-hidden cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 60%, #8b5cf6 100%)', boxShadow: '0 16px 40px rgba(59,130,246,0.3)' }}
+            >
+              <div
+                className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 pointer-events-none"
+                style={{ background: 'radial-gradient(circle, #fff, transparent)', transform: 'translate(25%,-35%)' }}
+              />
+              <div className="relative flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                    <Sparkles size={22} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">Contenu marketing IA</p>
+                    <p className="text-blue-100 text-sm">Génère des posts LinkedIn/Facebook et articles, prêts à valider</p>
+                  </div>
+                </div>
+                <motion.span
+                  className="flex items-center gap-1.5 text-sm font-bold bg-white text-blue-700 px-4 py-2 rounded-xl flex-shrink-0"
+                  whileHover={{ x: 2 }}
+                >
+                  Ouvrir <ArrowRight size={15} />
+                </motion.span>
+              </div>
+            </motion.div>
           </Link>
-        </div>
+        </motion.div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-500 rounded-full animate-spin" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-24 rounded-2xl shimmer" />
+              ))}
+            </div>
+            <div className="h-64 rounded-2xl shimmer" />
           </div>
         ) : (
           <>
@@ -123,19 +157,29 @@ export default function AdminPage() {
                 { label: 'Événements actifs', value: stats?.totalEvents ?? 0, icon: '📅', color: '#8b5cf6' },
                 { label: 'Conversations', value: stats?.totalConversations ?? 0, icon: '💬', color: '#6366f1' },
                 { label: 'Abonnés actifs', value: stats?.activeSubscriptions ?? 0, icon: '⭐', color: '#ec4899' },
-              ].map((s) => (
-                <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              ].map((s, idx) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + idx * 0.05 }}
+                  className="bg-white rounded-2xl p-5 border border-slate-100 hover-lift"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-2xl">{s.icon}</span>
                     <span className="text-2xl font-black" style={{ color: s.color }}>{s.value}</span>
                   </div>
                   <p className="text-sm font-semibold text-slate-600">{s.label}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* Users table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
+              style={{ boxShadow: 'var(--shadow-sm)' }}
+            >
               <div className="px-6 py-4 border-b border-slate-100">
                 <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
                   Utilisateurs ({users.length})
@@ -153,12 +197,12 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {users.map((u) => (
-                      <tr
+                    {users.map((u, idx) => (
+                      <motion.tr
                         key={u.id}
-                        className="transition-colors"
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        transition={{ delay: Math.min(idx * 0.02, 0.4) }}
+                        className="transition-colors hover:bg-slate-50"
                       >
                         <td className="px-5 py-4">
                           <p className="text-[13px] font-semibold text-slate-800">
@@ -198,12 +242,12 @@ export default function AdminPage() {
                             </button>
                           )}
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </motion.div>
           </>
         )}
       </div>

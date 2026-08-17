@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Sparkles, Copy, Check, ThumbsUp, ThumbsDown, Rocket, ChevronDown, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 type ContentType = 'LINKEDIN_POST' | 'FACEBOOK_POST' | 'BLOG_ARTICLE';
@@ -20,10 +22,20 @@ interface AgentContentItem {
   reviewedBy: { id: string; firstName: string; lastName: string } | null;
 }
 
+const TYPE_OPTIONS: Array<{ value: ContentType; label: string; icon: string; hint: string }> = [
+  { value: 'LINKEDIN_POST', label: 'LinkedIn', icon: '💼', hint: 'Ton professionnel' },
+  { value: 'FACEBOOK_POST', label: 'Facebook', icon: '📘', hint: 'Ton conversationnel' },
+  { value: 'BLOG_ARTICLE', label: 'Article de blog', icon: '📝', hint: 'Format long' },
+];
 const TYPE_LABELS: Record<ContentType, string> = {
   LINKEDIN_POST: 'LinkedIn',
   FACEBOOK_POST: 'Facebook',
   BLOG_ARTICLE: 'Article de blog',
+};
+const TYPE_ICONS: Record<ContentType, string> = {
+  LINKEDIN_POST: '💼',
+  FACEBOOK_POST: '📘',
+  BLOG_ARTICLE: '📝',
 };
 
 const STATUS_LABELS: Record<ContentStatus, string> = {
@@ -177,41 +189,96 @@ export default function AdminContentPage() {
   const formatDate = (d: string | null) =>
     d ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '—';
 
+  const pendingCount = items.filter((i) => i.status === 'PENDING_REVIEW').length;
+
   return (
-    <div className="min-h-screen p-8" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen p-8" style={{ background: 'var(--bg, #f8fafc)' }}>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>✍️</div>
+            <motion.div
+              initial={{ scale: 0.6, rotate: -8, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-lg shadow-lg"
+              style={{ background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
+            >
+              <Sparkles size={20} />
+            </motion.div>
             <div>
               <h1 className="text-2xl font-bold text-slate-800">Contenu marketing IA</h1>
               <p className="text-sm text-slate-500">Génère, relis et valide les publications avant diffusion manuelle</p>
             </div>
           </div>
-          <Link href="/admin" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
-            ← Retour au panel admin
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+          >
+            <ArrowLeft size={15} />
+            Panel admin
           </Link>
-        </div>
+        </motion.div>
 
         {/* Formulaire de génération */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Générer un nouveau contenu</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="relative rounded-2xl p-6 mb-8 overflow-hidden"
+          style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-md, 0 4px 12px rgba(15,23,42,0.08))' }}
+        >
+          <div
+            className="absolute top-0 left-0 right-0 h-[3px]"
+            style={{ background: 'linear-gradient(90deg,#3b82f6,#8b5cf6,#ec4899)' }}
+          />
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+            <Sparkles size={14} className="text-blue-500" />
+            Générer un nouveau contenu
+          </h2>
+
+          {/* Sélecteur de type — cartes cliquables */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+            {TYPE_OPTIONS.map((opt) => {
+              const selected = genType === opt.value;
+              return (
+                <motion.button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGenType(opt.value)}
+                  whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}
+                  className="relative flex items-center gap-2.5 rounded-xl p-3 text-left transition-colors"
+                  style={{
+                    border: selected ? '1.5px solid #3b82f6' : '1.5px solid #e2e8f0',
+                    background: selected ? '#eff6ff' : '#fff',
+                  }}
+                >
+                  <span className="text-xl">{opt.icon}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-slate-700 truncate">{opt.label}</span>
+                    <span className="block text-[11px] text-slate-400">{opt.hint}</span>
+                  </span>
+                  {selected && (
+                    <motion.span
+                      layoutId="content-type-check"
+                      className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: '#3b82f6' }}
+                    >
+                      <Check size={11} color="#fff" strokeWidth={3} />
+                    </motion.span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-            <select
-              value={genType}
-              onChange={(e) => setGenType(e.target.value as ContentType)}
-              className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
-            >
-              {(Object.keys(TYPE_LABELS) as ContentType[]).map((t) => (
-                <option key={t} value={t}>{TYPE_LABELS[t]}</option>
-              ))}
-            </select>
             <input
               value={genAudience}
               onChange={(e) => setGenAudience(e.target.value)}
               placeholder="Public cible (optionnel — ex: freelances tech)"
-              className="border border-slate-200 rounded-lg px-3 py-2 text-sm md:col-span-2"
+              className="dash-input md:col-span-3"
             />
           </div>
           <textarea
@@ -219,148 +286,238 @@ export default function AdminContentPage() {
             onChange={(e) => setGenTopic(e.target.value)}
             placeholder="Sujet du post/article (ex: pourquoi les freelances devraient soigner leur réseau professionnel)"
             rows={2}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-3"
+            className="dash-input mb-3"
           />
-          {genError && <p className="text-xs text-red-500 mb-3">{genError}</p>}
-          <button
+          <AnimatePresence>
+            {genError && (
+              <motion.p
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                className="text-xs text-red-500 mb-3"
+              >
+                {genError}
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <motion.button
             onClick={handleGenerate}
             disabled={generating || !genTopic.trim()}
-            className="text-sm font-semibold px-4 py-2 rounded-lg text-white disabled:opacity-40"
-            style={{ background: '#2563eb' }}
+            whileHover={!generating && genTopic.trim() ? { y: -1 } : {}}
+            whileTap={!generating && genTopic.trim() ? { scale: 0.97 } : {}}
+            className="btn-glow flex items-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {generating ? 'Génération en cours…' : 'Générer'}
-          </button>
-        </div>
+            {generating ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Génération en cours…
+              </>
+            ) : (
+              <>
+                <Sparkles size={15} />
+                Générer
+              </>
+            )}
+          </motion.button>
+        </motion.div>
 
-        {/* Filtres */}
-        <div className="flex gap-2 mb-4">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-              style={
-                filter === f.value
-                  ? { background: '#2563eb', color: '#fff' }
-                  : { background: '#fff', color: '#64748b', border: '1px solid #e2e8f0' }
-              }
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {/* Filtres — pilule animée */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+          className="flex flex-wrap items-center gap-2 mb-4"
+        >
+          {FILTERS.map((f) => {
+            const active = filter === f.value;
+            return (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className="relative text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors"
+                style={{ color: active ? '#fff' : '#64748b', border: active ? 'none' : '1px solid #e2e8f0' }}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="content-filter-pill"
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: '#2563eb' }}
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10">
+                  {f.label}
+                  {f.value === 'PENDING_REVIEW' && pendingCount > 0 && (
+                    <span className="ml-1.5 opacity-80">· {pendingCount}</span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </motion.div>
 
         {/* Liste */}
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-[68px] rounded-2xl shimmer" />
+            ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-white rounded-2xl p-10 text-center text-sm text-slate-400 border border-slate-100">
-            Aucun contenu dans cette catégorie.
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-10 text-center border border-slate-100"
+          >
+            <div className="text-3xl mb-2 float-anim inline-block">📭</div>
+            <p className="text-sm text-slate-400">Aucun contenu dans cette catégorie.</p>
+          </motion.div>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => {
-              const expanded = expandedId === item.id;
-              return (
-                <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                  <button onClick={() => toggleExpand(item)} className="w-full text-left px-5 py-4 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                          {TYPE_LABELS[item.type]}
-                        </span>
-                        <span
-                          className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: `${STATUS_COLORS[item.status]}15`, color: STATUS_COLORS[item.status] }}
-                        >
-                          {STATUS_LABELS[item.status]}
-                        </span>
-                        <span className="text-[11px] text-slate-400">{formatDate(item.createdAt)}</span>
-                      </div>
-                      <p className="text-sm text-slate-700 truncate">{item.title || item.body.slice(0, 100)}</p>
-                    </div>
-                    <span className="text-slate-400 text-xs flex-shrink-0">{expanded ? '▲' : '▼'}</span>
-                  </button>
-
-                  {expanded && (
-                    <div className="px-5 pb-5 border-t border-slate-100 pt-4">
-                      <input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        placeholder="Titre (optionnel, utile pour les articles de blog)"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-2 font-semibold"
-                      />
-                      <textarea
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        rows={item.type === 'BLOG_ARTICLE' ? 14 : 6}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-3 font-mono"
-                      />
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          onClick={() => handleCopy(item)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600"
-                        >
-                          {copiedId === item.id ? 'Copié ✓' : 'Copier le texte'}
-                        </button>
-
-                        {editBody !== item.body || editTitle !== (item.title ?? '') ? (
-                          <button
-                            onClick={() => handleSaveOnly(item.id)}
-                            disabled={savingId === item.id}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
-                          >
-                            Enregistrer les modifications
-                          </button>
-                        ) : null}
-
-                        {item.status === 'PENDING_REVIEW' && (
-                          <>
-                            <button
-                              onClick={() => applyStatus(item.id, 'APPROVED')}
-                              disabled={savingId === item.id}
-                              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
-                              style={{ background: '#22c55e' }}
+            <AnimatePresence initial={false}>
+              {items.map((item, idx) => {
+                const expanded = expandedId === item.id;
+                const dirty = expanded && (editBody !== item.body || editTitle !== (item.title ?? ''));
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ delay: Math.min(idx * 0.04, 0.3), layout: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
+                    className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover-lift"
+                  >
+                    <button onClick={() => toggleExpand(item)} className="w-full text-left px-5 py-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0 flex items-center gap-3">
+                        <span className="text-lg flex-shrink-0">{TYPE_ICONS[item.type]}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                              {TYPE_LABELS[item.type]}
+                            </span>
+                            <span
+                              className="relative text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
+                              style={{ background: `${STATUS_COLORS[item.status]}15`, color: STATUS_COLORS[item.status] }}
                             >
-                              Approuver
-                            </button>
-                            <button
-                              onClick={() => applyStatus(item.id, 'REJECTED')}
-                              disabled={savingId === item.id}
-                              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
-                              style={{ background: '#ef4444' }}
-                            >
-                              Rejeter
-                            </button>
-                          </>
-                        )}
-
-                        {item.status === 'APPROVED' && (
-                          <button
-                            onClick={() => applyStatus(item.id, 'PUBLISHED')}
-                            disabled={savingId === item.id}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
-                            style={{ background: '#2563eb' }}
-                          >
-                            Marquer comme publié
-                          </button>
-                        )}
+                              {item.status === 'PENDING_REVIEW' && (
+                                <span className="relative w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: STATUS_COLORS[item.status] }}>
+                                  <span className="notif-pulse absolute inset-0 rounded-full" />
+                                </span>
+                              )}
+                              {STATUS_LABELS[item.status]}
+                            </span>
+                            <span className="text-[11px] text-slate-400">{formatDate(item.createdAt)}</span>
+                          </div>
+                          <p className="text-sm text-slate-700 truncate">{item.title || item.body.slice(0, 100)}</p>
+                        </div>
                       </div>
+                      <motion.span animate={{ rotate: expanded ? 180 : 0 }} className="text-slate-400 flex-shrink-0">
+                        <ChevronDown size={16} />
+                      </motion.span>
+                    </button>
 
-                      <div className="mt-3 text-[11px] text-slate-400 space-y-0.5">
-                        {item.targetAudience && <p>Public cible : {item.targetAudience}</p>}
-                        <p>Modèle : {item.model}</p>
-                        {item.reviewedBy && <p>Relu par {item.reviewedBy.firstName} {item.reviewedBy.lastName}</p>}
-                        {item.publishedAt && <p>Publié le {formatDate(item.publishedAt)}</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    <AnimatePresence initial={false}>
+                      {expanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div className="px-5 pb-5 border-t border-slate-100 pt-4">
+                            <input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              placeholder="Titre (optionnel, utile pour les articles de blog)"
+                              className="dash-input mb-2 font-semibold"
+                            />
+                            <textarea
+                              value={editBody}
+                              onChange={(e) => setEditBody(e.target.value)}
+                              rows={item.type === 'BLOG_ARTICLE' ? 14 : 6}
+                              className="dash-input mb-3 font-mono text-[13px]"
+                            />
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <motion.button
+                                whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}
+                                onClick={() => handleCopy(item)}
+                                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300"
+                              >
+                                <AnimatePresence mode="wait" initial={false}>
+                                  {copiedId === item.id ? (
+                                    <motion.span key="copied" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} className="flex items-center gap-1.5 text-green-600">
+                                      <Check size={13} /> Copié
+                                    </motion.span>
+                                  ) : (
+                                    <motion.span key="copy" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} className="flex items-center gap-1.5">
+                                      <Copy size={13} /> Copier le texte
+                                    </motion.span>
+                                  )}
+                                </AnimatePresence>
+                              </motion.button>
+
+                              {dirty && (
+                                <motion.button
+                                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                                  whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}
+                                  onClick={() => handleSaveOnly(item.id)}
+                                  disabled={savingId === item.id}
+                                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                >
+                                  Enregistrer les modifications
+                                </motion.button>
+                              )}
+
+                              {item.status === 'PENDING_REVIEW' && (
+                                <>
+                                  <motion.button
+                                    whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}
+                                    onClick={() => applyStatus(item.id, 'APPROVED')}
+                                    disabled={savingId === item.id}
+                                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
+                                    style={{ background: '#22c55e' }}
+                                  >
+                                    <ThumbsUp size={13} /> Approuver
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}
+                                    onClick={() => applyStatus(item.id, 'REJECTED')}
+                                    disabled={savingId === item.id}
+                                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
+                                    style={{ background: '#ef4444' }}
+                                  >
+                                    <ThumbsDown size={13} /> Rejeter
+                                  </motion.button>
+                                </>
+                              )}
+
+                              {item.status === 'APPROVED' && (
+                                <motion.button
+                                  whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }}
+                                  onClick={() => applyStatus(item.id, 'PUBLISHED')}
+                                  disabled={savingId === item.id}
+                                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
+                                  style={{ background: '#2563eb' }}
+                                >
+                                  <Rocket size={13} /> Marquer comme publié
+                                </motion.button>
+                              )}
+
+                              {savingId === item.id && <Loader2 size={14} className="animate-spin text-slate-400" />}
+                            </div>
+
+                            <div className="mt-3 text-[11px] text-slate-400 space-y-0.5">
+                              {item.targetAudience && <p>Public cible : {item.targetAudience}</p>}
+                              <p>Modèle : {item.model}</p>
+                              {item.reviewedBy && <p>Relu par {item.reviewedBy.firstName} {item.reviewedBy.lastName}</p>}
+                              {item.publishedAt && <p>Publié le {formatDate(item.publishedAt)}</p>}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>
