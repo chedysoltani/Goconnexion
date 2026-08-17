@@ -44,10 +44,14 @@ export default function WelcomeStreakBanner() {
 
   useEffect(() => {
     const raw = sessionStorage.getItem('gc_streak_flash');
-    if (!raw) return;
+    if (!raw) {
+      console.debug('[streak] rien dans sessionStorage à', pathname);
+      return;
+    }
     sessionStorage.removeItem('gc_streak_flash');
     try {
       const parsed: StreakFlash = JSON.parse(raw);
+      console.debug('[streak] flag trouvé et lu :', parsed);
       if (parsed.isFirstVisit || parsed.isNewDay) {
         setFlash(parsed);
         const timer = setTimeout(() => setFlash(null), 5500);

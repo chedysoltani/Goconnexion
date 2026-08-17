@@ -87,6 +87,8 @@ export const api = {
         setClientSessionMarker();
         if (data.streak) {
           sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
+        } else {
+          console.debug('[streak] pas de champ "streak" dans la réponse /auth/login — backend pas à jour ?');
         }
       }
       return data;
@@ -115,6 +117,8 @@ export const api = {
         setClientSessionMarker();
         if (data.streak) {
           sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
+        } else {
+          console.debug('[streak] pas de champ "streak" dans la réponse /auth/register — backend pas à jour ?');
         }
 
         // Rattache la session du chatbot marketing (si le visiteur y a discuté avant de s'inscrire)

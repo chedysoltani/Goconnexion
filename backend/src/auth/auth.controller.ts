@@ -20,8 +20,8 @@ import {
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
-const ACCESS_TTL  = 24 * 60 * 60 * 1000;       // 1 jour
-const REFRESH_TTL = 7 * 24 * 60 * 60 * 1000;   // 7 jours
+const ACCESS_TTL = 24 * 60 * 60 * 1000; // 1 jour
+const REFRESH_TTL = 7 * 24 * 60 * 60 * 1000; // 7 jours
 
 @Controller('auth')
 export class AuthController {
@@ -31,10 +31,17 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: any) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: any,
+  ) {
     const data = await this.authService.register(dto);
     this.setAuthCookies(res, data.accessToken, data.refreshToken);
-    return { user: data.user, accessToken: data.accessToken };
+    return {
+      user: data.user,
+      accessToken: data.accessToken,
+      streak: data.streak,
+    };
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -44,7 +51,11 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: any) {
     const data = await this.authService.login(dto);
     this.setAuthCookies(res, data.accessToken, data.refreshToken);
-    return { user: data.user, accessToken: data.accessToken };
+    return {
+      user: data.user,
+      accessToken: data.accessToken,
+      streak: data.streak,
+    };
   }
 
   // ── Refresh ────────────────────────────────────────────────────────────────
@@ -118,7 +129,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       // lax en dev (localhost ports ignorés pour SameSite), none en prod (cross-subdomain)
-      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+      sameSite: isProd ? 'none' : 'lax',
       path: '/',
       maxAge,
       ...(isProd && process.env.COOKIE_DOMAIN
