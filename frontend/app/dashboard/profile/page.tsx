@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { User } from '@/types/auth';
 import SearchableSelect from '@/components/ui/SearchableSelect';
@@ -36,8 +37,8 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
         ...props.style,
       }}
       onFocus={(e) => {
-        e.currentTarget.style.borderColor = '#4a90d9';
-        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.12)';
+        e.currentTarget.style.borderColor = '#3b82f6';
+        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.12)';
         e.currentTarget.style.background = '#fff';
         props.onFocus?.(e);
       }}
@@ -58,8 +59,8 @@ function Textarea({ className = '', ...props }: React.TextareaHTMLAttributes<HTM
       className={`w-full px-4 py-3 rounded-xl text-[14px] font-medium text-foreground outline-none transition-all duration-200 resize-none ${className}`}
       style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0' }}
       onFocus={(e) => {
-        e.currentTarget.style.borderColor = '#4a90d9';
-        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(74,144,217,0.12)';
+        e.currentTarget.style.borderColor = '#3b82f6';
+        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.12)';
         e.currentTarget.style.background = '#fff';
       }}
       onBlur={(e) => {
@@ -222,7 +223,7 @@ export default function ProfilePage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4"
         style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}>
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 8px 24px rgba(74,144,217,0.3)' }}>
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 8px 24px rgba(59,130,246,0.3)' }}>
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
         <p className="text-sm font-semibold" style={{ color: '#64748b' }}>Chargement de votre profil...</p>
@@ -238,13 +239,15 @@ export default function ProfilePage() {
     <div className="min-h-screen pb-12" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}>
 
       {/* Hero cover */}
-      <div className="relative profile-cover" style={{ height: '220px' }}>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+        className="relative profile-cover" style={{ height: '220px' }}>
         {/* Noise overlay */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
         {/* Decorative circles */}
         <div className="absolute top-6 right-12 w-32 h-32 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #4a90d9, transparent)' }} />
+          style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
         <div className="absolute -bottom-8 left-1/3 w-48 h-48 rounded-full opacity-5"
           style={{ background: 'radial-gradient(circle, #8b5cf6, transparent)' }} />
 
@@ -259,14 +262,18 @@ export default function ProfilePage() {
             Dashboard
           </Link>
         </div>
-      </div>
+      </motion.div>
 
       <div className="max-w-5xl mx-auto px-6">
         {/* Avatar + name row */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 mb-6 relative z-10">
           <div className="flex items-end gap-5">
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', bounce: 0.4, duration: 0.6, delay: 0.1 }}
+              className="relative flex-shrink-0"
+            >
               <div
                 onClick={() => document.getElementById('avatar-upload')?.click()}
                 className="w-24 h-24 rounded-2xl border-4 border-white shadow-xl flex items-center justify-center text-white text-2xl font-bold cursor-pointer overflow-hidden group transition-transform duration-200 hover:scale-105"
@@ -288,10 +295,14 @@ export default function ProfilePage() {
               <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
               {/* Online badge */}
               <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-blue-400 border-2 border-white" />
-            </div>
+            </motion.div>
 
             {/* Name + role */}
-            <div className="pb-2">
+            <motion.div
+              initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="pb-2"
+            >
               <h1 className="text-xl font-bold text-foreground leading-tight">
                 {user?.firstName} {user?.lastName}
               </h1>
@@ -303,14 +314,14 @@ export default function ProfilePage() {
                 </span>
                 {(role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry) && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                    style={{ background: 'rgba(74,144,217,0.1)', color: '#4a90d9', border: '1px solid rgba(74,144,217,0.2)' }}>
+                    style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}>
                     {INDUSTRIES.find(i => i.label === (role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry))?.icon ?? '🏢'}{' '}
                     {role === 'freelancer' ? freelancerData.industry : entrepreneurData.industry}
                   </span>
                 )}
                 <span className="text-[12px]" style={{ color: '#94a3b8' }}>{user?.email}</span>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Stats row */}
@@ -319,69 +330,98 @@ export default function ProfilePage() {
               { value: myPosts.length.toString(), label: 'Publications' },
               { value: '—', label: 'Connexions' },
               { value: 'Mai 2026', label: 'Membre depuis' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center px-4 py-2 rounded-xl"
+            ].map((stat, idx) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 + idx * 0.06 }}
+                className="text-center px-4 py-2 rounded-xl hover-lift"
                 style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(26,35,50,0.06)' }}>
                 <p className="text-[15px] font-bold text-foreground">{stat.value}</p>
                 <p className="text-[10px] font-medium" style={{ color: '#94a3b8' }}>{stat.label}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
         {/* Alerts */}
-        {saveSuccess && (
-          <div className="mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl scale-in"
-            style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)' }}>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(37,99,235,0.2)' }}>
-              <svg width="12" height="12" fill="none" stroke="#2563eb" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p className="text-[13px] font-semibold" style={{ color: '#1d4ed8' }}>
-              Profil mis à jour avec succès !
-            </p>
-          </div>
-        )}
-        {saveError && (
-          <div className="mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl scale-in"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(239,68,68,0.2)' }}>
-              <svg width="12" height="12" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <p className="text-[13px] font-semibold" style={{ color: '#dc2626' }}>{saveError}</p>
-          </div>
-        )}
+        <AnimatePresence>
+          {saveSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', bounce: 0.4, duration: 0.5 }}
+              className="mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+              style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)' }}>
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.6, delay: 0.1 }}
+                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(37,99,235,0.2)' }}>
+                <svg width="12" height="12" fill="none" stroke="#2563eb" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+              <p className="text-[13px] font-semibold" style={{ color: '#1d4ed8' }}>
+                Profil mis à jour avec succès !
+              </p>
+            </motion.div>
+          )}
+          {saveError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', bounce: 0.4, duration: 0.5 }}
+              className="mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.2)' }}>
+                <svg width="12" height="12" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-[13px] font-semibold" style={{ color: '#dc2626' }}>{saveError}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Section tabs */}
-        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit"
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          className="flex gap-1 mb-6 p-1 rounded-xl w-fit"
           style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #e2e8f0' }}>
           {(['profile', 'posts'] as const).map((s) => (
             <button key={s} onClick={() => setActiveSection(s)}
-              className="px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200"
-              style={activeSection === s
-                ? { background: '#4a90d9', color: '#fff', boxShadow: '0 2px 8px rgba(74,144,217,0.3)' }
-                : { color: '#64748b' }}>
-              {s === 'profile' ? 'Profil' : `Publications (${myPosts.length})`}
+              className="relative px-5 py-2 rounded-lg text-[13px] font-semibold transition-colors duration-200"
+              style={{ color: activeSection === s ? '#fff' : '#64748b' }}>
+              {activeSection === s && (
+                <motion.span
+                  layoutId="profile-tab-pill"
+                  className="absolute inset-0 rounded-lg"
+                  style={{ background: '#3b82f6', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">{s === 'profile' ? 'Profil' : `Publications (${myPosts.length})`}</span>
             </button>
           ))}
-        </div>
+        </motion.div>
 
+        <AnimatePresence mode="wait">
         {activeSection === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+            key="profile-section"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
             <div className="lg:col-span-2 space-y-6">
               {/* Personal info card */}
-              <div className="rounded-2xl overflow-hidden"
+              <motion.div
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                className="rounded-2xl overflow-hidden hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
                 <div className="px-6 py-4" style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                      style={{ background: 'rgba(74,144,217,0.12)', color: '#4a90d9' }}>
+                      style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
                       <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -426,7 +466,7 @@ export default function ProfilePage() {
                     </FieldGroup>
                     <button type="submit" disabled={isSaving}
                       className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all duration-200 disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 16px rgba(74,144,217,0.3)' }}>
+                      style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}>
                       {isSaving ? (
                         <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Enregistrement...</>
                       ) : (
@@ -437,15 +477,17 @@ export default function ProfilePage() {
                     </button>
                   </form>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl overflow-hidden"
+              <motion.div
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                className="rounded-2xl overflow-hidden hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
                 {/* Card header */}
                 <div className="px-6 py-4" style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                      style={{ background: 'rgba(74,144,217,0.12)', color: '#4a90d9' }}>
+                      style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
                       <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -513,7 +555,7 @@ export default function ProfilePage() {
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {freelancerData.skills.map((skill, i) => (
                               <span key={i} className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-                                style={{ background: 'rgba(74,144,217,0.1)', color: '#4a90d9', border: '1px solid rgba(74,144,217,0.2)' }}>
+                                style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}>
                                 {skill}
                               </span>
                             ))}
@@ -538,7 +580,7 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-3">
                           <button type="button" onClick={() => document.getElementById('cv-upload')?.click()}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 hover:scale-105"
-                            style={{ background: 'rgba(74,144,217,0.1)', color: '#4a90d9', border: '1px solid rgba(74,144,217,0.2)' }}>
+                            style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}>
                             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -547,7 +589,7 @@ export default function ProfilePage() {
                           <input id="cv-upload" type="file" accept="application/pdf" className="hidden" onChange={handleCvUpload} />
                           {freelancerData.cvUrl && (
                             <a href={freelancerData.cvUrl} target="_blank" rel="noopener noreferrer"
-                              className="text-[12px] font-semibold hover:underline" style={{ color: '#4a90d9' }}>
+                              className="text-[12px] font-semibold hover:underline" style={{ color: '#3b82f6' }}>
                               Voir le CV →
                             </a>
                           )}
@@ -565,9 +607,9 @@ export default function ProfilePage() {
 
                       <button type="submit" disabled={isSaving}
                         className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[14px] font-bold text-white transition-all duration-200 disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #4a90d9, #2563eb)', boxShadow: '0 4px 16px rgba(74,144,217,0.3)' }}
-                        onMouseEnter={e => !isSaving && (e.currentTarget.style.boxShadow = '0 8px 24px rgba(74,144,217,0.4)')}
-                        onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(74,144,217,0.3)')}>
+                        style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
+                        onMouseEnter={e => !isSaving && (e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.4)')}
+                        onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.3)')}>
                         {isSaving ? (
                           <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Enregistrement...</>
                         ) : (
@@ -639,16 +681,18 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Right sidebar */}
             <div className="space-y-5">
               {/* Info card */}
-              <div className="rounded-2xl p-5"
+              <motion.div
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                className="rounded-2xl p-5 hover-lift"
                 style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 24px rgba(26,35,50,0.06)' }}>
                 <h3 className="text-[13px] font-bold text-foreground mb-4 flex items-center gap-2">
-                  <svg width="15" height="15" fill="none" stroke="#4a90d9" strokeWidth="2" viewBox="0 0 24 24">
+                  <svg width="15" height="15" fill="none" stroke="#3b82f6" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                   Statistiques réseau
@@ -656,7 +700,7 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   {[
                     { label: 'Type de compte', value: roleConfig.label, color: roleConfig.color },
-                    { label: 'Membre depuis', value: 'Mai 2026', color: '#4a90d9' },
+                    { label: 'Membre depuis', value: 'Mai 2026', color: '#3b82f6' },
                     { label: 'Publications', value: myPosts.length.toString(), color: '#2563eb' },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between p-3 rounded-xl"
@@ -666,19 +710,24 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Completion card */}
               {completion && (
-                <div className="rounded-2xl p-5"
-                  style={{ background: 'linear-gradient(135deg, #0a1628, #0e1f36)', border: '1px solid rgba(74,144,217,0.2)' }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="rounded-2xl p-5 hover-lift"
+                  style={{ background: 'linear-gradient(135deg, #0a1628, #0e1f36)', border: '1px solid rgba(59,130,246,0.2)' }}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-[13px] font-bold text-white">Complétion du profil</h3>
-                    <span className="text-[13px] font-bold" style={{ color: '#4a90d9' }}>{completion.percent}%</span>
+                    <span className="text-[13px] font-bold" style={{ color: '#3b82f6' }}>{completion.percent}%</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${completion.percent}%`, background: 'linear-gradient(90deg, #4a90d9, #60a5fa)' }} />
+                    <motion.div
+                      initial={{ width: 0 }} animate={{ width: `${completion.percent}%` }}
+                      transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full"
+                      style={{ background: 'linear-gradient(90deg, #3b82f6, #60a5fa)' }} />
                   </div>
                   {completion.missing.length > 0 ? (
                     <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -689,20 +738,24 @@ export default function ProfilePage() {
                       Profil complet — visibilité maximale 🎉
                     </p>
                   )}
-                </div>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {activeSection === 'posts' && (
-          <div>
+          <motion.div
+            key="posts-section"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+          >
             {myPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
                 style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
                 <div className="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center"
-                  style={{ background: 'rgba(74,144,217,0.08)' }}>
-                  <svg width="24" height="24" fill="none" stroke="#4a90d9" strokeWidth="1.5" viewBox="0 0 24 24">
+                  style={{ background: 'rgba(59,130,246,0.08)' }}>
+                  <svg width="24" height="24" fill="none" stroke="#3b82f6" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
@@ -713,8 +766,12 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {myPosts.map((post) => (
-                  <div key={post.id} className="rounded-2xl p-5 slide-up"
+                {myPosts.map((post, idx) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(idx * 0.06, 0.3) }}
+                    className="rounded-2xl p-5 hover-lift"
                     style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 2px 12px rgba(26,35,50,0.05)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[11px] font-medium" style={{ color: '#94a3b8' }}>
@@ -741,12 +798,13 @@ export default function ProfilePage() {
                         <img src={post.imageUrl} alt="Post" className="w-full object-cover" style={{ maxHeight: '200px' }} />
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </div>
   );
