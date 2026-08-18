@@ -55,6 +55,14 @@ services:
       # À passer à https://metrics.goconnexions.com une fois le DNS propagé et
       # nginx/grafana.conf.disabled activé.
       GF_SERVER_ROOT_URL: http://localhost:3000
+      # SMTP pour les alertes — relais SMTP de Resend, mêmes identifiants que
+      # MailService (backend/src/mail/mail.service.ts). Le nom d'utilisateur
+      # "resend" est fixe (relais Resend), seule la clé API sert de mot de passe.
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: smtp.resend.com:465
+      GF_SMTP_USER: resend
+      GF_SMTP_PASSWORD: ${RESEND_API_KEY}
+      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM_ADDRESS}
     volumes:
       - grafana_data:/var/lib/grafana
     networks:
