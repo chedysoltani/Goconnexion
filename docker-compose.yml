@@ -43,6 +43,31 @@ services:
     expose:
       - "3001"
 
+  # ── Grafana (business metrics) ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: goconnexion_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      # Laissé sur localhost tant que le sous-domaine n'est pas branché sur nginx.
+      # À passer à https://metrics.goconnexions.com une fois le DNS propagé et
+      # nginx/grafana.conf.disabled activé.
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - goconnexion_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # TEMPORAIRE: port exposé sur l'hôte pour tester avant que le sous-domaine
+    # soit prêt. À retirer une fois nginx/grafana.conf.disabled activé, pour ne
+    # plus exposer Grafana qu'à travers le reverse proxy HTTPS.
+    ports:
+      - "3000:3000"
+
   # ── Nginx Reverse Proxy ───────────────────────────────────────────────────────
   nginx:
     image: nginx:1.27-alpine
@@ -63,6 +88,7 @@ services:
 volumes:
   postgres_data:
   uploads:
+  grafana_data:
 
 networks:
   goconnexion_net:

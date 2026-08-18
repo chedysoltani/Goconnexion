@@ -1,0 +1,81 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Config Nginx pour exposer Grafana sur metrics.goconnexions.com
+#
+# INACTIF pour l'instant : ce fichier n'est PAS inclus par nginx.conf, donc
+# il n'a aucun effet tant qu'il reste sous ce nom. À activer une fois le DNS
+# propagé :
+#
+#   1. Vérifier que metrics.goconnexions.com pointe bien vers ce VPS
+#      (dig +short metrics.goconnexions.com)
+#   2. Obtenir le certificat (ex. certbot) pour ce sous-domaine et déposer
+#      fullchain.pem / privkey.pem dans ./nginx/ssl/ (ou adapter les chemins
+#      ci-dessous si vous utilisez des certs séparés par sous-domaine)
+#   3. Coller le contenu de ce fichier (les deux blocs `server`) dans le
+#      bloc `http { ... }` de nginx.conf, juste avant la fermeture `}`
+#   4. Dans docker-compose.yml, retirer le mapping `ports: - "3000:3000"`
+#      du service grafana (il ne doit plus être exposé qu'via nginx)
+#   5. Recharger nginx : docker exec goconnexion_nginx nginx -s reload
+#      (ou redémarrer le conteneur si les certs viennent d'être ajoutés)
+# ─────────────────────────────────────────────────────────────────────────
+
+upstream goconnexion_grafana {
+    server grafana:3000;
+    keepalive 32;
+}
+
+# ── HTTP → HTTPS redirect ─────────────────────────────────────────────────
+server {
+    listen 80;
+    server_name metrics.goconnexions.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ── HTTPS ─────────────────────────────────────────────────────────────────
+server {
+    listen 443 ssl http2;
+    server_name metrics.goconnexions.com;
+
+    ssl_certificate     /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    location / {
+        proxy_pass         http://goconnexion_grafana;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # Grafana Live (WebSocket) — mises à jour temps réel des dashboards
+    location /api/live/ {
+        proxy_pass         http://goconnexion_grafana;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400s;
+    }
+}
