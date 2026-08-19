@@ -1,0 +1,520 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": [],
+      "title": "Croissance",
+      "type": "row"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "id": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "time_series",
+          "rawSql": "SELECT\n  date_trunc('day', \"createdAt\")::date AS \"time\",\n  COUNT(*) AS \"Inscriptions\"\nFROM \"User\"\nWHERE \"createdAt\" >= NOW() - INTERVAL '30 days'\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Inscriptions par jour (30 derniers jours)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "id": 3,
+      "options": {
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  CASE\n    WHEN EXISTS (SELECT 1 FROM \"Referral\" r WHERE r.\"referredUserId\" = u.id) THEN 'Parrainage'\n    WHEN EXISTS (SELECT 1 FROM \"AgentChatSession\" acs WHERE acs.\"convertedUserId\" = u.id) THEN 'Chatbot'\n    ELSE 'Organique'\n  END AS \"source\",\n  COUNT(*) AS \"total\"\nFROM \"User\" u\nGROUP BY 1\nORDER BY 2 DESC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Répartition des inscriptions par source",
+      "type": "piechart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 9 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS \"Total inscrits\" FROM \"User\";",
+          "refId": "A"
+        }
+      ],
+      "title": "Total inscrits (actuel)",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 9 },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS \"Nouveaux abonnés payants (24h)\"\nFROM \"Subscription\"\nWHERE \"plan\" != 'FREE'\n  AND \"createdAt\" >= NOW() - INTERVAL '24 hours';",
+          "refId": "A"
+        }
+      ],
+      "title": "Nouveaux abonnés payants (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 9 },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  ROUND(\n    100.0 * COUNT(DISTINCT s.\"userId\") FILTER (WHERE s.\"plan\" != 'FREE' AND s.\"status\" = 'ACTIVE')\n    / NULLIF(COUNT(DISTINCT u.id), 0),\n  1) AS \"Taux conversion payant\"\nFROM \"User\" u\nLEFT JOIN \"Subscription\" s ON s.\"userId\" = u.id;",
+          "refId": "A"
+        }
+      ],
+      "title": "Taux de conversion payant",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 7,
+      "panels": [],
+      "title": "Engagement",
+      "type": "row"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 14 },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS \"Actifs (7j)\"\nFROM \"User\"\nWHERE \"lastActiveAt\" >= NOW() - INTERVAL '7 days';",
+          "refId": "A"
+        }
+      ],
+      "title": "Utilisateurs actifs (7 derniers jours)",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 14 },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS \"Avec streak actif\"\nFROM \"User\"\nWHERE \"currentStreak\" > 0;",
+          "refId": "A"
+        }
+      ],
+      "title": "Utilisateurs avec streak en cours",
+      "type": "stat"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  \"firstName\" || ' ' || \"lastName\" AS \"Utilisateur\",\n  \"currentStreak\" AS \"Streak actuel\",\n  \"longestStreak\" AS \"Record\",\n  \"lastActiveAt\" AS \"Dernière activité\"\nFROM \"User\"\nWHERE \"currentStreak\" > 0\nORDER BY \"currentStreak\" DESC\nLIMIT 10;",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 streaks actuels",
+      "type": "table"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "id": 11,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "time_series",
+          "rawSql": "SELECT\n  date_trunc('day', \"createdAt\")::date AS \"time\",\n  COUNT(*) AS \"Posts\"\nFROM \"FeedPost\"\nWHERE \"createdAt\" >= NOW() - INTERVAL '30 days'\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Posts créés par jour (30 derniers jours)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "id": 12,
+      "panels": [],
+      "title": "Marketing / Chatbot",
+      "type": "row"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 31 },
+      "id": 13,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "time_series",
+          "rawSql": "SELECT\n  date_trunc('day', \"createdAt\")::date AS \"time\",\n  COUNT(*) AS \"Sessions chatbot\"\nFROM \"AgentChatSession\"\nWHERE \"createdAt\" >= NOW() - INTERVAL '30 days'\nGROUP BY 1\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Sessions chatbot par jour (30 derniers jours)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 31 },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  ROUND(\n    100.0 * COUNT(DISTINCT \"convertedUserId\")\n    / NULLIF(COUNT(DISTINCT \"visitorId\"), 0),\n  1) AS \"Conversion chatbot\"\nFROM \"AgentChatSession\";",
+          "refId": "A"
+        }
+      ],
+      "title": "Taux de conversion chatbot (visiteurs → inscrits)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "id": 15,
+      "panels": [],
+      "title": "Business",
+      "type": "row"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 40 },
+      "id": 16,
+      "options": {
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  \"role\" AS \"Rôle\",\n  COUNT(*) AS \"Total\"\nFROM \"User\"\nGROUP BY 1\nORDER BY 2 DESC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Répartition par rôle (Freelance / Entrepreneur / ...)",
+      "type": "piechart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 40 },
+      "id": 17,
+      "options": {
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  CASE WHEN \"plan\" = 'FREE' THEN 'Free' ELSE 'Payant' END AS \"Type\",\n  COUNT(*) AS \"Total\"\nFROM \"User\"\nGROUP BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Répartition Free / Payant",
+      "type": "piechart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 40 },
+      "id": 18,
+      "options": {
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": { "mode": "single" },
+        "xTickLabelRotation": 0
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  \"status\" AS \"Statut\",\n  COUNT(*) AS \"Commandes\"\nFROM \"MarketplaceOrder\"\nGROUP BY 1\nORDER BY 2 DESC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Commandes marketplace par statut",
+      "type": "barchart"
+    },
+    {
+      "datasource": "grafana-postgresql-datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 40 },
+      "id": 19,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": "grafana-postgresql-datasource",
+          "format": "table",
+          "rawSql": "SELECT\n  e.\"title\" AS \"Événement\",\n  COUNT(er.id) AS \"Inscriptions\",\n  e.\"startDate\" AS \"Date\"\nFROM \"Event\" e\nLEFT JOIN \"EventRegistration\" er ON er.\"eventId\" = e.id\nGROUP BY e.id, e.\"title\", e.\"startDate\"\nORDER BY e.\"startDate\" DESC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Inscriptions aux événements par événement",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["goconnexions", "business"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "GoConnexions — Business Metrics",
+  "uid": "goconnexions-business",
+  "version": 1,
+  "weekStart": ""
+}
