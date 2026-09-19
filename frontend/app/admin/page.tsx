@@ -21,8 +21,20 @@ interface AdminUser {
   lastName: string;
   role: string;
   plan: string;
+  isAmbassador: boolean;
   createdAt: string;
   lastActiveAt: string | null;
+}
+
+interface AmbassadorEntry {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatarUrl?: string;
+  createdAt: string;
+  referralCode: string | null;
+  totalReferrals: number;
 }
 
 const PLAN_COLORS: Record<string, string> = {
@@ -45,8 +57,10 @@ export default function AdminPage() {
   const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [ambassadors, setAmbassadors] = useState<AmbassadorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
@@ -58,12 +72,14 @@ export default function AdminPage() {
 
     const load = async () => {
       try {
-        const [statsData, usersData] = await Promise.all([
+        const [statsData, usersData, ambassadorsData] = await Promise.all([
           api.admin.stats(),
           api.admin.users(1, 50),
+          api.admin.ambassadors(),
         ]);
         setStats(statsData);
         setUsers(usersData.users ?? []);
+        setAmbassadors(ambassadorsData ?? []);
       } catch {
         // silencieux
       } finally {
@@ -84,6 +100,24 @@ export default function AdminPage() {
       // silencieux
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleToggleAmbassador = async (u: AdminUser) => {
+    setTogglingId(u.id);
+    try {
+      const updated = await api.admin.setAmbassador(u.id, !u.isAmbassador);
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, isAmbassador: updated.isAmbassador } : x)));
+      if (updated.isAmbassador) {
+        const ambassadorsData = await api.admin.ambassadors();
+        setAmbassadors(ambassadorsData ?? []);
+      } else {
+        setAmbassadors((prev) => prev.filter((a) => a.id !== u.id));
+      }
+    } catch {
+      // silencieux
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -229,24 +263,90 @@ export default function AdminPage() {
                         <td className="px-5 py-4 text-[12px] text-slate-500">{formatDate(u.createdAt)}</td>
                         <td className="px-5 py-4 text-[12px] text-slate-500">{formatDate(u.lastActiveAt)}</td>
                         <td className="px-5 py-4">
-                          {u.role !== 'ADMIN' && (
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              disabled={deletingId === u.id}
-                              className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
-                              style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)' }}
-                              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)'; }}
-                              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'; }}
-                            >
-                              {deletingId === u.id ? '...' : 'Supprimer'}
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {u.role !== 'ADMIN' && (
+                              <button
+                                onClick={() => handleToggleAmbassador(u)}
+                                disabled={togglingId === u.id}
+                                className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+                                style={u.isAmbassador
+                                  ? { color: '#d97706', background: 'rgba(217,119,6,0.1)' }
+                                  : { color: '#3b82f6', background: 'rgba(59,130,246,0.08)' }}
+                              >
+                                {togglingId === u.id ? '...' : u.isAmbassador ? '★ Ambassadeur' : 'Promouvoir'}
+                              </button>
+                            )}
+                            {u.role !== 'ADMIN' && (
+                              <button
+                                onClick={() => handleDeleteUser(u.id)}
+                                disabled={deletingId === u.id}
+                                className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+                                style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)' }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)'; }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'; }}
+                              >
+                                {deletingId === u.id ? '...' : 'Supprimer'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            </motion.div>
+
+            {/* Ambassadors */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="bg-white rounded-2xl border border-slate-100 overflow-hidden mt-6"
+              style={{ boxShadow: 'var(--shadow-sm)' }}
+            >
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+                <span className="text-lg">🌟</span>
+                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                  Ambassadeurs ({ambassadors.length})
+                </h2>
+              </div>
+              {ambassadors.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-slate-400 text-sm">Aucun ambassadeur pour le moment.</p>
+                  <p className="text-slate-400 text-xs mt-1">Promouvez un utilisateur depuis le tableau ci-dessus.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ background: '#f8fafc' }}>
+                        {['Ambassadeur', 'Code', 'Inscriptions générées', 'Depuis'].map((h) => (
+                          <th key={h} className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {ambassadors.map((a) => (
+                        <tr key={a.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-4">
+                            <p className="text-[13px] font-semibold text-slate-800">{a.firstName} {a.lastName}</p>
+                            <p className="text-[11px] text-slate-400 font-mono">{a.email}</p>
+                          </td>
+                          <td className="px-5 py-4 text-[12px] font-mono text-slate-500">{a.referralCode ?? '—'}</td>
+                          <td className="px-5 py-4">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                              {a.totalReferrals}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-[12px] text-slate-500">{formatDate(a.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </motion.div>
           </>
         )}

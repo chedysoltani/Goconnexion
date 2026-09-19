@@ -1,11 +1,16 @@
 import { Controller, Get, Body, Put, UseGuards, Request, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { ReferralService } from '../referral/referral.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AmbassadorGuard } from '../auth/guards/ambassador.guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly referralService: ReferralService,
+  ) {}
 
   @Get('suggestions')
   async getSuggestions(@Request() req: any) {
@@ -15,6 +20,12 @@ export class UsersController {
   @Get('me/completion')
   async getCompletion(@Request() req: any) {
     return this.usersService.getCompletion(req.user.id);
+  }
+
+  @Get('me/ambassador-stats')
+  @UseGuards(AmbassadorGuard)
+  async getAmbassadorStats(@Request() req: any) {
+    return this.referralService.getAmbassadorStats(req.user.id);
   }
 
   @Get()

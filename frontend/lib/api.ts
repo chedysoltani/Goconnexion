@@ -253,6 +253,9 @@ export const api = {
     deleteUser: (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
     updateUserPlan: (id: string, plan: string) =>
       request(`/admin/users/${id}/plan`, { method: 'PUT', body: JSON.stringify({ plan }) }),
+    ambassadors: () => request('/admin/ambassadors'),
+    setAmbassador: (id: string, isAmbassador: boolean) =>
+      request(`/admin/users/${id}/ambassador`, { method: 'PUT', body: JSON.stringify({ isAmbassador }) }),
   },
 
   feed: {
@@ -367,6 +370,7 @@ export const api = {
     dashboard: () => request('/referral/dashboard'),
     leaderboard: () => request('/referral/leaderboard'),
     registerReferral: (code: string) => request(`/referral/register/${code}`, { method: 'POST' }),
+    ambassadorStats: () => request('/users/me/ambassador-stats'),
   },
 
   marketplace: {

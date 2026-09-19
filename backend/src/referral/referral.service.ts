@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
+import { getFrontendUrl } from '../common/frontend-url';
 
 @Injectable()
 export class ReferralService {
@@ -82,6 +83,48 @@ export class ReferralService {
     ]);
 
     return { success: true };
+  }
+
+  // Stats détaillées pour la page /ambassadeur — inclut le statut d'abonnement payant de chaque filleul.
+  async getAmbassadorStats(userId: string) {
+    const referralCode = await this.getOrCreateCode(userId);
+    const referrals = await this.prisma.referral.findMany({
+      where: { referralCodeId: referralCode.id },
+      include: {
+        referredUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            createdAt: true,
+            role: true,
+            subscription: { select: { plan: true, status: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      referralCode: referralCode.code,
+      referralLink: `${getFrontendUrl()}/auth/signup?ref=${referralCode.code}`,
+      totalReferrals: referralCode.totalReferrals,
+      referrals: referrals.map((r) => ({
+        id: r.id,
+        createdAt: r.createdAt,
+        referredUser: {
+          id: r.referredUser.id,
+          firstName: r.referredUser.firstName,
+          lastName: r.referredUser.lastName,
+          avatarUrl: r.referredUser.avatarUrl,
+          role: r.referredUser.role,
+        },
+        isPaidSubscriber:
+          r.referredUser.subscription?.status === 'ACTIVE' &&
+          r.referredUser.subscription?.plan !== 'FREE',
+      })),
+    };
   }
 
   async getLeaderboard() {

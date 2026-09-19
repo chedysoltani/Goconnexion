@@ -36,4 +36,14 @@ export class AdminController {
   updateUserPlan(@Param('id') id: string, @Body('plan') plan: PlanType) {
     return this.adminService.updateUserPlan(id, plan);
   }
+
+  @Get('ambassadors')
+  getAmbassadors() {
+    return this.adminService.getAmbassadors();
+  }
+
+  @Put('users/:id/ambassador')
+  setAmbassador(@Param('id') id: string, @Body('isAmbassador') isAmbassador: boolean) {
+    return this.adminService.setAmbassador(id, isAmbassador);
+  }
 }

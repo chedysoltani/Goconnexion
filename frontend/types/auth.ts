@@ -8,6 +8,7 @@ export interface BaseUser {
   lastName: string;
   role: UserRole;
   plan?: PlanType;
+  isAmbassador?: boolean;
   avatarUrl?: string;
   country?: string | null;
   createdAt: Date;

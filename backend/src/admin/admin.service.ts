@@ -34,6 +34,7 @@ export class AdminService {
           lastName: true,
           role: true,
           plan: true,
+          isAmbassador: true,
           createdAt: true,
           lastActiveAt: true,
           subscription: { select: { plan: true, status: true } },
@@ -62,5 +63,41 @@ export class AdminService {
       create: { userId: id, plan, status: 'ACTIVE' },
     });
     return { id, plan };
+  }
+
+  async setAmbassador(id: string, isAmbassador: boolean) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    return this.prisma.user.update({
+      where: { id },
+      data: { isAmbassador },
+      select: { id: true, firstName: true, lastName: true, email: true, isAmbassador: true },
+    });
+  }
+
+  async getAmbassadors() {
+    const ambassadors = await this.prisma.user.findMany({
+      where: { isAmbassador: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        avatarUrl: true,
+        createdAt: true,
+        referralCode: { select: { code: true, totalReferrals: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return ambassadors.map((a) => ({
+      id: a.id,
+      firstName: a.firstName,
+      lastName: a.lastName,
+      email: a.email,
+      avatarUrl: a.avatarUrl,
+      createdAt: a.createdAt,
+      referralCode: a.referralCode?.code ?? null,
+      totalReferrals: a.referralCode?.totalReferrals ?? 0,
+    }));
   }
 }

@@ -133,6 +133,7 @@ export class AuthService {
         plan: user.plan ?? 'FREE',
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
+        isAmbassador: user.isAmbassador,
         country: user.country,
       },
       streak,
@@ -159,6 +160,7 @@ export class AuthService {
           plan: user.plan ?? 'FREE',
           avatarUrl: user.avatarUrl,
           isEmailVerified: user.isEmailVerified,
+          isAmbassador: user.isAmbassador,
         },
         ...tokens,
       };
