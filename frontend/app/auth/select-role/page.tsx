@@ -38,7 +38,11 @@ export default function SelectRolePage() {
   const [hovered, setHovered] = useState<UserRole | null>(null);
 
   const handleContinue = () => {
-    if (selected) router.push(`/auth/signup?role=${selected}`);
+    if (!selected) return;
+    // Conserve les paramètres de campagne déjà présents (ref, utm_*, persona…), ex. depuis /join.
+    const params = new URLSearchParams(window.location.search);
+    params.set('role', selected);
+    router.push(`/auth/signup?${params.toString()}`);
   };
 
   return (

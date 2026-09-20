@@ -1,0 +1,386 @@
+/* Landing /join — tokens et animations scopés sur .gcj : rien ne fuit vers le reste de l'app.
+   Identité : navy (tokens existants --primary / --sidebar-bg) + orange d'action + blanc chaud. */
+
+.gcj {
+  --j-ink: #050e1f;
+  --j-navy: #0b1a35;
+  --j-navy-2: #0f1f3d;
+  --j-navy-3: #1a3a5c;
+  --j-orange: #f97316;
+  --j-orange-hover: #fb8a3c;
+  --j-orange-deep: #c2410c;
+  --j-orange-soft: #fff1e6;
+  --j-cream: #fffaf5;
+  --j-slate-50: #f8fafc;
+  --j-text: #0f172a;
+  --j-text-2: #475569;
+  --j-line: #e2e8f0;
+  --j-on-dark: #f1f5f9;
+  --j-on-dark-2: rgba(226, 232, 240, 0.74);
+  --j-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color: var(--j-text);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gcj *:focus-visible {
+  outline: 3px solid var(--j-orange);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.gcj .gcj-dark *:focus-visible {
+  outline-color: #fff;
+}
+
+/* ─── Accessibilité : lien d'évitement ─────────────────────────────── */
+.gcj-skip {
+  position: absolute;
+  left: 16px;
+  top: -64px;
+  z-index: 200;
+  background: #fff;
+  color: var(--j-navy-2);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: top 0.2s;
+}
+.gcj-skip:focus {
+  top: 12px;
+}
+
+/* ─── Boutons ──────────────────────────────────────────────────────── */
+.gcj-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 26px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.25s var(--j-ease), box-shadow 0.25s var(--j-ease), background-color 0.2s,
+    border-color 0.2s, color 0.2s;
+}
+.gcj-btn svg {
+  transition: transform 0.25s var(--j-ease);
+}
+.gcj-btn:hover svg {
+  transform: translateX(3px);
+}
+.gcj-btn-primary {
+  /* Texte navy sur orange : ~6:1, là où du blanc sur orange resterait sous AA. */
+  background: var(--j-orange);
+  color: var(--j-ink);
+  box-shadow: 0 10px 30px -8px rgba(249, 115, 22, 0.55);
+}
+.gcj-btn-primary:hover {
+  background: var(--j-orange-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.65);
+}
+.gcj-btn-primary:active {
+  transform: translateY(0);
+}
+.gcj-btn-lg {
+  min-height: 56px;
+  padding: 0 34px;
+  font-size: 16px;
+}
+.gcj-btn-sm {
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+.gcj-btn-ghost-dark {
+  color: var(--j-on-dark);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+}
+.gcj-btn-ghost-dark:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ─── Fonds ────────────────────────────────────────────────────────── */
+.gcj-hero-bg {
+  background:
+    radial-gradient(60% 55% at 85% 8%, rgba(249, 115, 22, 0.22), transparent 60%),
+    radial-gradient(50% 50% at 5% 95%, rgba(59, 130, 246, 0.16), transparent 60%),
+    linear-gradient(180deg, var(--j-navy) 0%, var(--j-ink) 100%);
+}
+.gcj-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(70% 70% at 50% 40%, #000, transparent);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 40%, #000, transparent);
+}
+.gcj-dots-light {
+  background-image: radial-gradient(rgba(15, 31, 61, 0.09) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* ─── Apparition au chargement (hero, sans JS ni hydratation) ──────── */
+@keyframes gcj-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.gcj-rise {
+  animation: gcj-rise 0.8s var(--j-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Variante sans fondu pour le titre : il reste peint dès la 1re frame (meilleur LCP). */
+@keyframes gcj-slide {
+  from {
+    transform: translateY(16px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.gcj-slide {
+  animation: gcj-slide 0.7s var(--j-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes gcj-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.gcj-pop {
+  animation: gcj-pop 0.7s var(--j-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Flottement discret : 3 éléments du hero uniquement. */
+@keyframes gcj-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+.gcj-float {
+  animation: gcj-float 6s ease-in-out infinite;
+  animation-delay: var(--fd, 0s);
+}
+
+@keyframes gcj-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.gcj-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: gcj-draw 1.2s var(--j-ease) both;
+  animation-delay: var(--d, 0.4s);
+}
+
+@keyframes gcj-pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(249, 115, 22, 0);
+  }
+}
+.gcj-pulse {
+  animation: gcj-pulse-dot 2.4s ease-out infinite;
+}
+
+/* ─── Apparition au scroll (îlot <Reveal>) ─────────────────────────── */
+.gcj-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.8s var(--j-ease), transform 0.8s var(--j-ease);
+  transition-delay: var(--d, 0ms);
+}
+.gcj-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─── Cartes ───────────────────────────────────────────────────────── */
+.gcj-card {
+  transition: transform 0.35s var(--j-ease), box-shadow 0.35s var(--j-ease),
+    border-color 0.25s, background-color 0.25s;
+}
+.gcj-card:hover {
+  transform: translateY(-6px);
+}
+
+/* Carte profil : l'accent orange se dévoile au survol / focus clavier. */
+.gcj-persona {
+  position: relative;
+  isolation: isolate;
+}
+.gcj-persona::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(90% 70% at 50% 0%, rgba(249, 115, 22, 0.22), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.gcj-persona:hover::before,
+.gcj-persona:focus-visible::before {
+  opacity: 1;
+}
+.gcj-persona:hover .gcj-persona-icon,
+.gcj-persona:focus-visible .gcj-persona-icon {
+  transform: scale(1.08) rotate(-4deg);
+  background: var(--j-orange);
+  color: var(--j-ink);
+}
+.gcj-persona-icon {
+  transition: transform 0.35s var(--j-ease), background-color 0.25s, color 0.25s;
+}
+.gcj-persona:hover .gcj-persona-cta svg,
+.gcj-persona:focus-visible .gcj-persona-cta svg {
+  transform: translateX(4px);
+}
+.gcj-persona-cta svg {
+  transition: transform 0.25s var(--j-ease);
+}
+
+/* ─── Parcours animé (section « Pourquoi maintenant ») ─────────────── */
+.gcj-journey-track {
+  position: absolute;
+  background: linear-gradient(90deg, var(--j-orange), #fbbf24);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 2.2s var(--j-ease) 0.3s;
+}
+.gcj-journey.is-in .gcj-journey-track {
+  transform: scaleX(1);
+}
+.gcj-journey-node {
+  opacity: 0;
+  transform: translateY(14px) scale(0.9);
+  transition: opacity 0.6s var(--j-ease), transform 0.6s var(--j-ease);
+  transition-delay: calc(0.25s + var(--i) * 0.42s);
+}
+.gcj-journey.is-in .gcj-journey-node {
+  opacity: 1;
+  transform: none;
+}
+.gcj-journey.is-in .gcj-journey-last {
+  animation: gcj-pulse-dot 2.4s ease-out 2.4s 3;
+}
+
+/* Mobile : le fil est vertical */
+@media (max-width: 767px) {
+  .gcj-journey-track {
+    transform-origin: top center;
+    transform: scaleY(0);
+    background: linear-gradient(180deg, var(--j-orange), #fbbf24);
+  }
+  .gcj-journey.is-in .gcj-journey-track {
+    transform: scaleY(1);
+  }
+}
+
+/* ─── FAQ accordéon ────────────────────────────────────────────────── */
+.gcj-faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 0.4s var(--j-ease), visibility 0s linear 0.4s;
+}
+.gcj-faq-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows 0.4s var(--j-ease), visibility 0s;
+}
+.gcj-faq-panel > div {
+  overflow: hidden;
+}
+
+/* ─── Barre CTA collante (mobile) ──────────────────────────────────── */
+.gcj-sticky {
+  transform: translateY(110%);
+  visibility: hidden; /* hors écran = hors ordre de tabulation */
+  transition: transform 0.4s var(--j-ease), visibility 0s linear 0.4s;
+}
+.gcj-sticky[data-visible='true'] {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform 0.4s var(--j-ease), visibility 0s;
+}
+
+/* Accent typographique des titres : serif italique (Fraunces, déjà chargée), orange contrasté. */
+.gcj-em {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--j-orange-deep);
+}
+.gcj-dark .gcj-em {
+  color: var(--j-orange);
+}
+
+/* ─── En-tête ──────────────────────────────────────────────────────── */
+.gcj-header {
+  transition: background-color 0.3s, backdrop-filter 0.3s, border-color 0.3s;
+  border-bottom: 1px solid transparent;
+}
+.gcj-header[data-scrolled='true'] {
+  background: rgba(5, 14, 31, 0.82);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Mouvement réduit : tout est visible d'emblée, rien ne bouge ─── */
+@media (prefers-reduced-motion: reduce) {
+  .gcj *,
+  .gcj *::before,
+  .gcj *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .gcj-reveal,
+  .gcj-journey-node {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .gcj-journey-track {
+    transform: none !important;
+  }
+  .gcj-line {
+    stroke-dashoffset: 0;
+  }
+  .gcj-card:hover,
+  .gcj-btn:hover {
+    transform: none;
+  }
+}

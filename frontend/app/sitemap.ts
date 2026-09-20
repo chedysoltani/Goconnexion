@@ -11,6 +11,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/join`,
+      lastModified: new Date('2026-09-19'),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/home`,
       lastModified: new Date('2026-03-17'),
       changeFrequency: 'monthly',

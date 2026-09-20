@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserRole, SignupData } from '@/types/auth';
 import { api } from '@/lib/api';
+import { captureCampaign } from '@/lib/tracking/campaign';
+import { trackEvent, trackOnce } from '@/lib/tracking/analytics';
 
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { COUNTRIES } from '@/lib/constants/countries';
@@ -55,6 +57,12 @@ export default function SignupForm() {
     if (ref) setReferralCode(ref);
   }, [searchParams]);
 
+  // Tunnel /join : mémorise la campagne (utm_*, ref) puis trace le début d'inscription.
+  useEffect(() => {
+    captureCampaign();
+    trackOnce('register_started');
+  }, []);
+
   const upd = (field: string, value: any) => {
     if (field.startsWith('profile.')) {
       const k = field.slice(8);
@@ -104,6 +112,7 @@ export default function SignupForm() {
     setGlobalError('');
     try {
       await api.auth.register(form);
+      trackEvent('register_completed', { role: form.role });
       if (referralCode.trim()) {
         // Best-effort : un code invalide/expiré ne doit pas bloquer la création du compte.
         await api.referral.registerReferral(referralCode.trim()).catch(() => {});

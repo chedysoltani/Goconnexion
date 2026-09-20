@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User as UserIcon, Briefcase, BarChart3, Target, Heart, MessageCircle as MessageIcon, Users, Calendar } from 'lucide-react';
 import { api } from '@/lib/api';
+import { trackOnce } from '@/lib/tracking/analytics';
 import { User } from '@/types/auth';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { INDUSTRIES } from '@/lib/constants/industries';
@@ -153,6 +154,8 @@ export default function ProfilePage() {
     try {
       const c = await api.users.completion();
       setCompletion(c);
+      // Jalon du tunnel : profil complété (une seule fois par navigateur).
+      if (c?.percent >= 100) trackOnce('profile_completed', {}, { persist: true });
     } catch {}
   };
 
