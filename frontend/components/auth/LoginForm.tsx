@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LoginCredentials } from '@/types/auth';
 import { api } from '@/lib/api';
+import { getSafeRedirect } from '@/lib/safe-redirect';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState<LoginCredentials>({ email: '', password: '' });
+  // ?redirect= conservé à travers l'inscription (ex. retour à une offre de stage)
+  const redirect = getSafeRedirect(searchParams.get('redirect'));
+  const signupHref = redirect ? `/auth/select-role?redirect=${encodeURIComponent(redirect)}` : '/auth/select-role';
 
   useEffect(() => {
     if (searchParams.get('message') === 'signup-success') {
@@ -42,7 +46,7 @@ export default function LoginForm() {
     try {
       const data = await api.auth.login(formData);
       const role = data?.user?.role ?? '';
-      router.push(role === 'ADMIN' ? '/admin' : '/dashboard');
+      router.push(redirect ?? (role === 'ADMIN' ? '/admin' : '/dashboard'));
     } catch (err: any) {
       setErrors({ general: err.message || 'Email ou mot de passe incorrect' });
     } finally {
@@ -77,7 +81,7 @@ export default function LoginForm() {
           <span className="font-semibold text-white/90 text-[15px]">GoConnexions</span>
         </Link>
         <Link
-          href="/auth/select-role"
+          href={signupHref}
           className="text-sm text-white/40 hover:text-white/80 transition-colors"
         >
           Pas de compte ?{' '}
@@ -209,7 +213,7 @@ export default function LoginForm() {
           {/* Footer link */}
           <p className="text-center mt-6 text-sm slide-up slide-up-5" style={{ color: 'rgba(255,255,255,0.3)' }}>
             Pas encore de compte ?{' '}
-            <Link href="/auth/select-role" className="text-accent font-medium hover:underline">
+            <Link href={signupHref} className="text-accent font-medium hover:underline">
               Rejoindre GoConnexions
             </Link>
           </p>

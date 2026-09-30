@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserRole, SignupData } from '@/types/auth';
 import { api } from '@/lib/api';
+import { getSafeRedirect } from '@/lib/safe-redirect';
 import { captureCampaign } from '@/lib/tracking/campaign';
 import { trackEvent, trackOnce } from '@/lib/tracking/analytics';
 
@@ -46,6 +47,8 @@ export default function SignupForm() {
   });
   const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // ?redirect= : retour à la page d'origine (ex. une offre de stage) après création du compte
+  const redirect = getSafeRedirect(searchParams.get('redirect'));
 
   useEffect(() => {
     const r = searchParams.get('role') as UserRole;
@@ -117,7 +120,7 @@ export default function SignupForm() {
         // Best-effort : un code invalide/expiré ne doit pas bloquer la création du compte.
         await api.referral.registerReferral(referralCode.trim()).catch(() => {});
       }
-      router.push('/dashboard');
+      router.push(redirect ?? '/dashboard');
     } catch (err: any) {
       setGlobalError(err.message || 'Une erreur est survenue.');
     } finally {
@@ -138,7 +141,7 @@ export default function SignupForm() {
           </div>
           <span className="font-semibold text-white/90 text-[15px]">GoConnexions</span>
         </Link>
-        <Link href="/auth/login" className="text-sm whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <Link href={redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login'} className="text-sm whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>
           <span className="hidden sm:inline">Déjà un compte ?{' '}</span>
           <span className="text-accent font-medium hover:underline">Se connecter</span>
         </Link>
