@@ -168,6 +168,10 @@ model User {
   // Agent IA marketing
   reviewedAgentContent AgentContent[]  @relation("AgentContentReviewer")
   followUps            AgentFollowUp[]
+
+  // Stages
+  internshipOffers       InternshipOffer[]       @relation("InternshipOffers")
+  internshipApplications InternshipApplication[] @relation("InternshipApplications")
 }
 
 model FreelancerProfile {
@@ -687,4 +691,65 @@ model AgentFollowUp {
   sentAt DateTime       @default(now())
 
   @@index([userId, reason])
+}
+
+// ── Offres de stage ───────────────────────────────────────────────────────────
+
+enum InternshipOfferStatus {
+  PUBLISHED
+  CLOSED
+}
+
+enum InternshipApplicationStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+enum InternshipMode {
+  ON_SITE
+  REMOTE
+  HYBRID
+}
+
+model InternshipOffer {
+  id             String                  @id @default(uuid())
+  title          String
+  description    String                  @db.Text
+  companyName    String
+  domain         String
+  location       String?
+  mode           InternshipMode          @default(ON_SITE)
+  durationMonths Int?
+  startDate      DateTime?
+  isPaid         Boolean                 @default(false)
+  skills         String[]
+  status         InternshipOfferStatus   @default(PUBLISHED)
+  authorId       String
+  author         User                    @relation("InternshipOffers", fields: [authorId], references: [id], onDelete: Cascade)
+  applications   InternshipApplication[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([status, createdAt])
+  @@index([domain])
+}
+
+model InternshipApplication {
+  id          String                      @id @default(uuid())
+  offerId     String
+  offer       InternshipOffer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  applicantId String
+  applicant   User                        @relation("InternshipApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+  message     String?                     @db.Text
+  // Référence interne vers le stockage privé (jamais une URL publique /uploads)
+  cvUrl       String
+  status      InternshipApplicationStatus @default(PENDING)
+  // Consentement explicite au partage du CV (Loi 25) — horodaté à la candidature
+  consentAt   DateTime
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+
+  @@unique([offerId, applicantId])
 }
