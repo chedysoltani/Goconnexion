@@ -55,6 +55,7 @@ function Navbar() {
     { label: 'Fonctionnalités', href: '#features' },
     { label: 'Comment ça marche', href: '#how-it-works' },
     { label: 'Prix', href: '#pricing' },
+    { label: 'Stages', href: '/stages' },
   ];
 
   return (

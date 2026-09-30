@@ -506,6 +506,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
         />
 
         {[
+          { href: '/stages', icon: <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6.5-9.5V16c0 1.5 2.9 3 6.5 3s6.5-1.5 6.5-3v-5.5"/></svg>, label: 'Stages' },
           { href: '/dashboard/profile', icon: <IconProfile />, label: 'Mon profil' },
           { href: '/pricing', icon: <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>, label: 'Forfaits' },
         ].map((item) => (

@@ -74,6 +74,22 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
   return response.json();
 }
 
+// Variante de request() pour les réponses binaires (ex. PDF protégé) — mêmes cookies,
+// un refresh silencieux sur 401, mais sans redirection forcée vers /auth/login.
+async function requestBlob(endpoint: string): Promise<Blob> {
+  const doFetch = () => fetch(`${API_BASE_URL}${endpoint}`, { credentials: 'include' });
+  let response = await doFetch();
+  if (response.status === 401) {
+    const refresh = await fetch(`${API_BASE_URL}/auth/refresh`, { method: 'POST', credentials: 'include' }).catch(() => null);
+    if (refresh?.ok) response = await doFetch();
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Erreur ${response.status}`);
+  }
+  return response.blob();
+}
+
 export const api = {
   auth: {
     login: async (credentials: any) => {
@@ -425,5 +441,32 @@ export const api = {
     getOne: (id: string) => request(`/agent/content/${id}`),
     update: (id: string, data: { title?: string; body?: string; status?: string }) =>
       request(`/agent/content/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  },
+
+  // Offres de stage — liste et détail publics, le reste nécessite une session
+  internships: {
+    list: (params: { search?: string; domain?: string; mode?: string; page?: number; limit?: number } = {}) => {
+      const q = new URLSearchParams();
+      if (params.search) q.set('search', params.search);
+      if (params.domain) q.set('domain', params.domain);
+      if (params.mode)   q.set('mode',   params.mode);
+      if (params.page)   q.set('page',   String(params.page));
+      if (params.limit)  q.set('limit',  String(params.limit));
+      return request(`/internships?${q.toString()}`);
+    },
+    get:              (id: string)            => request(`/internships/${id}`),
+    create:           (data: any)             => request('/internships', { method: 'POST', body: JSON.stringify(data) }),
+    update:           (id: string, data: any) => request(`/internships/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remove:           (id: string)            => request(`/internships/${id}`, { method: 'DELETE' }),
+    apply:            (id: string, data: { cvUrl: string; message?: string; consent: boolean }) =>
+      request(`/internships/${id}/apply`, { method: 'POST', body: JSON.stringify(data) }),
+    mine:             ()                      => request('/internships/mine'),
+    myApplications:   ()                      => request('/internships/applications/mine'),
+    withdraw:         (applicationId: string) => request(`/internships/applications/${applicationId}`, { method: 'DELETE' }),
+    offerApplications:(id: string)            => request(`/internships/${id}/applications`),
+    updateApplicationStatus: (id: string, status: string) =>
+      request(`/internships/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    // CV servi par une route protégée — jamais via l'URL /uploads directe
+    getCv:            (applicationId: string) => requestBlob(`/internships/applications/${applicationId}/cv`),
   },
 };
