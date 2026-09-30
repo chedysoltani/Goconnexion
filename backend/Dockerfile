@@ -35,7 +35,7 @@ RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
 
 # Public folder (uploads subdir will be a named volume mounted over this)
-RUN mkdir -p /app/public/uploads
+RUN mkdir -p /app/public/uploads /app/private
 
 EXPOSE 3001
 

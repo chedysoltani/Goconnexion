@@ -35,6 +35,8 @@ services:
       NODE_ENV: production
     volumes:
       - uploads:/app/public/uploads
+      # Stockage privé (CV des candidatures de stage) — jamais servi publiquement
+      - private_files:/app/private
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,6 +99,7 @@ services:
 volumes:
   postgres_data:
   uploads:
+  private_files:
   grafana_data:
 
 networks:

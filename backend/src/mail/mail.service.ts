@@ -541,6 +541,33 @@ export class MailService {
     );
   }
 
+  async sendInternshipApplication(
+    author: { email: string; firstName: string },
+    offer: { title: string },
+    applicant: { firstName: string; lastName: string },
+  ): Promise<void> {
+    const offersUrl = `${getFrontendUrl()}/stages/mes-offres`;
+    await this.send(
+      author.email,
+      `Nouvelle candidature — ${offer.title}`,
+      this.wrap(`
+        <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#0f172a">
+          Nouvelle candidature reçue 🎓
+        </h1>
+        <p style="margin:0 0 16px;color:#475569">
+          Bonjour ${this.esc(author.firstName)},
+          <strong>${this.esc(applicant.firstName)} ${this.esc(applicant.lastName)}</strong>
+          vient de postuler à votre offre de stage
+          <strong>${this.esc(offer.title)}</strong>.
+        </p>
+        <p style="margin:0 0 24px;color:#475569">
+          Consultez son message et son CV depuis votre espace « Mes offres ».
+        </p>
+        ${this.btn('Voir les candidatures', offersUrl)}
+      `),
+    );
+  }
+
   // ── Helpers privés ────────────────────────────────────────────────────────
 
   private btn(label: string, url: string, color = '#3b82f6'): string {

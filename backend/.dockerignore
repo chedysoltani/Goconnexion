@@ -12,3 +12,4 @@ test/
 coverage/
 .nyc_output
 prisma/migrations/.gitkeep
+private

@@ -23,6 +23,7 @@ import { AdvertisementsModule } from './advertisements/advertisements.module';
 import { MailModule } from './mail/mail.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AgentModule } from './agent/agent.module';
+import { InternshipsModule } from './internships/internships.module';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -58,6 +59,7 @@ import { LastActiveInterceptor } from './auth/interceptors/last-active.intercept
     MailModule,
     MarketplaceModule,
     AgentModule,
+    InternshipsModule,
   ],
   controllers: [AppController],
   providers: [

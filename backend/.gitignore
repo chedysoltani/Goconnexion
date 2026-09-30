@@ -5,3 +5,6 @@ node_modules
 
 /generated/prisma
 dist/
+
+# Stockage privé (CV de candidatures, etc.) — jamais versionné ni servi
+/private
