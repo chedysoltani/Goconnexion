@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } fr
 import { AdvertisementsService } from './advertisements.service';
 import { CreateAdvertisementDto, UpdateAdvertisementDto } from './dto/advertisement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PlanFeatureGuard, RequiresFeature } from '../subscription/plan-feature.guard';
 
 @Controller('advertisements')
 export class AdvertisementsController {
@@ -25,13 +26,15 @@ export class AdvertisementsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanFeatureGuard)
+  @RequiresFeature('canCreateAds')
   create(@Request() req: any, @Body() dto: CreateAdvertisementDto) {
     return this.adsService.create(req.user.id, dto);
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanFeatureGuard)
+  @RequiresFeature('canCreateAds')
   update(@Param('id') id: string, @Request() req: any, @Body() dto: UpdateAdvertisementDto) {
     return this.adsService.update(id, req.user.id, dto);
   }

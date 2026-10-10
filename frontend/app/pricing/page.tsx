@@ -1,103 +1,64 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Check, Zap, Building2, Sparkles, ArrowLeft,
-  Shield, Star, Infinity, TrendingUp, Users, MessageSquare,
-  FileText, BarChart3, Video, Globe, Lock,
+  Check, Zap, Building2, Sparkles, ArrowLeft, Clock, Loader2,
 } from 'lucide-react';
+import { api } from '@/lib/api';
+import type { PlanInfo, PlanType, PlansResponse } from '@/types/auth';
 
-type PlanId = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_INCUBATEUR';
 type Billing = 'monthly' | 'yearly';
 
-interface Feature {
-  text: string;
-  available: boolean;
-  highlight?: boolean;
-  icon?: React.ReactNode;
-}
-
-const PLANS: {
-  id: PlanId;
-  name: string;
-  tagline: string;
-  price: { monthly: number; yearly: number };
+// Apparence uniquement : prix et avantages viennent de GET /subscription/plans.
+const VISUALS: Record<PlanType, {
   color: string;
   gradient: string;
   glow: string;
   icon: React.ReactNode;
   badge?: string;
-  popular?: boolean;
-  features: Feature[];
-}[] = [
-  {
-    id: 'FREE',
-    name: 'Gratuit',
-    tagline: 'Pour démarrer',
-    price: { monthly: 0, yearly: 0 },
+}> = {
+  FREE: {
     color: '#64748b',
     gradient: 'linear-gradient(135deg,#f8fafc,#f1f5f9)',
     glow: 'rgba(100,116,139,0.15)',
     icon: <Sparkles size={20} />,
-    features: [
-      { text: '3 candidatures / mois', available: true, icon: <FileText size={13} /> },
-      { text: '1 projet actif', available: true, icon: <Zap size={13} /> },
-      { text: '10 connexions', available: true, icon: <Users size={13} /> },
-      { text: '50 messages / mois', available: true, icon: <MessageSquare size={13} /> },
-      { text: 'Espace Incubateur', available: false },
-      { text: 'Analytics de profil', available: false },
-      { text: 'Paiement sécurisé', available: false },
-      { text: 'Appels vidéo', available: false },
-      { text: 'Support prioritaire', available: false },
-    ],
   },
-  {
-    id: 'PRO',
-    name: 'Pro',
-    tagline: 'Pour les professionnels',
-    price: { monthly: 19, yearly: 159 },
+  PRO: {
     color: '#3b82f6',
     gradient: 'linear-gradient(135deg,#eff6ff,#dbeafe)',
     glow: 'rgba(59,130,246,0.18)',
     icon: <Zap size={20} />,
     badge: 'Populaire',
-    popular: true,
-    features: [
-      { text: 'Candidatures illimitées', available: true, highlight: true, icon: <Infinity size={13} /> },
-      { text: '5 projets actifs', available: true, icon: <Zap size={13} /> },
-      { text: 'Connexions illimitées', available: true, highlight: true, icon: <Users size={13} /> },
-      { text: 'Messagerie illimitée', available: true, highlight: true, icon: <MessageSquare size={13} /> },
-      { text: 'Espace Incubateur', available: false },
-      { text: 'Analytics de profil', available: true, highlight: true, icon: <BarChart3 size={13} /> },
-      { text: 'Paiement sécurisé (escrow)', available: true, icon: <Shield size={13} /> },
-      { text: 'Appels vidéo intégrés', available: true, icon: <Video size={13} /> },
-      { text: 'Badge Pro visible', available: true, highlight: true, icon: <Star size={13} /> },
-    ],
   },
-  {
-    id: 'BUSINESS',
-    name: 'Business',
-    tagline: 'Pour les équipes',
-    price: { monthly: 49, yearly: 399 },
+  BUSINESS: {
     color: '#7c3aed',
     gradient: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
     glow: 'rgba(124,58,237,0.18)',
     icon: <Building2 size={20} />,
-    features: [
-      { text: 'Tout Pro inclus', available: true, highlight: true, icon: <Check size={13} /> },
-      { text: 'Projets illimités', available: true, icon: <Infinity size={13} /> },
-      { text: 'Page entreprise dédiée', available: true, highlight: true, icon: <Building2 size={13} /> },
-      { text: 'Équipe jusqu\'à 5 membres', available: true, icon: <Users size={13} /> },
-      { text: 'Recrutement IA avancé', available: true, highlight: true, icon: <TrendingUp size={13} /> },
-      { text: 'Rapports & exports PDF', available: true, icon: <BarChart3 size={13} /> },
-      { text: 'Support chat 24h/7j', available: true, icon: <MessageSquare size={13} /> },
-      { text: 'Badge Entreprise Vérifiée', available: true, icon: <Shield size={13} /> },
-      { text: 'Intégrations tierces (Slack…)', available: true, icon: <Zap size={13} /> },
-    ],
   },
-];
+  PREMIUM_INCUBATEUR: {
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)',
+    glow: 'rgba(139,92,246,0.4)',
+    icon: <Sparkles size={22} color="#a78bfa" />,
+  },
+};
+
+function SoonBadge({ dark = false }: { dark?: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide align-middle"
+      style={dark
+        ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }
+        : { background: '#f1f5f9', color: '#94a3b8' }}
+    >
+      <Clock size={8} /> Bientôt
+    </span>
+  );
+}
 
 const FAQ = [
   {
@@ -106,24 +67,55 @@ const FAQ = [
   },
   {
     q: 'Comment fonctionne la commission sur les projets ?',
-    a: 'GoConnexion prend une commission de 8% sur chaque transaction réalisée via la plateforme. Cette commission finance la sécurité des paiements et le service d\'escrow.',
+    a: 'GoConnexions prend une commission de 8% sur chaque transaction réalisée via la plateforme. Cette commission finance la sécurité des paiements et le service d\'escrow.',
   },
   {
     q: 'Mes données sont-elles sécurisées ?',
-    a: 'Oui. Tous les paiements sont traités via Stripe (certifié PCI-DSS). Les données professionnelles sont hébergées en Europe (RGPD compliant).',
+    a: 'Oui. Tous les paiements sont traités via Stripe (certifié PCI-DSS). Vos renseignements personnels sont traités conformément à la Loi 25 du Québec ; les détails sont dans notre politique de confidentialité.',
   },
   {
     q: 'Y a-t-il un essai gratuit pour les forfaits payants ?',
-    a: 'Les nouveaux comptes Pro bénéficient de 14 jours d\'essai gratuit sans carte bancaire. Pour Business, contacte-nous pour un essai personnalisé.',
+    a: 'Oui : chaque compte peut essayer le forfait Pro gratuitement pendant 14 jours, sans carte bancaire. À la fin de l\'essai, le compte repasse automatiquement en Gratuit, sans aucun prélèvement.',
   },
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [billing, setBilling] = useState<Billing>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [hoveredPlan, setHoveredPlan] = useState<PlanId | null>(null);
+  const [hoveredPlan, setHoveredPlan] = useState<PlanType | null>(null);
+  const [catalog, setCatalog] = useState<PlansResponse | null>(null);
+  const [catalogError, setCatalogError] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialError, setTrialError] = useState('');
 
-  const yearlyDiscount = (plan: typeof PLANS[0]) => {
+  useEffect(() => {
+    api.subscription.plans().then(setCatalog).catch(() => setCatalogError(true));
+    try { setIsLoggedIn(!!localStorage.getItem('user')); } catch { /* stockage indisponible */ }
+  }, []);
+
+  const mainPlans = catalog?.plans.filter((p) => p.id !== 'PREMIUM_INCUBATEUR') ?? [];
+  const incubateur = catalog?.plans.find((p) => p.id === 'PREMIUM_INCUBATEUR');
+
+  const startTrial = async () => {
+    if (!isLoggedIn) {
+      router.push(`/auth/signup?redirect=${encodeURIComponent('/pricing')}`);
+      return;
+    }
+    setTrialLoading(true);
+    setTrialError('');
+    try {
+      await api.subscription.startTrial();
+      router.push('/dashboard');
+    } catch (err: any) {
+      setTrialError(err?.message ?? 'Impossible de démarrer l\'essai.');
+    } finally {
+      setTrialLoading(false);
+    }
+  };
+
+  const yearlyDiscount = (plan: PlanInfo) => {
     if (plan.price.monthly === 0) return 0;
     const yearlyVsMonthly = plan.price.monthly * 12;
     return Math.round(((yearlyVsMonthly - plan.price.yearly) / yearlyVsMonthly) * 100);
@@ -134,26 +126,26 @@ export default function PricingPage() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 topbar-glass">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link
             href="/"
             className="flex items-center gap-2 text-[13px] font-semibold transition-colors"
             style={{ color: '#64748b' }}
           >
             <ArrowLeft size={15} />
-            GoConnexion
+            GoConnexions
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             <Link
               href="/auth/login"
-              className="px-4 py-2 rounded-xl text-[13px] font-semibold transition-colors"
+              className="hidden sm:inline-block px-4 py-2 rounded-xl text-[13px] font-semibold transition-colors"
               style={{ color: '#64748b' }}
             >
               Connexion
             </Link>
             <Link
               href="/dashboard"
-              className="px-4 py-2 rounded-xl text-[13px] font-bold text-white"
+              className="px-4 py-2 rounded-xl text-[13px] font-bold text-white whitespace-nowrap"
               style={{ background: 'linear-gradient(135deg,#3b82f6,#2563eb)' }}
             >
               Tableau de bord
@@ -225,7 +217,7 @@ export default function PricingPage() {
                             color: billing === 'yearly' ? 'white' : '#3b82f6',
                           }}
                         >
-                          -30%
+                          Économisez
                         </span>
                       </span>
                     )}
@@ -236,9 +228,17 @@ export default function PricingPage() {
           </motion.div>
 
           {/* Plans grid */}
+          {!catalog && (
+            <div className="flex items-center justify-center gap-2 py-24 mb-20 text-[13px]" style={{ color: '#94a3b8' }}>
+              {catalogError
+                ? 'Impossible de charger les forfaits. Réessayez dans un instant.'
+                : <><Loader2 size={16} className="animate-spin" /> Chargement des forfaits…</>}
+            </div>
+          )}
+
           <div className="grid md:grid-cols-3 gap-6 mb-20">
-            {PLANS.map((plan, i) => {
-              const price = billing === 'yearly' ? plan.price.yearly : plan.price.monthly;
+            {mainPlans.map((info, i) => {
+              const plan = { ...info, ...VISUALS[info.id] };
               const displayPrice = billing === 'yearly' ? Math.round(plan.price.yearly / 12) : plan.price.monthly;
               const discount = yearlyDiscount(plan);
               const isHovered = hoveredPlan === plan.id;
@@ -329,7 +329,7 @@ export default function PricingPage() {
                       href={
                         plan.id === 'FREE'
                           ? '/auth/signup'
-                          : `/billing/checkout?plan=${plan.id}&interval=${billing}&price=${billing === 'yearly' ? Math.round(plan.price.yearly / 12) : plan.price.monthly}`
+                          : `/billing/checkout?plan=${plan.id}&interval=${billing}`
                       }
                       whileHover={{ scale: 1.02, boxShadow: plan.popular ? `0 12px 32px ${plan.glow}` : undefined }}
                       whileTap={{ scale: 0.98 }}
@@ -348,6 +348,27 @@ export default function PricingPage() {
                     >
                       {plan.id === 'FREE' ? 'Commencer gratuitement' : `Passer à ${plan.name}`}
                     </motion.a>
+
+                    {catalog?.trial.plan === plan.id && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={startTrial}
+                          disabled={trialLoading}
+                          className="w-full flex items-center justify-center gap-1.5 mt-2.5 py-2 text-[12.5px] font-semibold transition-opacity hover:opacity-75 disabled:opacity-50"
+                          style={{ color: plan.color }}
+                        >
+                          {trialLoading && <Loader2 size={13} className="animate-spin" />}
+                          Essayer {catalog.trial.days} jours gratuitement
+                        </button>
+                        <p className="text-center text-[10.5px]" style={{ color: '#94a3b8' }}>
+                          Sans carte bancaire · une fois par compte
+                        </p>
+                        {trialError && (
+                          <p className="text-center text-[11px] mt-1.5" style={{ color: '#dc2626' }}>{trialError}</p>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* Divider */}
@@ -367,35 +388,27 @@ export default function PricingPage() {
                           transition={{ delay: i * 0.1 + fi * 0.04 + 0.4 }}
                           className="flex items-center gap-2.5"
                         >
-                          {feat.available ? (
-                            <div
-                              className="w-4.5 h-4.5 flex-shrink-0 rounded-full flex items-center justify-center"
-                              style={{
-                                background: feat.highlight ? `${plan.color}18` : '#f0fdf4',
-                                color: feat.highlight ? plan.color : '#22c55e',
-                                minWidth: 18,
-                                width: 18,
-                                height: 18,
-                              }}
-                            >
-                              <Check size={10} strokeWidth={2.5} />
-                            </div>
-                          ) : (
-                            <div
-                              className="w-4.5 h-4.5 flex-shrink-0 rounded-full flex items-center justify-center"
-                              style={{ background: '#f8fafc', minWidth: 18, width: 18, height: 18 }}
-                            >
-                              <Lock size={9} style={{ color: '#cbd5e1' }} />
-                            </div>
-                          )}
+                          <div
+                            className="w-4.5 h-4.5 flex-shrink-0 rounded-full flex items-center justify-center"
+                            style={{
+                              background: feat.soon ? '#f8fafc' : feat.highlight ? `${plan.color}18` : '#f0fdf4',
+                              color: feat.soon ? '#cbd5e1' : feat.highlight ? plan.color : '#22c55e',
+                              minWidth: 18,
+                              width: 18,
+                              height: 18,
+                            }}
+                          >
+                            {feat.soon ? <Clock size={9} /> : <Check size={10} strokeWidth={2.5} />}
+                          </div>
                           <span
                             className="text-[12.5px]"
                             style={{
-                              color: !feat.available ? '#cbd5e1' : feat.highlight ? '#0f172a' : '#475569',
-                              fontWeight: feat.highlight ? 600 : 400,
+                              color: feat.soon ? '#94a3b8' : feat.highlight ? '#0f172a' : '#475569',
+                              fontWeight: feat.highlight && !feat.soon ? 600 : 400,
                             }}
                           >
                             {feat.text}
+                            {feat.soon && <SoonBadge />}
                           </span>
                         </motion.li>
                       ))}
@@ -407,6 +420,7 @@ export default function PricingPage() {
           </div>
 
           {/* PREMIUM Incubateur — plan spécialisé */}
+          {incubateur && (
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -445,28 +459,24 @@ export default function PricingPage() {
                       <Sparkles size={22} color="#a78bfa" />
                     </div>
                     <div>
-                      <h3 className="text-[20px] font-bold text-white">PREMIUM Incubateur</h3>
-                      <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Accès à l'espace communautaire exclusif</p>
+                      <h3 className="text-[20px] font-bold text-white">{incubateur.name}</h3>
+                      <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{incubateur.tagline}</p>
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-3 mt-6">
-                    {[
-                      'Espace Incubateur illimité',
-                      'Posts, ressources & discussions',
-                      'Communauté de membres vérifiés',
-                      'Connexions & messages illimités',
-                      'Analytics & boost de profil',
-                      'Événements exclusifs',
-                      'Accès API complet',
-                      'Badge INCUBATEUR visible',
-                    ].map((feat) => (
-                      <div key={feat} className="flex items-center gap-2.5">
+                    {incubateur.features.map((feat) => (
+                      <div key={feat.text} className="flex items-center gap-2.5">
                         <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'rgba(139,92,246,0.2)' }}>
-                          <Check size={9} color="#a78bfa" strokeWidth={2.5} />
+                          style={{ background: feat.soon ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.2)' }}>
+                          {feat.soon
+                            ? <Clock size={8} color="rgba(255,255,255,0.4)" />
+                            : <Check size={9} color="#a78bfa" strokeWidth={2.5} />}
                         </div>
-                        <span className="text-[12.5px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{feat}</span>
+                        <span className="text-[12.5px]" style={{ color: feat.soon ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.7)' }}>
+                          {feat.text}
+                          {feat.soon && <SoonBadge dark />}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -487,7 +497,7 @@ export default function PricingPage() {
                           transition={{ duration: 0.2 }}
                           className="text-[42px] font-bold leading-none tracking-tight text-white"
                         >
-                          {billing === 'yearly' ? Math.round(890 / 12) : 99}
+                          {billing === 'yearly' ? Math.round(incubateur.price.yearly / 12) : incubateur.price.monthly}
                         </motion.span>
                       </AnimatePresence>
                       <div className="pb-2">
@@ -498,14 +508,14 @@ export default function PricingPage() {
 
                     {billing === 'yearly' && (
                       <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                        Facturé 890 CAD/an
-                        <span className="ml-1.5 font-bold" style={{ color: '#2563eb' }}>(-25%)</span>
+                        Facturé {incubateur.price.yearly} CAD/an
+                        <span className="ml-1.5 font-bold" style={{ color: '#2563eb' }}>(-{yearlyDiscount(incubateur)}%)</span>
                       </p>
                     )}
                     {billing === 'monthly' && <div className="mb-4" />}
 
                     <motion.a
-                      href={`/billing/checkout?plan=PREMIUM_INCUBATEUR&interval=${billing}&price=${billing === 'yearly' ? Math.round(890 / 12) : 99}`}
+                      href={`/billing/checkout?plan=PREMIUM_INCUBATEUR&interval=${billing}`}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       className="px-8 py-3 rounded-2xl text-[14px] font-bold text-white transition-all"
@@ -522,6 +532,7 @@ export default function PricingPage() {
               </div>
             </div>
           </motion.div>
+          )}
 
           {/* Social proof */}
           <motion.div
@@ -533,9 +544,9 @@ export default function PricingPage() {
             <div className="flex items-center justify-center gap-8 flex-wrap">
               {[
                 { value: '8%', label: 'Commission marketplace' },
-                { value: '14j', label: 'Essai Pro gratuit' },
+                { value: '14j', label: 'Essai Pro gratuit, sans carte' },
                 { value: '∞', label: 'Annulation à tout moment' },
-                { value: 'RGPD', label: 'Données hébergées en EU' },
+                { value: 'Loi 25', label: 'Données protégées (Québec)' },
               ].map((stat, i) => (
                 <motion.div
                   key={i}
@@ -619,7 +630,7 @@ export default function PricingPage() {
                 Prêt à accélérer votre carrière ?
               </h2>
               <p className="text-[14px] text-blue-200 mb-8 max-w-md mx-auto">
-                Rejoignez des centaines de freelancers et entrepreneurs qui ont déjà fait confiance à GoConnexion.
+                Rejoignez des centaines de freelancers et entrepreneurs qui ont déjà fait confiance à GoConnexions.
               </p>
               <div className="flex items-center justify-center gap-4 flex-wrap">
                 <motion.a

@@ -11,6 +11,8 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { MessagingService } from './messaging.service';
 import { UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { planLimitsFor } from '../subscription/plans';
 
 // Extrait gc_access depuis le header Cookie de la connexion WebSocket
 function extractCookieToken(cookieHeader: string): string | null {
@@ -58,6 +60,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   constructor(
     private jwtService: JwtService,
     private messagingService: MessagingService,
+    private prisma: PrismaService,
   ) {
     MessagingGateway.instance = this;
   }
@@ -117,11 +120,22 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   // ── WebRTC Signaling ────────────────────────────────────────────
   @SubscribeMessage('video-call-request')
-  handleVideoCallRequest(
+  async handleVideoCallRequest(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { targetUserId: string; callType: 'video' | 'audio'; offer: any },
   ) {
     const caller = client.data.user;
+
+    // Seul l'appelant doit avoir un plan qui inclut les appels
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { userId: caller.sub },
+      select: { plan: true, status: true, trialEndsAt: true },
+    });
+    if (!planLimitsFor(subscription).canAccessVideoCall) {
+      client.emit('call-rejected', { reason: 'PLAN_REQUIRED' });
+      return;
+    }
+
     console.log(`[WS] video-call-request from caller=${caller?.sub} → relaying incoming-call to room=${data.targetUserId} type=${data.callType}`);
     this.server.to(data.targetUserId).emit('incoming-call', {
       callerId: caller.sub,

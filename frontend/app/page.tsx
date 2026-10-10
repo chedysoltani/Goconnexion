@@ -1,7 +1,25 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+import { COMPANY, SOCIAL_LINKS } from '@/lib/constants/company';
+import type { PlanInfo, PlansResponse } from '@/types/auth';
+
+// Aucune statistique ni témoignage inventé : tant que ces champs sont vides/undefined, les blocs
+// correspondants restent masqués (même principe que /join, voir lib/join/content.ts → TRUST_CONFIG).
+// Dès qu'une vraie donnée existe, la renseigner ici suffit à faire réapparaître le bloc.
+const SITE_TRUST: {
+  memberCount?: string; // ex. "1 200+" — un vrai chiffre, jamais une estimation
+  logos: string[];
+  stats: { value: string; label: string }[];
+  testimonial?: { quote: string; author: string; role: string; resultValue?: string; resultLabel?: string };
+} = {
+  memberCount: undefined,
+  logos: [],
+  stats: [],
+  testimonial: undefined,
+};
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 const G = {
@@ -144,7 +162,9 @@ function Hero() {
         <RevealBox delay={0}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 100, background: G.accentMuted, border: `1px solid ${G.accentBorder}`, marginBottom: 32 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: G.accent, display: 'inline-block', animation: 'gc-pulse 2s ease-in-out infinite' }} />
-            <span style={{ color: G.accent, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Accès Anticipé Ouvert · 2 400+ membres</span>
+            <span style={{ color: G.accent, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Accès Anticipé Ouvert{SITE_TRUST.memberCount ? ` · ${SITE_TRUST.memberCount} membres` : ''}
+            </span>
           </div>
         </RevealBox>
 
@@ -189,25 +209,28 @@ function Hero() {
           </div>
         </RevealBox>
 
-        <RevealBox delay={320}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-            <div style={{ display: 'flex' }}>
-              {avatarColors.map((color, i) => (
-                <div key={i} style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${color}, ${color}99)`, border: `2px solid ${G.bg}`, marginLeft: i > 0 ? -10 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
-                  {String.fromCharCode(65 + i)}
-                </div>
-              ))}
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ display: 'flex', gap: 2, marginBottom: 3 }}>
-                {[1, 2, 3, 4, 5].map(i => (
-                  <svg key={i} width="13" height="13" fill={G.accent} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+        {/* Preuve sociale : masquée tant qu'on n'a pas un vrai nombre de membres à afficher. */}
+        {SITE_TRUST.memberCount && (
+          <RevealBox delay={320}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+              <div style={{ display: 'flex' }}>
+                {avatarColors.map((color, i) => (
+                  <div key={i} style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${color}, ${color}99)`, border: `2px solid ${G.bg}`, marginLeft: i > 0 ? -10 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
+                    {String.fromCharCode(65 + i)}
+                  </div>
                 ))}
               </div>
-              <span style={{ fontSize: 12, color: G.muted }}>+2 400 professionnels qui construisent mieux</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ display: 'flex', gap: 2, marginBottom: 3 }}>
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <svg key={i} width="13" height="13" fill={G.accent} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                  ))}
+                </div>
+                <span style={{ fontSize: 12, color: G.muted }}>+{SITE_TRUST.memberCount} professionnels qui construisent mieux</span>
+              </div>
             </div>
-          </div>
-        </RevealBox>
+          </RevealBox>
+        )}
       </div>
 
       <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -219,15 +242,16 @@ function Hero() {
 }
 
 /* ─── Logos ──────────────────────────────────────────────────── */
+// Masquée tant que SITE_TRUST.logos est vide : pas de logo d'entreprise sans son autorisation.
 function LogosSection() {
-  const logos = ['Shopify', 'HEC Montréal', 'Desjardins', 'Ubisoft', 'La Ruche', 'Notman House'];
+  if (SITE_TRUST.logos.length === 0) return null;
   return (
     <section style={{ background: G.surface, borderTop: `1px solid ${G.border}`, borderBottom: `1px solid ${G.border}`, padding: '32px 24px' }}>
       <RevealBox>
         <div style={{ maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
           <p style={{ fontSize: 11, color: G.muted, textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 600, marginBottom: 24 }}>Utilisé par des professionnels de</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '10px 40px' }}>
-            {logos.map(name => (
+            {SITE_TRUST.logos.map(name => (
               <span key={name} style={{ color: 'rgba(219,234,254,0.22)', fontSize: 14, fontWeight: 700, letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>{name}</span>
             ))}
           </div>
@@ -238,15 +262,16 @@ function LogosSection() {
 }
 
 /* ─── Problem ─────────────────────────────────────────────────── */
+// Constats qualitatifs, sans pourcentage inventé (les mêmes que /join, voir lib/join/content.ts → PROBLEMS).
 const PROBLEM_STATS = [
-  { value: '91%', label: 'des professionnels admettent ne pas entretenir régulièrement leurs relations clés.', color: G.accent },
-  { value: '3 min', label: 'c\'est la durée de vie effective d\'un message LinkedIn avant d\'être noyé dans le fil.', color: '#e2b04a' },
-  { value: '0', label: 'rappel automatique dans la plupart des outils de réseautage pour reprendre contact.', color: '#e25a4a' },
+  { value: '🔇', label: 'Beaucoup de contenu, beaucoup de profils, mais peu de connexions réellement pertinentes.', color: G.accent },
+  { value: '🥶', label: 'Les interactions professionnelles deviennent parfois froides et impersonnelles.', color: '#e2b04a' },
+  { value: '🔍', label: 'Les bonnes personnes peuvent être difficiles à identifier au bon moment.', color: '#e25a4a' },
 ] as const;
 
 function StatCard({ stat, delay }: { stat: typeof PROBLEM_STATS[number]; delay: number }) {
   return (
-    <RevealBox delay={delay} style={{ background: G.surface, border: `1px solid ${G.border}`, borderRadius: 24, padding: '40px 36px' }}>
+    <RevealBox delay={delay} className="gc-card" style={{ background: G.surface, border: `1px solid ${G.border}`, borderRadius: 24, padding: '40px 36px' }}>
       <div style={{ fontSize: 'clamp(2.8rem, 6vw, 4.2rem)', fontWeight: 900, color: stat.color, letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 16 }}>{stat.value}</div>
       <p style={{ fontSize: 15, color: G.muted, lineHeight: 1.6, margin: 0 }}>{stat.label}</p>
     </RevealBox>
@@ -284,7 +309,7 @@ function FeatureCard({ f, delay }: { f: typeof FEATURES[number]; delay: number }
   const [hov, setHov] = useState(false);
   return (
     <RevealBox delay={delay} style={{ gridColumn: `span ${f.span}` }}>
-      <div style={{
+      <div className="gc-card" style={{
         background: G.surface, border: `1px solid ${hov ? G.accentBorder : G.border}`,
         borderRadius: 24, padding: '36px 32px', height: '100%',
         transform: hov ? 'translateY(-4px)' : 'translateY(0)',
@@ -408,7 +433,7 @@ function StepCard({ s, delay }: { s: typeof STEPS[number]; delay: number }) {
   const [hov, setHov] = useState(false);
   return (
     <RevealBox delay={delay}>
-      <div style={{ background: G.surface, border: `1px solid ${hov ? `${s.color}50` : G.border}`, borderRadius: 24, padding: '36px 32px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.3s', height: '100%' }}
+      <div className="gc-card" style={{ background: G.surface, border: `1px solid ${hov ? `${s.color}50` : G.border}`, borderRadius: 24, padding: '36px 32px', position: 'relative', overflow: 'hidden', transition: 'border-color 0.3s', height: '100%' }}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}>
         <div style={{ position: 'absolute', top: -8, right: 12, fontSize: 80, fontWeight: 900, color: `${s.color}08`, fontFamily: 'monospace', lineHeight: 1, userSelect: 'none' }}>{s.n}</div>
@@ -449,43 +474,50 @@ function HowItWorksSection() {
 }
 
 /* ─── Testimonial ─────────────────────────────────────────────── */
+// Masquée tant qu'on n'a ni vrai témoignage consenti ni vraies statistiques (SITE_TRUST, en haut du
+// fichier) : pas de citation ni de chiffre inventés. Le texte qualitatif reste affiché seul en
+// attendant — rien dans cette phrase n'est une statistique.
 function TestimonialSection() {
-  const miniStats = [
-    { v: '2 400+', l: 'professionnels actifs' },
-    { v: '87%', l: 'taux de satisfaction' },
-    { v: '3×', l: 'plus d\'opportunités' },
-    { v: '< 5 min', l: 'pour commencer' },
-  ] as const;
-
+  const t = SITE_TRUST.testimonial;
   return (
     <section style={{ background: G.surface, padding: '96px 24px', borderTop: `1px solid ${G.border}`, borderBottom: `1px solid ${G.border}` }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        <RevealBox>
-          <div style={{ position: 'relative', padding: '56px 48px', background: G.bg, borderRadius: 32, border: `1px solid ${G.border}` }}>
-            <div style={{ position: 'absolute', top: 28, left: 36, fontSize: 120, lineHeight: 1, color: `${G.accent}10`, fontFamily: 'Georgia, serif', userSelect: 'none' }}>"</div>
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 100, background: G.accentMuted, border: `1px solid ${G.accentBorder}`, color: G.accent, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 32 }}>Témoignage réel</span>
-              <blockquote style={{ fontSize: 'clamp(1.2rem, 3vw, 1.55rem)', fontWeight: 500, color: G.text, lineHeight: 1.5, margin: '0 0 36px', letterSpacing: '-0.01em' }}>
-                "J'avais 1 400 connexions LinkedIn et je me sentais complètement seule professionnellement. GoConnexions m'a aidée à vraiment parler à 12 d'entre elles en un mois. Deux sont devenues clientes. Une est devenue co-fondatrice."
-              </blockquote>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: `linear-gradient(135deg, ${G.accent}, #4a90d9)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 16, flexShrink: 0 }}>C</div>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: G.text, margin: '0 0 2px' }}>Camille Okafor</p>
-                    <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>Fondatrice, Verdant Studio — Lagos / Londres</p>
+        {t && (
+          <RevealBox>
+            <div className="gc-quote-card" style={{ position: 'relative', padding: '56px 48px', background: G.bg, borderRadius: 32, border: `1px solid ${G.border}` }}>
+              <div style={{ position: 'absolute', top: 28, left: 36, fontSize: 120, lineHeight: 1, color: `${G.accent}10`, fontFamily: 'Georgia, serif', userSelect: 'none' }}>"</div>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <span style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 100, background: G.accentMuted, border: `1px solid ${G.accentBorder}`, color: G.accent, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 32 }}>Témoignage réel</span>
+                <blockquote style={{ fontSize: 'clamp(1.2rem, 3vw, 1.55rem)', fontWeight: 500, color: G.text, lineHeight: 1.5, margin: '0 0 36px', letterSpacing: '-0.01em' }}>
+                  "{t.quote}"
+                </blockquote>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: `linear-gradient(135deg, ${G.accent}, #4a90d9)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 16, flexShrink: 0 }}>{t.author.charAt(0)}</div>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: G.text, margin: '0 0 2px' }}>{t.author}</p>
+                      <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>{t.role}</p>
+                    </div>
                   </div>
-                </div>
-                <div style={{ borderLeft: `1px solid ${G.border}`, paddingLeft: 24 }}>
-                  <span style={{ fontSize: 36, fontWeight: 900, color: G.accent, letterSpacing: '-0.04em' }}>2</span>
-                  <p style={{ fontSize: 12, color: G.muted, margin: '4px 0 0', maxWidth: 180, lineHeight: 1.4 }}>clientes issues de 12 conversations significatives</p>
+                  {t.resultValue && (
+                    <div style={{ borderLeft: `1px solid ${G.border}`, paddingLeft: 24 }}>
+                      <span style={{ fontSize: 36, fontWeight: 900, color: G.accent, letterSpacing: '-0.04em' }}>{t.resultValue}</span>
+                      <p style={{ fontSize: 12, color: G.muted, margin: '4px 0 0', maxWidth: 180, lineHeight: 1.4 }}>{t.resultLabel}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </RevealBox>
+          </RevealBox>
+        )}
 
-        <RevealBox delay={160} style={{ marginTop: 56, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }} className="gc-2col">
+        <RevealBox
+          delay={160}
+          style={SITE_TRUST.stats.length > 0
+            ? { marginTop: t ? 56 : 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }
+            : { marginTop: t ? 56 : 0, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
+          className={SITE_TRUST.stats.length > 0 ? 'gc-2col' : ''}
+        >
           <div>
             <h3 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 800, color: G.text, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               Le réseautage est une{' '}
@@ -495,14 +527,16 @@ function TestimonialSection() {
               Les meilleures opportunités de votre carrière ne viendront pas d'un message froid ou d'une publication virale. Elles viendront d'une vraie conversation avec quelqu'un qui vous fait confiance.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {miniStats.map((stat, i) => (
-              <div key={i} style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 16, padding: '20px 20px' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: G.accent, letterSpacing: '-0.03em', marginBottom: 4 }}>{stat.v}</div>
-                <div style={{ fontSize: 12, color: G.muted, lineHeight: 1.4 }}>{stat.l}</div>
-              </div>
-            ))}
-          </div>
+          {SITE_TRUST.stats.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {SITE_TRUST.stats.map((stat, i) => (
+                <div key={i} style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 16, padding: '20px 20px' }}>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: G.accent, letterSpacing: '-0.03em', marginBottom: 4 }}>{stat.value}</div>
+                  <div style={{ fontSize: 12, color: G.muted, lineHeight: 1.4 }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </RevealBox>
       </div>
     </section>
@@ -521,36 +555,21 @@ type Plan = {
   badge?: string;
 };
 
-const PLANS: Plan[] = [
-  {
-    name: 'Gratuit',
-    price: { monthly: 0, yearly: 0 },
-    desc: 'Pour découvrir GoConnexions',
-    features: ['5 connexions actives', 'Messagerie de base', 'Profil public', 'Rappels basiques'],
-    cta: 'Commencer gratuitement',
-    href: '/auth/select-role',
-    highlight: false,
-  },
-  {
-    name: 'Freelancer',
-    price: { monthly: 29, yearly: 24 },
-    desc: 'Pour les indépendants ambitieux',
-    features: ['Connexions illimitées', 'Rappels intelligents', 'Carte relationnelle avancée', 'Messagerie contextuelle', 'Statistiques de réseau', 'Support prioritaire'],
-    cta: 'Essai gratuit 14 jours',
-    href: '/auth/select-role',
-    highlight: true,
-    badge: 'Populaire',
-  },
-  {
-    name: 'Entrepreneur',
-    price: { monthly: 49, yearly: 40 },
-    desc: 'Pour les équipes en croissance',
-    features: ['Tout Freelancer inclus', "Équipe jusqu'à 5 membres", 'CRM avancé', 'Intégrations tiers', 'Événements illimités', 'Onboarding dédié'],
-    cta: 'Essai gratuit 14 jours',
-    href: '/auth/select-role',
-    highlight: false,
-  },
-];
+// Les offres viennent du catalogue backend (GET /subscription/plans), comme /pricing.
+// price.yearly = équivalent mensuel de l'abonnement annuel.
+function toLandingPlan(p: PlanInfo, trial: PlansResponse['trial']): Plan {
+  const isTrialPlan = trial.plan === p.id;
+  return {
+    name: p.name,
+    price: { monthly: p.price.monthly, yearly: Math.round(p.price.yearly / 12) },
+    desc: p.tagline,
+    features: p.features.filter((f) => !f.soon).slice(0, 6).map((f) => f.text),
+    cta: p.id === 'FREE' ? 'Commencer gratuitement' : isTrialPlan ? `Essai gratuit ${trial.days} jours` : `Choisir ${p.name}`,
+    href: p.id === 'FREE' ? '/auth/select-role' : '/pricing',
+    highlight: !!p.popular,
+    badge: p.popular ? 'Populaire' : undefined,
+  };
+}
 
 function PlanCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; delay: number }) {
   const [hov, setHov] = useState(false);
@@ -605,6 +624,14 @@ function PlanCard({ plan, yearly, delay }: { plan: Plan; yearly: boolean; delay:
 
 function PricingSection() {
   const [yearly, setYearly] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  useEffect(() => {
+    api.subscription.plans()
+      .then((data) => setPlans(
+        data.plans.filter((p) => p.id !== 'PREMIUM_INCUBATEUR').map((p) => toLandingPlan(p, data.trial)),
+      ))
+      .catch(() => setPlans([]));
+  }, []);
   return (
     <section id="pricing" style={{ background: G.bg, padding: '96px 24px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -619,12 +646,12 @@ function PricingSection() {
             <button onClick={() => setYearly(false)} style={{ padding: '7px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.25s', background: !yearly ? G.accent : 'transparent', color: !yearly ? '#fff' : G.muted }}>Mensuel</button>
             <button onClick={() => setYearly(true)} style={{ padding: '7px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.25s', background: yearly ? G.accent : 'transparent', color: yearly ? '#fff' : G.muted, display: 'flex', alignItems: 'center', gap: 6 }}>
               Annuel
-              <span style={{ background: 'rgba(37,99,235,0.2)', color: G.accent, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100 }}>-17%</span>
+              <span style={{ background: 'rgba(37,99,235,0.2)', color: G.accent, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100 }}>Économisez</span>
             </button>
           </div>
         </RevealBox>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, alignItems: 'start' }} className="gc-3col">
-          {PLANS.map((p, i) => <PlanCard key={i} plan={p} yearly={yearly} delay={i * 100} />)}
+          {plans.map((p, i) => <PlanCard key={p.name} plan={p} yearly={yearly} delay={i * 100} />)}
         </div>
       </div>
     </section>
@@ -643,7 +670,7 @@ function CtaSection() {
           <em style={{ fontStyle: 'italic', fontWeight: 400, color: G.accent, fontFamily: 'Georgia, serif' }}>une vraie conversation de distance.</em>
         </h2>
         <p style={{ fontSize: 15, color: G.muted, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 40px' }}>
-          Rejoignez plus de 2 400 entrepreneurs et freelances qui construisent des relations professionnelles significatives. Gratuit pour commencer, sans carte bancaire.
+          Rejoignez les entrepreneurs et freelances qui construisent des relations professionnelles significatives. Gratuit pour commencer, sans carte bancaire.
         </p>
         <Link href="/auth/select-role" style={{
           display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -664,9 +691,9 @@ function CtaSection() {
 
 /* ─── Footer ─────────────────────────────────────────────────── */
 const FOOTER_COLS = [
-  { title: 'Produit', links: [{ label: 'Fonctionnalités', href: '#features' }, { label: 'Comment ça marche', href: '#how-it-works' }, { label: 'Tarifs', href: '#pricing' }, { label: 'Changelog', href: '#' }] },
-  { title: 'Entreprise', links: [{ label: 'À propos', href: '#' }, { label: 'Blog', href: '#' }, { label: 'Carrières', href: '#' }, { label: 'Contact', href: 'mailto:bonjour@goconnexions.com' }] },
-  { title: 'Légal', links: [{ label: 'Confidentialité', href: '#' }, { label: "Conditions d'utilisation", href: '#' }, { label: 'Cookies', href: '#' }] },
+  { title: 'Produit', links: [{ label: 'Fonctionnalités', href: '#features' }, { label: 'Comment ça marche', href: '#how-it-works' }, { label: 'Tarifs', href: '/pricing' }, { label: 'Stages', href: '/stages' }] },
+  { title: 'Entreprise', links: [{ label: 'À propos', href: '/a-propos' }, { label: 'FAQ', href: '/faq' }, { label: 'Contact', href: `mailto:${COMPANY.contactEmail}` }] },
+  { title: 'Légal', links: [{ label: 'Confidentialité', href: '/privacy' }, { label: "Conditions d'utilisation", href: '/terms' }, { label: 'Cookies', href: '/privacy#cookies' }] },
 ] as const;
 
 function Footer() {
@@ -699,12 +726,12 @@ function Footer() {
           ))}
         </div>
         <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>© 2026 GoConnexions. Tous droits réservés. Fait avec ♥ à Montréal.</p>
+          <p style={{ fontSize: 12, color: G.muted, margin: 0 }}>© 2026 GoConnexions, exploitée par {COMPANY.legalName} Tous droits réservés. Fait avec ♥ à Montréal.</p>
           <div style={{ display: 'flex', gap: 20 }}>
-            {['Twitter', 'LinkedIn', 'Instagram'].map(s => (
-              <a key={s} href="#" style={{ fontSize: 12, color: G.muted, textDecoration: 'none', transition: 'color 0.2s' }}
+            {SOCIAL_LINKS.map(s => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: G.muted, textDecoration: 'none', transition: 'color 0.2s', padding: '6px 0' }}
                 onMouseEnter={e => (e.currentTarget.style.color = G.accent)}
-                onMouseLeave={e => (e.currentTarget.style.color = G.muted)}>{s}</a>
+                onMouseLeave={e => (e.currentTarget.style.color = G.muted)}>{s.label}</a>
             ))}
           </div>
         </div>
@@ -714,9 +741,11 @@ function Footer() {
 }
 
 /* ─── Global styles ──────────────────────────────────────────── */
+// dangerouslySetInnerHTML et non {children} : React échappe les apostrophes du texte rendu côté serveur
+// (&#x27;), que le navigateur ne décode pas dans un <style> → mismatch d'hydratation sur toute la page.
 function GlobalStyles() {
   return (
-    <style>{`
+    <style dangerouslySetInnerHTML={{ __html: `
       *, *::before, *::after { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
       body { background: #09090B; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
@@ -741,11 +770,19 @@ function GlobalStyles() {
       @media (max-width: 768px) {
         .gc-3col { grid-template-columns: 1fr !important; }
         .gc-2col { grid-template-columns: 1fr !important; }
-        .gc-footer-grid { grid-template-columns: 1fr 1fr !important; }
+        .gc-footer-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+        .gc-footer-grid > :first-child { grid-column: 1 / -1; }
         .gc-bento { grid-template-columns: 1fr !important; }
         .gc-bento > * { grid-column: span 1 !important; }
+        main > section { padding-top: 64px !important; padding-bottom: 64px !important; }
+        .gc-quote-card { padding: 40px 24px !important; border-radius: 24px !important; }
       }
-    `}</style>
+
+      @media (max-width: 480px) {
+        main > section { padding-left: 16px !important; padding-right: 16px !important; }
+        .gc-card { padding: 28px 24px !important; }
+      }
+    ` }} />
   );
 }
 

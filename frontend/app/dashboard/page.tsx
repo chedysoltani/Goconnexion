@@ -211,6 +211,7 @@ export default function DashboardPage() {
           lastName: currentUser.lastName,
           role: currentUser.role.toLowerCase() as any,
           plan: currentUser.plan ?? 'FREE',
+          limits: currentUser.limits,
           createdAt: new Date(currentUser.createdAt),
           updatedAt: new Date(),
           profile: currentUser.freelancerProfile

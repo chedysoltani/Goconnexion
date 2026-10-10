@@ -1,12 +1,13 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Zap, Building2, Check, Sparkles,
+  X, Zap, Building2, Check, Sparkles, Rocket,
   ArrowRight, Loader2, CreditCard, Globe,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import type { PaidPlan, PlanInfo } from '@/types/auth';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -19,43 +20,27 @@ interface UpgradeModalProps {
 type BillingInterval = 'monthly' | 'yearly';
 type PaymentProvider = 'stripe' | 'wise';
 
-const PLANS = [
-  {
-    id: 'PRO' as const,
-    name: 'Pro',
-    price: { monthly: 19, yearly: 159 },
+// Apparence uniquement : prix et avantages viennent de GET /subscription/plans.
+const VISUALS: Record<PaidPlan, { color: string; gradient: string; glow: string; icon: React.ReactNode }> = {
+  PRO: {
     color: '#3b82f6',
     gradient: 'linear-gradient(135deg,#3b82f6,#2563eb)',
     glow: 'rgba(59,130,246,0.25)',
     icon: <Zap size={18} />,
-    popular: true,
-    perks: [
-      'Candidatures & connexions illimitées',
-      'Analytics de profil complets',
-      'Contrats électroniques',
-      'Paiement sécurisé (escrow)',
-      'Appels vidéo intégrés',
-      'Badge Pro visible',
-    ],
   },
-  {
-    id: 'BUSINESS' as const,
-    name: 'Business',
-    price: { monthly: 49, yearly: 399 },
+  BUSINESS: {
     color: '#7c3aed',
     gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
     glow: 'rgba(124,58,237,0.25)',
     icon: <Building2 size={18} />,
-    perks: [
-      'Tout Pro inclus',
-      'Projets & équipe illimités',
-      'Page entreprise dédiée',
-      'Recrutement IA avancé',
-      'Support prioritaire 24h/7j',
-      'Accès API complet',
-    ],
   },
-];
+  PREMIUM_INCUBATEUR: {
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+    glow: 'rgba(139,92,246,0.25)',
+    icon: <Rocket size={18} />,
+  },
+};
 
 export default function UpgradeModal({
   isOpen,
@@ -69,15 +54,26 @@ export default function UpgradeModal({
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [stripeConfigured, setStripeConfigured] = useState(false);
+  const [paidPlans, setPaidPlans] = useState<PlanInfo[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
     api.subscription.plans()
-      .then((data: any) => setStripeConfigured(data.stripeConfigured ?? false))
+      .then((data) => {
+        setStripeConfigured(data.stripeConfigured ?? false);
+        setPaidPlans(data.plans.filter((p) => p.id !== 'FREE'));
+      })
       .catch(() => setStripeConfigured(false));
   }, [isOpen]);
 
-  const handleUpgrade = async (planId: 'PRO' | 'BUSINESS') => {
+  const PLANS = paidPlans.map((p) => ({
+    ...p,
+    ...VISUALS[p.id as PaidPlan],
+    id: p.id as PaidPlan,
+    perks: p.features.filter((f) => !f.soon).slice(0, 6).map((f) => f.text),
+  }));
+
+  const handleUpgrade = async (planId: PaidPlan) => {
     setLoading(planId);
     try {
       if (provider === 'wise') {
@@ -97,11 +93,7 @@ export default function UpgradeModal({
       }
 
       // Mode sandbox — redirige vers page checkout simulée
-      const plan = PLANS.find(p => p.id === planId)!;
-      const price = billing === 'yearly'
-        ? Math.round(plan.price.yearly / 12)
-        : plan.price.monthly;
-      window.location.href = `/billing/checkout?plan=${planId}&interval=${billing}&price=${price}`;
+      window.location.href = `/billing/checkout?plan=${planId}&interval=${billing}`;
     } catch (e: any) {
       alert(e?.message ?? 'Erreur lors de la mise à niveau');
     } finally {
@@ -143,7 +135,7 @@ export default function UpgradeModal({
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="w-full max-w-[640px] rounded-3xl overflow-hidden pointer-events-auto"
+              className="w-full max-w-[880px] rounded-3xl overflow-hidden pointer-events-auto"
               style={{ background: 'white', boxShadow: '0 40px 100px rgba(15,23,42,0.25)' }}
             >
               {/* Header gradient */}
@@ -212,7 +204,7 @@ export default function UpgradeModal({
                               className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                               style={{ background: 'rgba(37,99,235,0.3)', color: '#60a5fa' }}
                             >
-                              -30%
+                              Économisez
                             </span>
                           </>
                         )}
@@ -259,7 +251,7 @@ export default function UpgradeModal({
               </div>
 
               {/* Plans */}
-              <div className="p-6 grid sm:grid-cols-2 gap-4">
+              <div className="p-6 grid sm:grid-cols-3 gap-4">
                 {PLANS.map((plan) => {
                   const displayPrice = billing === 'yearly'
                     ? yearlyMonthly(plan)
@@ -301,7 +293,7 @@ export default function UpgradeModal({
                             {plan.name}
                           </p>
                           <p className="text-[13px] font-bold leading-none" style={{ color: plan.color }}>
-                            {displayPrice}€
+                            {displayPrice} CAD
                             <span className="text-[11px] font-normal" style={{ color: '#94a3b8' }}> / mois</span>
                           </p>
                         </div>
@@ -309,7 +301,7 @@ export default function UpgradeModal({
 
                       {billing === 'yearly' && (
                         <p className="text-[10px] mb-3 -mt-1" style={{ color: '#94a3b8' }}>
-                          Facturé {plan.price.yearly}€/an
+                          Facturé {plan.price.yearly} CAD/an
                           <span className="ml-1 font-bold" style={{ color: '#2563eb' }}>
                             (-{yearlyDiscount(plan)}%)
                           </span>
@@ -359,7 +351,7 @@ export default function UpgradeModal({
                         ) : provider === 'wise' ? (
                           <><Globe size={13} /> Payer via Wise <ArrowRight size={13} /></>
                         ) : (
-                          <><CreditCard size={13} /> Payer {displayPrice}€/mois <ArrowRight size={13} /></>
+                          <><CreditCard size={13} /> Payer {displayPrice} CAD/mois <ArrowRight size={13} /></>
                         )}
                       </motion.button>
                     </motion.div>

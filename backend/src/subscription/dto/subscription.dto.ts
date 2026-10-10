@@ -19,7 +19,7 @@ export class CreateCheckoutDto {
 }
 
 export class CreateWisePaymentDto {
-  @IsEnum(['PRO', 'BUSINESS', 'PREMIUM_ENTREPRENEUR', 'PREMIUM_FREELANCER', 'PREMIUM_INCUBATEUR'])
+  @IsEnum(['PRO', 'BUSINESS', 'PREMIUM_INCUBATEUR'])
   plan: string;
 
   @IsIn(['monthly', 'yearly'])

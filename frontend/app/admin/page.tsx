@@ -41,8 +41,6 @@ const PLAN_COLORS: Record<string, string> = {
   FREE: '#94a3b8',
   PRO: '#3b82f6',
   BUSINESS: '#8b5cf6',
-  PREMIUM_ENTREPRENEUR: '#2563eb',
-  PREMIUM_FREELANCER: '#f59e0b',
   PREMIUM_INCUBATEUR: '#ec4899',
 };
 

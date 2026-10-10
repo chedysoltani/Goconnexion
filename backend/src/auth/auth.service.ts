@@ -51,6 +51,10 @@ export class AuthService {
           country: dto.country,
           emailVerificationToken: verificationToken,
           emailVerificationExpires: verificationExpires,
+          signupUtmSource: dto.signupUtmSource,
+          signupUtmMedium: dto.signupUtmMedium,
+          signupUtmCampaign: dto.signupUtmCampaign,
+          signupUtmContent: dto.signupUtmContent,
         },
       });
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/auth';
@@ -55,6 +55,9 @@ interface Post {
 }
 
 export default function IncubatorPage({ user }: IncubatorPageProps) {
+  // Business : lecture seule. Premium Incubateur : lecture + publication.
+  const canRead = !!user?.limits?.canReadIncubator;
+  const canWrite = !!user?.limits?.canWriteIncubator;
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>('Tous');
@@ -73,6 +76,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
   const categories = ['Tous', 'Tech', 'Finance', 'Santé', 'Social', 'Éducation', 'Environnement', 'Autre'];
 
   const fetchPosts = async () => {
+    if (!canRead) return;
     setIsLoading(true);
     try {
       const data = await api.incubator.posts(categoryFilter === 'Tous' ? undefined : categoryFilter);
@@ -86,7 +90,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
 
   useEffect(() => {
     fetchPosts();
-  }, [categoryFilter]);
+  }, [categoryFilter, canRead]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLike = async (postId: string) => {
     try {
@@ -201,12 +205,12 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
     }
   };
 
-  if (user?.plan !== 'PREMIUM_INCUBATEUR') {
+  if (!canRead) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20 text-center px-6">
         <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 text-4xl" style={{background:'rgba(139,92,246,0.1)'}}>🔒</div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">Espace Incubateur</h2>
-        <p className="text-slate-500 text-sm max-w-xs mb-6">Cet espace est réservé aux membres du plan <strong>PREMIUM Incubateur</strong>. Rejoignez-nous pour accéder aux ressources exclusives.</p>
+        <p className="text-slate-500 text-sm max-w-xs mb-6">Cet espace est accessible en lecture avec le plan <strong>Business</strong>, et en participation complète avec <strong>Premium Incubateur</strong>.</p>
         <a href="/pricing" className="px-6 py-3 rounded-2xl text-sm font-bold text-white" style={{background:'linear-gradient(135deg,#8b5cf6,#7c3aed)',boxShadow:'0 4px 16px rgba(139,92,246,0.4)'}}>
           Découvrir les offres →
         </a>
@@ -281,6 +285,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
             onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; }}
           />
         </div>
+        {canWrite ? (
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02]"
@@ -289,6 +294,15 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
           <Plus size={16} />
           Proposer une Idée
         </button>
+        ) : (
+          <a
+            href="/pricing"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors"
+            style={{ background: 'rgba(139,92,246,0.08)', color: '#7c3aed', border: '1px solid rgba(139,92,246,0.2)' }}
+          >
+            🔒 Lecture seule — passez à Premium Incubateur pour publier
+          </a>
+        )}
       </div>
 
       {/* Category Pills */}
@@ -330,12 +344,12 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
             <p className="text-muted text-sm max-w-md mx-auto mb-8 leading-relaxed">
               Soyez le premier à soumettre un concept de startup dans la catégorie <span className="font-semibold text-foreground">{categoryFilter}</span> pour inspirer les autres ! Chaque grande entreprise a commencé par une simple idée ✨
             </p>
-            <button
+            {canWrite && <button
               onClick={() => setShowCreateModal(true)}
               className="px-6 py-3 bg-gradient-to-r from-accent to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-accent/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
               Proposer une Idée
-            </button>
+            </button>}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -391,6 +405,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
                       {/* Like button – animated with scale and fill */}
                       <button 
                         onClick={() => handleLike(post.id)}
+                        disabled={!canWrite}
                         className={`flex items-center gap-1.5 font-semibold transition-all duration-200 group/like ${
                           hasLiked ? 'text-accent' : 'hover:text-accent'
                         }`}
@@ -430,7 +445,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
                     )}
 
                     {/* Comment Input form */}
-                    <form onSubmit={(e) => handleCommentSubmit(post.id, e)} className="flex gap-2">
+                    {canWrite && <form onSubmit={(e) => handleCommentSubmit(post.id, e)} className="flex gap-2">
                       <input
                         type="text"
                         placeholder="Donnez votre feedback constructif..."
@@ -445,7 +460,7 @@ export default function IncubatorPage({ user }: IncubatorPageProps) {
                       >
                         <Send size={12} />
                       </button>
-                    </form>
+                    </form>}
                   </div>
                 </div>
               );

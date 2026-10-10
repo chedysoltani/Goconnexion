@@ -1,5 +1,43 @@
 export type UserRole = 'freelancer' | 'entrepreneur' | 'user';
-export type PlanType = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_ENTREPRENEUR' | 'PREMIUM_FREELANCER' | 'PREMIUM_INCUBATEUR';
+export type PlanType = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_INCUBATEUR';
+
+export type PaidPlan = Exclude<PlanType, 'FREE'>;
+
+// Réponse de GET /subscription/plans (catalogue défini dans backend/src/subscription/plans.ts)
+export interface PlanFeature {
+  text: string;
+  highlight?: boolean;
+  soon?: boolean;
+}
+
+export interface PlanInfo {
+  id: PlanType;
+  name: string;
+  tagline: string;
+  popular?: boolean;
+  price: { monthly: number; yearly: number };
+  features: PlanFeature[];
+}
+
+export interface PlansResponse {
+  stripeConfigured: boolean;
+  trial: { plan: PaidPlan; days: number };
+  plans: PlanInfo[];
+}
+
+// Miroir de PLAN_LIMITS (backend/src/subscription/plans.ts), renvoyé par /auth/me. -1 = illimité.
+export interface PlanLimits {
+  maxProjects: number;
+  maxApplications: number;
+  maxConnections: number;
+  maxMessagesPerMonth: number;
+  canAccessAnalytics: boolean;
+  canAccessVideoCall: boolean;
+  canCreateAds: boolean;
+  canReadIncubator: boolean;
+  canWriteIncubator: boolean;
+  badge: string | null;
+}
 
 export interface BaseUser {
   id: string;
@@ -8,6 +46,7 @@ export interface BaseUser {
   lastName: string;
   role: UserRole;
   plan?: PlanType;
+  limits?: PlanLimits;
   isAmbassador?: boolean;
   avatarUrl?: string;
   country?: string | null;

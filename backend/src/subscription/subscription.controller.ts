@@ -48,6 +48,12 @@ export class SubscriptionController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('trial')
+  startTrial(@Request() req: any) {
+    return this.subscriptionService.startTrial(req.user.sub ?? req.user.id);
+  }
+
   // ── Wise endpoints ────────────────────────────────────────────
 
   @UseGuards(JwtAuthGuard)

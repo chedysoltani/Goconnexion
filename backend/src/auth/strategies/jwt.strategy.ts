@@ -54,6 +54,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             status: true,
             currentPeriodEnd: true,
             cancelAtPeriodEnd: true,
+            trialEndsAt: true,
           },
         },
       },

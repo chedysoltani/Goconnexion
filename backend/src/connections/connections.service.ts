@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestStatus } from '@prisma/client';
-import { PLAN_LIMITS } from '../subscription/subscription.service';
+import { PLAN_LIMITS, effectivePlan } from '../subscription/plans';
 
 @Injectable()
 export class ConnectionsService {
@@ -17,8 +17,8 @@ export class ConnectionsService {
       where: { id: senderId },
       include: { subscription: true },
     });
-    const plan = sender?.subscription?.plan ?? 'FREE';
-    const limit = PLAN_LIMITS[plan]?.maxConnections ?? 10;
+    const plan = effectivePlan(sender?.subscription);
+    const limit = PLAN_LIMITS[plan].maxConnections;
     if (limit !== -1) {
       const connectionCount = await this.prisma.userRelation.count({ where: { userId: senderId } });
       if (connectionCount >= limit) {

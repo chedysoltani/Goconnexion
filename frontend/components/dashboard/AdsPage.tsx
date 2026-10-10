@@ -53,8 +53,7 @@ export default function AdsPage({ user }: AdsPageProps) {
     fetchAds();
   }, [fetchAds]);
 
-  const isPremium = user?.plan && user.plan !== 'FREE';
-  if (!isPremium) {
+  if (!user?.limits?.canCreateAds) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20 text-center px-6">
         <div className="text-5xl mb-5">📢</div>

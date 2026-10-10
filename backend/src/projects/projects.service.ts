@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectStatus, ApplicationStatus } from '@prisma/client';
-import { PLAN_LIMITS } from '../subscription/subscription.service';
+import { PLAN_LIMITS, effectivePlan } from '../subscription/plans';
 
 @Injectable()
 export class ProjectsService {
@@ -22,8 +22,8 @@ export class ProjectsService {
       throw new NotFoundException('Entrepreneur profile not found');
     }
 
-    const plan = entrepreneur.user.subscription?.plan ?? 'FREE';
-    const limit = PLAN_LIMITS[plan]?.maxProjects ?? 1;
+    const plan = effectivePlan(entrepreneur.user.subscription);
+    const limit = PLAN_LIMITS[plan].maxProjects;
     if (limit !== -1) {
       const projectCount = await this.prisma.project.count({ where: { ownerId: entrepreneur.id } });
       if (projectCount >= limit) {
@@ -157,8 +157,8 @@ export class ProjectsService {
       throw new NotFoundException('Freelancer profile not found');
     }
 
-    const plan = freelancer.user.subscription?.plan ?? 'FREE';
-    const limit = PLAN_LIMITS[plan]?.maxApplications ?? 3;
+    const plan = effectivePlan(freelancer.user.subscription);
+    const limit = PLAN_LIMITS[plan].maxApplications;
     if (limit !== -1) {
       const appCount = await this.prisma.projectApplication.count({ where: { freelancerId: freelancer.id } });
       if (appCount >= limit) {

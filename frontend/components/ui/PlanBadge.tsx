@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Zap, Building2, Sparkles, Star, Rocket } from 'lucide-react';
-
-type Plan = 'FREE' | 'PRO' | 'BUSINESS' | 'PREMIUM_ENTREPRENEUR' | 'PREMIUM_FREELANCER' | 'PREMIUM_INCUBATEUR';
+import { Zap, Building2, Sparkles, Rocket } from 'lucide-react';
+import type { PlanType as Plan } from '@/types/auth';
 
 const PLAN_CONFIG: Record<Plan, {
   label: string;
@@ -32,20 +31,6 @@ const PLAN_CONFIG: Record<Plan, {
     bg: 'rgba(124,58,237,0.1)',
     border: 'rgba(124,58,237,0.25)',
     icon: <Building2 size={9} />,
-  },
-  PREMIUM_ENTREPRENEUR: {
-    label: 'Premium',
-    color: '#8b5cf6',
-    bg: 'rgba(139,92,246,0.12)',
-    border: 'rgba(139,92,246,0.3)',
-    icon: <Star size={9} />,
-  },
-  PREMIUM_FREELANCER: {
-    label: 'Premium',
-    color: '#3b82f6',
-    bg: 'rgba(59,130,246,0.12)',
-    border: 'rgba(59,130,246,0.3)',
-    icon: <Zap size={9} />,
   },
   PREMIUM_INCUBATEUR: {
     label: 'Incubateur',

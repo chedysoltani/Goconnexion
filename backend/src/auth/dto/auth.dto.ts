@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class RegisterDto {
@@ -30,6 +30,28 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty({ message: 'Country is required' })
   country!: string;
+
+  // Attribution marketing (voir prisma/schema.prisma → User.signupUtm*). Valeurs issues de l'URL
+  // côté client (lib/tracking/campaign.ts) : jamais sûres, donc bornées en longueur ici aussi.
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  signupUtmSource?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  signupUtmMedium?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  signupUtmCampaign?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  signupUtmContent?: string;
 }
 
 export class LoginDto {

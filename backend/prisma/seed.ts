@@ -88,7 +88,7 @@ async function main() {
     include: { freelancerProfile: true },
   });
 
-  // 3. Freelancer PREMIUM
+  // 3. Freelancer PRO
   const sarahUser = await prisma.user.create({
     data: {
       email: 'sarah.benali@goconnexions.com',
@@ -96,7 +96,7 @@ async function main() {
       firstName: 'Sarah',
       lastName: 'Ben Ali',
       role: 'FREELANCER',
-      plan: 'PREMIUM_FREELANCER',
+      plan: 'PRO',
       freelancerProfile: {
         create: {
           title: 'UX/UI Designer & Product Strategist',
@@ -133,7 +133,7 @@ async function main() {
     include: { freelancerProfile: true },
   });
 
-  // 5. Entrepreneur PREMIUM
+  // 5. Entrepreneur BUSINESS
   const sophieUser = await prisma.user.create({
     data: {
       email: 'sophie.martin@goconnexions.com',
@@ -141,7 +141,7 @@ async function main() {
       firstName: 'Sophie',
       lastName: 'Martin',
       role: 'ENTREPRENEUR',
-      plan: 'PREMIUM_ENTREPRENEUR',
+      plan: 'BUSINESS',
       entrepreneurProfile: {
         create: {
           companyName: 'InnovateTech',
@@ -195,9 +195,9 @@ async function main() {
 
   console.log('  admin@goconnexions.com          → ADMIN');
   console.log('  jean.dupont@goconnexions.com    → FREELANCER FREE');
-  console.log('  sarah.benali@goconnexions.com   → FREELANCER PREMIUM');
+  console.log('  sarah.benali@goconnexions.com   → FREELANCER PRO');
   console.log('  leila.trabelsi@goconnexions.com → FREELANCER FREE');
-  console.log('  sophie.martin@goconnexions.com  → ENTREPRENEUR PREMIUM');
+  console.log('  sophie.martin@goconnexions.com  → ENTREPRENEUR BUSINESS');
   console.log('  mohamed.khelil@goconnexions.com → ENTREPRENEUR FREE');
   console.log('  karim.mansour@goconnexions.com  → INCUBATEUR PREMIUM');
   console.log('OK\n');
@@ -205,10 +205,10 @@ async function main() {
   // ─── ABONNEMENTS ──────────────────────────────────────────────────────
   console.log('Création des abonnements premium...');
   await prisma.subscription.create({
-    data: { userId: sarahUser.id, plan: 'PREMIUM_FREELANCER', status: 'ACTIVE', currentPeriodEnd: days(30) },
+    data: { userId: sarahUser.id, plan: 'PRO', status: 'ACTIVE', currentPeriodEnd: days(30) },
   });
   await prisma.subscription.create({
-    data: { userId: sophieUser.id, plan: 'PREMIUM_ENTREPRENEUR', status: 'ACTIVE', currentPeriodEnd: days(30) },
+    data: { userId: sophieUser.id, plan: 'BUSINESS', status: 'ACTIVE', currentPeriodEnd: days(30) },
   });
   await prisma.subscription.create({
     data: { userId: karimUser.id, plan: 'PREMIUM_INCUBATEUR', status: 'ACTIVE', currentPeriodEnd: days(30) },
@@ -592,9 +592,9 @@ async function main() {
   console.log('  ─────────────────────────────────────────────────────────');
   console.log('  admin@goconnexions.com           Admin');
   console.log('  jean.dupont@goconnexions.com     Freelancer FREE');
-  console.log('  sarah.benali@goconnexions.com    Freelancer PREMIUM');
+  console.log('  sarah.benali@goconnexions.com    Freelancer PRO');
   console.log('  leila.trabelsi@goconnexions.com  Freelancer FREE #2');
-  console.log('  sophie.martin@goconnexions.com   Entrepreneur PREMIUM');
+  console.log('  sophie.martin@goconnexions.com   Entrepreneur BUSINESS');
   console.log('  mohamed.khelil@goconnexions.com  Entrepreneur FREE');
   console.log('  karim.mansour@goconnexions.com   Incubateur PREMIUM');
   console.log('');

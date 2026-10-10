@@ -13,8 +13,11 @@ export default function AnalyticsPage({ user }: AnalyticsPageProps) {
   const [stats, setStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
+  const canAccess = !!user?.limits?.canAccessAnalytics;
+
   useEffect(() => {
     const fetchStats = async () => {
+      if (!canAccess) return;
       try {
         setLoadingStats(true);
         const data = await api.analytics.dashboard();
@@ -26,7 +29,7 @@ export default function AnalyticsPage({ user }: AnalyticsPageProps) {
       }
     };
     fetchStats();
-  }, [user]);
+  }, [user, canAccess]);
 
   const makeStatCard = (label: string, value: string | number, sub: string, iconEl: React.ReactNode, iconBg: string, accent: string) => (
     <div
@@ -105,6 +108,19 @@ export default function AnalyticsPage({ user }: AnalyticsPageProps) {
 
     return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{cards}</div>;
   };
+
+  if (user && !canAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-20 text-center px-6">
+        <div className="text-5xl mb-5">📊</div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Analytiques</h2>
+        <p className="text-slate-500 text-sm max-w-xs mb-6">Suivez les performances de votre profil et de vos projets. Disponible à partir du plan <strong>PRO</strong>.</p>
+        <a href="/pricing" className="px-6 py-3 rounded-2xl text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg,#3b82f6,#2563eb)' }}>
+          Voir les offres →
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full p-6 md:p-8" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #f7f9fc 100%)' }}>

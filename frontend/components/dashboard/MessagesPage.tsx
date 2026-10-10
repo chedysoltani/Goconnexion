@@ -225,6 +225,15 @@ export default function MessagesPage({ user, initialConvId }: MessagesPageProps)
   const selectedConv = getSelectedConv();
   const activeParticipant = selectedConv ? getParticipantInfo(selectedConv) : null;
 
+  const startCall = (type: 'video' | 'audio') => {
+    if (!activeParticipant) return;
+    if (!user?.limits?.canAccessVideoCall) {
+      setMessageLimitError('Les appels audio et vidéo sont disponibles à partir du plan Pro.');
+      return;
+    }
+    setActiveCall({ type, direction: 'outgoing', target: activeParticipant });
+  };
+
   const filteredConversations = conversations.filter((conv) => {
     const p = getParticipantInfo(conv);
     return `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
@@ -431,12 +440,12 @@ export default function MessagesPage({ user, initialConvId }: MessagesPageProps)
                 {
                   icon: <Phone size={15} />,
                   title: 'Appel vocal',
-                  onClick: () => activeParticipant && setActiveCall({ type: 'audio', direction: 'outgoing', target: activeParticipant }),
+                  onClick: () => startCall('audio'),
                 },
                 {
                   icon: <Video size={15} />,
                   title: 'Appel vidéo',
-                  onClick: () => activeParticipant && setActiveCall({ type: 'video', direction: 'outgoing', target: activeParticipant }),
+                  onClick: () => startCall('video'),
                 },
                 {
                   icon: <MoreHorizontal size={15} />,

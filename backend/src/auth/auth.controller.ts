@@ -19,6 +19,7 @@ import {
   ResetPasswordDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { PLAN_LIMITS, effectivePlan } from '../subscription/plans';
 
 const ACCESS_TTL = 24 * 60 * 60 * 1000; // 1 jour
 const REFRESH_TTL = 7 * 24 * 60 * 60 * 1000; // 7 jours
@@ -118,7 +119,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Request() req: any) {
-    return req.user;
+    const plan = req.user.subscription ? effectivePlan(req.user.subscription) : req.user.plan;
+    return { ...req.user, plan, limits: PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] };
   }
 
   // ── Cookie helpers ─────────────────────────────────────────────────────────

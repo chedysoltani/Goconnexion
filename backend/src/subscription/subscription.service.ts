@@ -8,101 +8,10 @@ import { EventsService } from '../events/events.service';
 import { PlanType, PlanStatus, PaymentProvider } from '@prisma/client';
 import { getFrontendUrl } from '../common/frontend-url';
 
-export const PLAN_LIMITS = {
-  FREE: {
-    maxProjects: 1,
-    maxApplications: 3,
-    maxConnections: 10,
-    maxMessagesPerMonth: 50,
-    maxIncubatorPosts: 0,
-    canAccessAnalytics: false,
-    canAccessContracts: false,
-    canBoostProfile: false,
-    canAccessVideoCall: false,
-    canAccessApiAccess: false,
-    canAccessExclusiveEvents: false,
-    badge: null,
-  },
-  PRO: {
-    maxProjects: 5,
-    maxApplications: -1,
-    maxConnections: -1,
-    maxMessagesPerMonth: -1,
-    maxIncubatorPosts: 0,
-    canAccessAnalytics: true,
-    canAccessContracts: true,
-    canBoostProfile: true,
-    canAccessVideoCall: true,
-    canAccessApiAccess: false,
-    canAccessExclusiveEvents: true,
-    badge: 'PRO',
-  },
-  BUSINESS: {
-    maxProjects: -1,
-    maxApplications: -1,
-    maxConnections: -1,
-    maxMessagesPerMonth: -1,
-    maxIncubatorPosts: 0,
-    canAccessAnalytics: true,
-    canAccessContracts: true,
-    canBoostProfile: true,
-    canAccessVideoCall: true,
-    canAccessApiAccess: true,
-    canAccessExclusiveEvents: true,
-    badge: 'BUSINESS',
-  },
-  PREMIUM_ENTREPRENEUR: {
-    maxProjects: -1,
-    maxApplications: -1,
-    maxConnections: -1,
-    maxMessagesPerMonth: -1,
-    maxIncubatorPosts: -1,
-    canAccessAnalytics: true,
-    canAccessContracts: true,
-    canBoostProfile: true,
-    canAccessVideoCall: true,
-    canAccessApiAccess: false,
-    canAccessExclusiveEvents: true,
-    badge: 'ENTREPRENEUR',
-  },
-  PREMIUM_FREELANCER: {
-    maxProjects: -1,
-    maxApplications: -1,
-    maxConnections: -1,
-    maxMessagesPerMonth: -1,
-    maxIncubatorPosts: -1,
-    canAccessAnalytics: true,
-    canAccessContracts: true,
-    canBoostProfile: true,
-    canAccessVideoCall: true,
-    canAccessApiAccess: false,
-    canAccessExclusiveEvents: true,
-    badge: 'FREELANCER',
-  },
-  PREMIUM_INCUBATEUR: {
-    maxProjects: -1,
-    maxApplications: -1,
-    maxConnections: -1,
-    maxMessagesPerMonth: -1,
-    maxIncubatorPosts: -1,
-    canAccessAnalytics: true,
-    canAccessContracts: true,
-    canBoostProfile: true,
-    canAccessVideoCall: true,
-    canAccessApiAccess: true,
-    canAccessExclusiveEvents: true,
-    badge: 'INCUBATEUR',
-  },
-} as const;
-
-export const PLAN_PRICES = {
-  FREE:                 { monthly: 0,   yearly: 0    },
-  PRO:                  { monthly: 19,  yearly: 159  },
-  BUSINESS:             { monthly: 49,  yearly: 399  },
-  PREMIUM_ENTREPRENEUR: { monthly: 29,  yearly: 249  },
-  PREMIUM_FREELANCER:   { monthly: 25,  yearly: 199  },
-  PREMIUM_INCUBATEUR:   { monthly: 99,  yearly: 890  },
-} as const;
+import {
+  PLAN_LIMITS, PLAN_PRICES, PLAN_CATALOG, TRIAL_PLAN, TRIAL_DAYS,
+  effectivePlan, planLimitsFor,
+} from './plans';
 
 @Injectable()
 export class SubscriptionService {
@@ -127,23 +36,66 @@ export class SubscriptionService {
     }
     return {
       ...sub,
-      limits: PLAN_LIMITS[sub.plan],
+      plan: effectivePlan(sub),
+      limits: planLimitsFor(sub),
       prices: PLAN_PRICES,
+      trialAvailable: sub.plan === PlanType.FREE && !sub.trialEndsAt,
+      trialDays: TRIAL_DAYS,
       stripeConfigured: this.stripeService.isConfigured(),
       wiseConfigured: this.wiseService.isConfigured(),
     };
   }
 
-  async getUserPlan(userId: string): Promise<PlanType> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { plan: true },
-    });
-    return user?.plan ?? PlanType.FREE;
+  // ── Essai gratuit ──────────────────────────────────────────────
+  // Une fois par compte, sans carte. trialEndsAt reste renseigné après
+  // l'essai et sert de marqueur « essai déjà utilisé ».
+
+  async startTrial(userId: string) {
+    const sub = await this.prisma.subscription.findUnique({ where: { userId } });
+    if (sub?.trialEndsAt) {
+      throw new BadRequestException('Vous avez déjà utilisé votre essai gratuit.');
+    }
+    if (sub && sub.plan !== PlanType.FREE) {
+      throw new BadRequestException('Vous avez déjà un abonnement payant.');
+    }
+
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+
+    await this.prisma.$transaction([
+      this.prisma.subscription.upsert({
+        where: { userId },
+        create: {
+          userId, plan: TRIAL_PLAN, status: PlanStatus.TRIAL, trialEndsAt, currentPeriodEnd: trialEndsAt,
+        },
+        update: {
+          plan: TRIAL_PLAN, status: PlanStatus.TRIAL, trialEndsAt, currentPeriodEnd: trialEndsAt,
+        },
+      }),
+      this.prisma.user.update({ where: { id: userId }, data: { plan: TRIAL_PLAN } }),
+    ]);
+
+    return { plan: TRIAL_PLAN, trialEndsAt, limits: PLAN_LIMITS[TRIAL_PLAN] };
   }
 
-  getPlanLimits(plan: PlanType) {
-    return PLAN_LIMITS[plan];
+  @Cron(CronExpression.EVERY_HOUR)
+  async expireTrials() {
+    const expired = await this.prisma.subscription.findMany({
+      where: { status: PlanStatus.TRIAL, trialEndsAt: { lte: new Date() } },
+      select: { id: true, userId: true },
+    });
+
+    for (const sub of expired) {
+      await this.prisma.$transaction([
+        this.prisma.subscription.update({
+          where: { id: sub.id },
+          data: { plan: PlanType.FREE, status: PlanStatus.ACTIVE, currentPeriodEnd: null },
+        }),
+        this.prisma.user.update({ where: { id: sub.userId }, data: { plan: PlanType.FREE } }),
+      ]);
+    }
+
+    if (expired.length) this.logger.log(`Essais expirés : ${expired.length}`);
   }
 
   // ── Checkout ───────────────────────────────────────────────────
@@ -573,56 +525,12 @@ export class SubscriptionService {
   getPlansInfo() {
     return {
       stripeConfigured: this.stripeService.isConfigured(),
-      plans: [
-        {
-          id: 'FREE',
-          name: 'Gratuit',
-          price: PLAN_PRICES.FREE,
-          limits: PLAN_LIMITS.FREE,
-          features: [
-            '3 candidatures / mois',
-            '1 projet actif',
-            '10 connexions',
-            '50 messages / mois',
-            'Profil basique',
-          ],
-        },
-        {
-          id: 'PRO',
-          name: 'Pro',
-          price: PLAN_PRICES.PRO,
-          limits: PLAN_LIMITS.PRO,
-          popular: true,
-          features: [
-            'Candidatures illimitées',
-            '5 projets actifs',
-            'Connexions illimitées',
-            'Messagerie illimitée',
-            'Badge Pro visible',
-            'Analytics de profil',
-            'Contrats & signatures',
-            'Paiement sécurisé',
-            'Appels vidéo',
-          ],
-        },
-        {
-          id: 'BUSINESS',
-          name: 'Business',
-          price: PLAN_PRICES.BUSINESS,
-          limits: PLAN_LIMITS.BUSINESS,
-          features: [
-            'Tout Pro +',
-            'Projets illimités',
-            'Page entreprise dédiée',
-            "Équipe jusqu'à 5 membres",
-            'Recrutement IA',
-            'Analytics & rapports PDF',
-            'Support 24h',
-            'Accès API',
-            'Badge Entreprise Vérifiée',
-          ],
-        },
-      ],
+      trial: { plan: TRIAL_PLAN, days: TRIAL_DAYS },
+      plans: PLAN_CATALOG.map((p) => ({
+        ...p,
+        price: PLAN_PRICES[p.id],
+        limits: PLAN_LIMITS[p.id],
+      })),
     };
   }
 

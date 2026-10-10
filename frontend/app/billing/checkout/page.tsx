@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -8,47 +8,47 @@ import {
   Globe, Loader2, CreditCard, ArrowRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import type { PaidPlan, PlanInfo } from '@/types/auth';
 
-const PLAN_INFO: Record<string, { name: string; color: string; gradient: string; features: string[] }> = {
-  PRO: {
-    name: 'Pro',
-    color: '#3b82f6',
-    gradient: 'linear-gradient(135deg,#3b82f6,#2563eb)',
-    features: ['Connexions illimitées', 'Analytics complets', 'Contrats électroniques', 'Appels vidéo', 'Badge Pro'],
-  },
-  BUSINESS: {
-    name: 'Business',
-    color: '#7c3aed',
-    gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
-    features: ['Tout Pro inclus', 'Projets illimités', 'Page entreprise', 'Support 24h/7j', 'Accès API complet'],
-  },
+const PAID_PLANS: PaidPlan[] = ['PRO', 'BUSINESS', 'PREMIUM_INCUBATEUR'];
+
+const PLAN_GRADIENTS: Record<PaidPlan, string> = {
+  PRO: 'linear-gradient(135deg,#3b82f6,#2563eb)',
+  BUSINESS: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+  PREMIUM_INCUBATEUR: 'linear-gradient(135deg,#8b5cf6,#7c3aed)',
 };
 
 function CheckoutForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const plan     = (searchParams.get('plan') ?? 'PRO').toUpperCase() as 'PRO' | 'BUSINESS';
-  const interval = (searchParams.get('interval') ?? 'monthly') as 'monthly' | 'yearly';
-  const price    = searchParams.get('price') ?? '19';
+  const requested = (searchParams.get('plan') ?? 'PRO').toUpperCase() as PaidPlan;
+  const plan      = PAID_PLANS.includes(requested) ? requested : 'PRO';
+  const interval  = (searchParams.get('interval') ?? 'monthly') as 'monthly' | 'yearly';
 
-  const planInfo   = PLAN_INFO[plan] ?? PLAN_INFO.PRO;
+  // Prix et avantages viennent du catalogue backend, jamais de l'URL.
+  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
+  useEffect(() => {
+    api.subscription.plans()
+      .then((data) => setPlanInfo(data.plans.find((p) => p.id === plan) ?? null))
+      .catch(() => setPlanInfo(null));
+  }, [plan]);
 
-  // `price` est le prix mensuel équivalent passé par la page pricing.
-  // Pour les plans annuels, on reconstitue le vrai total depuis cette table.
-  const REAL_YEARLY: Record<string, number> = { PRO: 159, BUSINESS: 399 };
-  const monthlyEquiv = parseInt(price);
-  const realTotal = interval === 'yearly'
-    ? (REAL_YEARLY[plan] ?? monthlyEquiv * 12)
-    : monthlyEquiv;
+  const gradient  = PLAN_GRADIENTS[plan];
+  const monthly   = planInfo?.price.monthly ?? 0;
+  const yearly    = planInfo?.price.yearly ?? 0;
+  const realTotal = interval === 'yearly' ? yearly : monthly;
+  const price     = interval === 'yearly' ? Math.round(yearly / 12) : monthly;
+  const savings   = monthly ? Math.round(((monthly * 12 - yearly) / (monthly * 12)) * 100) : 0;
+  const features  = planInfo?.features.filter((f) => !f.soon).slice(0, 6).map((f) => f.text) ?? [];
 
   const [provider, setProvider]   = useState<'stripe' | 'wise'>('stripe');
   const [processing, setProcessing] = useState(false);
   const [error, setError]           = useState('');
 
   const totalLabel = interval === 'yearly'
-    ? `${realTotal} € / an`
-    : `${realTotal} € / mois`;
+    ? `${realTotal} CAD / an`
+    : `${realTotal} CAD / mois`;
 
   const handlePay = async () => {
     setProcessing(true);
@@ -95,7 +95,7 @@ function CheckoutForm() {
 
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
-              style={{ background: planInfo.gradient }}>G</div>
+              style={{ background: gradient }}>G</div>
             <div>
               <p className="text-white font-bold text-sm">GoConnexions</p>
               <p className="text-blue-300 text-xs">Plateforme professionnelle</p>
@@ -104,21 +104,21 @@ function CheckoutForm() {
 
           <div className="mb-6">
             <p className="text-blue-200 text-xs uppercase tracking-widest mb-2">Plan sélectionné</p>
-            <h2 className="text-white text-2xl font-black mb-1">{planInfo.name}</h2>
+            <h2 className="text-white text-2xl font-black mb-1">{planInfo?.name ?? '…'}</h2>
             <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-black text-white">{price}€</span>
+              <span className="text-4xl font-black text-white">{price} CAD</span>
               <span className="text-blue-300 text-sm">/ mois</span>
             </div>
             {interval === 'yearly' && (
               <span className="text-xs px-2 py-1 rounded-full font-bold"
                 style={{ background: 'rgba(37,99,235,0.2)', color: '#60a5fa' }}>
-                Facturé annuellement · Économisez 30%
+                Facturé annuellement · Économisez {savings}%
               </span>
             )}
           </div>
 
           <div className="space-y-2.5 mb-8">
-            {planInfo.features.map((f) => (
+            {features.map((f) => (
               <div key={f} className="flex items-center gap-2.5">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background: 'rgba(59,130,246,0.2)' }}>
@@ -131,7 +131,7 @@ function CheckoutForm() {
 
           <div className="mt-auto pt-6 border-t border-white/10">
             <div className="flex items-center justify-between text-white/60 text-xs mb-2">
-              <span>Sous-total</span><span>{price} € / mois</span>
+              <span>Sous-total</span><span>{price} CAD / mois</span>
             </div>
             <div className="flex items-center justify-between text-white font-bold text-sm">
               <span>Total aujourd'hui</span><span>{totalLabel}</span>
@@ -244,12 +244,12 @@ function CheckoutForm() {
           <div>
             <motion.button
               onClick={handlePay}
-              disabled={processing}
+              disabled={processing || !planInfo}
               whileHover={!processing ? { scale: 1.01 } : {}}
               whileTap={!processing ? { scale: 0.98 } : {}}
               className="w-full py-4 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2.5 transition-all"
               style={{
-                background: processing ? '#94a3b8' : planInfo.gradient,
+                background: processing ? '#94a3b8' : gradient,
                 boxShadow: processing ? 'none' : '0 8px 24px rgba(59,130,246,0.30)',
               }}
             >

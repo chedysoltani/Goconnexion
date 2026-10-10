@@ -1,3 +1,6 @@
+import type { PaidPlan, PlansResponse } from '@/types/auth';
+import { getCampaign } from '@/lib/tracking/campaign';
+
 // Les tokens JWT sont stockés dans des cookies httpOnly posés par le backend.
 // Le frontend ne touche jamais aux tokens — le navigateur les envoie automatiquement.
 // Seul l'objet `user` (non-sensible) est gardé en localStorage pour l'UI.
@@ -116,6 +119,10 @@ export const api = {
         entrepreneur: 'ENTREPRENEUR',
         user: 'COLLABORATOR',
       };
+      // Attribution marketing capturée à l'arrivée sur une page d'entrée (/join, etc.) — voir
+      // lib/tracking/campaign.ts. Permet de relier plus tard un abonnement payant à sa campagne
+      // d'origine (GET /auth/me renverra ces mêmes champs sur l'utilisateur créé).
+      const campaign = getCampaign();
       const data = await request('/auth/register', {
         method: 'POST',
         body: JSON.stringify({
@@ -126,6 +133,10 @@ export const api = {
           role: roleMap[signupData.role] ?? 'COLLABORATOR',
           industry: signupData.profile?.industry,
           country: signupData.country,
+          signupUtmSource: campaign.utm_source,
+          signupUtmMedium: campaign.utm_medium,
+          signupUtmCampaign: campaign.utm_campaign,
+          signupUtmContent: campaign.utm_content,
         }),
       });
       if (data.user && typeof window !== 'undefined') {
@@ -301,10 +312,11 @@ export const api = {
 
   subscription: {
     get: () => request('/subscription'),
-    plans: () => request('/subscription/plans'),
-    checkout: (plan: 'PRO' | 'BUSINESS', interval: 'monthly' | 'yearly' = 'monthly', provider: 'stripe' | 'wise' = 'stripe') =>
+    plans: (): Promise<PlansResponse> => request('/subscription/plans'),
+    checkout: (plan: PaidPlan, interval: 'monthly' | 'yearly' = 'monthly', provider: 'stripe' | 'wise' = 'stripe') =>
       request('/subscription/checkout', { method: 'POST', body: JSON.stringify({ plan, interval, provider }) }),
-    upgrade: (plan: 'PRO' | 'BUSINESS') =>
+    startTrial: () => request('/subscription/trial', { method: 'POST' }),
+    upgrade: (plan: PaidPlan) =>
       request('/subscription/upgrade', { method: 'POST', body: JSON.stringify({ plan }) }),
     portal: () => request('/subscription/portal', { method: 'POST' }),
     cancel: () => request('/subscription/cancel', { method: 'DELETE' }),

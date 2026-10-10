@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PLAN_LIMITS } from '../subscription/subscription.service';
+import { PLAN_LIMITS, effectivePlan } from '../subscription/plans';
 
 @Injectable()
 export class MessagingService {
@@ -147,8 +147,8 @@ export class MessagingService {
       where: { id: senderId },
       include: { subscription: true },
     });
-    const plan = sender?.subscription?.plan ?? 'FREE';
-    const limit = PLAN_LIMITS[plan]?.maxMessagesPerMonth ?? 50;
+    const plan = effectivePlan(sender?.subscription);
+    const limit = PLAN_LIMITS[plan].maxMessagesPerMonth;
     if (limit !== -1) {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);

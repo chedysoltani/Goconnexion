@@ -20,8 +20,6 @@ enum PlanType {
   FREE
   PRO
   BUSINESS
-  PREMIUM_ENTREPRENEUR
-  PREMIUM_FREELANCER
   PREMIUM_INCUBATEUR
 }
 
@@ -118,6 +116,15 @@ model User {
   lastActiveAt             DateTime  @default(now())
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
+
+  // Attribution marketing au moment de l'inscription (premier contact), jamais modifiée ensuite.
+  // Capturée côté frontend par lib/tracking/campaign.ts depuis ?utm_source=&utm_medium=&utm_campaign=&utm_content=
+  // sur /join ou toute autre page d'entrée. Sert à relier un abonnement payant (Subscription) à la
+  // campagne qui a amené ce membre — le parrainage (?ref=) est déjà suivi séparément via ReferralCode/Referral.
+  signupUtmSource   String?
+  signupUtmMedium   String?
+  signupUtmCampaign String?
+  signupUtmContent  String?
 
   // Streak de connexion (re-engagement)
   currentStreak  Int       @default(0)
