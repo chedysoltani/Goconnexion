@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Fraunces } from 'next/font/google';
 import '../styles/index.css';
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n/I18nContext';
 import GlobalProvider from '@/components/global/GlobalProvider';
+import AnalyticsScripts from '@/components/global/AnalyticsScripts';
+import CookieConsentBanner from '@/components/global/CookieConsentBanner';
 import { getSiteUrl } from '@/lib/site-url';
 
 const dmSans = DM_Sans({
@@ -44,11 +46,16 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${dmSans.variable} ${fraunces.variable}`}>
       <body>
+        {/* useSearchParams (re-tracking des pageviews en SPA) exige une limite Suspense */}
+        <Suspense fallback={null}>
+          <AnalyticsScripts />
+        </Suspense>
         <I18nProvider>
           <GlobalProvider>
             {children}
           </GlobalProvider>
         </I18nProvider>
+        <CookieConsentBanner />
       </body>
     </html>
   );

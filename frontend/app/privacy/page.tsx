@@ -86,8 +86,16 @@ export default function PrivacyPage() {
           reste sur votre appareil ; vous pouvez l’effacer à tout moment via les réglages de votre navigateur.
         </p>
         <p>
-          GoConnexions n’utilise aujourd’hui aucun cookie publicitaire ni outil de mesure d’audience tiers (Google
-          Analytics, Meta Pixel…). Si cela change, cette section sera mise à jour avant l’activation de ces outils.
+          Nous utilisons <strong>Plausible</strong> pour mesurer la fréquentation du site de façon anonyme et
+          globale (pages visitées, provenance) : cet outil ne pose aucun cookie et ne permet pas de vous identifier
+          individuellement.
+        </p>
+        <p>
+          Si vous l’acceptez via le bandeau affiché lors de votre première visite, nous utilisons aussi le{' '}
+          <strong>Pixel Meta</strong> (Facebook/Instagram) pour savoir quelles campagnes publicitaires amènent des
+          inscriptions. Il pose un cookie publicitaire et partage certaines données (pages visitées, inscription)
+          avec Meta. Vous pouvez refuser sans que cela change votre expérience du site, et changer d’avis à tout
+          moment en effaçant les cookies de ce site dans votre navigateur.
         </p>
       </section>
 
@@ -97,6 +105,7 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Stripe et Wise</strong> — traitement des paiements et abonnements ;</li>
           <li><strong>Resend</strong> — envoi des emails transactionnels (vérification, réinitialisation de mot de passe, notifications) ;</li>
+          <li><strong>Meta</strong> (Pixel Facebook/Instagram) — uniquement si vous avez accepté le cookie publicitaire ;</li>
           <li>les autres membres, dans la mesure prévue par le service (profil visible, messages à vos connexions, candidature visible par l’auteur d’une offre de stage).</li>
         </ul>
         <p>Nous ne vendons pas vos données personnelles.</p>
