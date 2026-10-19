@@ -1,5 +1,8 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsIn, IsOptional } from 'class-validator';
 import { UserRole } from '@prisma/client';
+
+export const SELF_SERVICE_ROLES = [UserRole.FREELANCER, UserRole.ENTREPRENEUR, UserRole.COLLABORATOR] as const;
+export type SelfServiceRole = (typeof SELF_SERVICE_ROLES)[number];
 
 export class RegisterDto {
   @IsEmail()
@@ -19,9 +22,10 @@ export class RegisterDto {
   @IsNotEmpty()
   lastName!: string;
 
-  @IsEnum(UserRole)
+  // Liste fermée : ADMIN (et tout rôle interne) ne peut jamais être choisi à l'inscription
+  @IsIn(SELF_SERVICE_ROLES)
   @IsOptional()
-  role?: UserRole;
+  role?: SelfServiceRole;
 
   @IsString()
   @IsOptional()

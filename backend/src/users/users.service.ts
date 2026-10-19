@@ -30,7 +30,7 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: Date; country?: string }) {
+  async update(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: Date | null; country?: string }) {
     return this.prisma.user.update({
       where: { id },
       data,

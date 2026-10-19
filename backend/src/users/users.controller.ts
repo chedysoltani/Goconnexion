@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { ReferralService } from '../referral/referral.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AmbassadorGuard } from '../auth/guards/ambassador.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -41,12 +42,13 @@ export class UsersController {
   @Put('profile')
   async update(
     @Request() req: any,
-    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: string; country?: string },
+    @Body() body: UpdateProfileDto,
   ) {
-    const updateData: any = { ...body };
-    if (body.birthDate) {
-      updateData.birthDate = new Date(body.birthDate);
-    } else if ('birthDate' in body) {
+    const { birthDate, ...rest } = body;
+    const updateData: { firstName?: string; lastName?: string; avatarUrl?: string; birthDate?: Date | null; country?: string } = { ...rest };
+    if (birthDate) {
+      updateData.birthDate = new Date(birthDate);
+    } else if (birthDate !== undefined) {
       updateData.birthDate = null;
     }
     return this.usersService.update(req.user.id, updateData);
