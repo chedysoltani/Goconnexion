@@ -38,8 +38,10 @@ async function main() {
 
   const hash = await bcrypt.hash('GoConnexions2026!', 10);
 
-  // ─── 2 ADMINS ────────────────────────────────────────────────────────
-  console.log('① Création des admins...');
+  // ─── 2 FONDATEURS ────────────────────────────────────────────────────
+  // Aucun compte ADMIN n'est créé par le seed : promouvoir ensuite avec
+  //   node dist/src/cli/set-role.js <email> ADMIN
+  console.log('① Création des fondateurs...');
 
   const eric = await prisma.user.create({
     data: {
@@ -48,7 +50,7 @@ async function main() {
       firstName: 'Eric',
       lastName: 'Boudreault',
       avatarUrl: avatar(1),
-      role: 'ADMIN',
+      role: 'FREELANCER',
       plan: 'FREE',
       isEmailVerified: true,
     },
@@ -61,14 +63,14 @@ async function main() {
       firstName: 'Marie-Claude',
       lastName: 'Fontaine',
       avatarUrl: avatar(2),
-      role: 'ADMIN',
+      role: 'FREELANCER',
       plan: 'FREE',
       isEmailVerified: true,
     },
   });
 
-  console.log('   eric@goconnexions.com         → ADMIN (Montréal)');
-  console.log('   marie.fontaine@...            → ADMIN (Québec City)\n');
+  console.log('   eric@goconnexions.com         → FREELANCER (Montréal)');
+  console.log('   marie.fontaine@...            → FREELANCER (Québec City)\n');
 
   // ─── 8 FREELANCERS ───────────────────────────────────────────────────
   console.log('② Création des freelancers...');
@@ -722,7 +724,7 @@ async function main() {
   console.log('║                                                              ║');
   console.log('║  MOT DE PASSE UNIVERSEL : GoConnexions2026!                 ║');
   console.log('║                                                              ║');
-  console.log('║  ADMINS                                                      ║');
+  console.log('║  FONDATEURS (aucun ADMIN : utiliser cli/set-role)            ║');
   console.log('║  eric@goconnexions.com           Eric Boudreault (MTL)       ║');
   console.log('║  marie.fontaine@goconnexions.com Marie-Claude Fontaine (QC)  ║');
   console.log('║                                                              ║');

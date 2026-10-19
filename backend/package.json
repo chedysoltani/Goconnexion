@@ -19,7 +19,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node prisma/seed.ts",
-    "seed:prod": "ts-node prisma/seed-production.ts"
+    "seed:prod": "ts-node prisma/seed-production.ts",
+    "set-role": "ts-node src/cli/set-role.ts",
+    "set-password": "ts-node src/cli/set-password.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

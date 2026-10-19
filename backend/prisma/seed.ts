@@ -53,14 +53,15 @@ async function main() {
   // ─── UTILISATEURS ─────────────────────────────────────────────────────
   console.log('Création des utilisateurs...');
 
-  // 1. Admin
+  // 1. Compte « admin » de démo, volontairement SANS rôle ADMIN.
+  //    En local : npm run set-role -- admin@goconnexions.com ADMIN
   const admin = await prisma.user.create({
     data: {
       email: 'admin@goconnexions.com',
       password: hash,
       firstName: 'Admin',
       lastName: 'GoConnexion',
-      role: 'ADMIN',
+      role: 'COLLABORATOR',
       plan: 'FREE',
     },
   });
@@ -193,7 +194,7 @@ async function main() {
     include: { entrepreneurProfile: true },
   });
 
-  console.log('  admin@goconnexions.com          → ADMIN');
+  console.log('  admin@goconnexions.com          → COLLABORATOR (set-role pour ADMIN)');
   console.log('  jean.dupont@goconnexions.com    → FREELANCER FREE');
   console.log('  sarah.benali@goconnexions.com   → FREELANCER PRO');
   console.log('  leila.trabelsi@goconnexions.com → FREELANCER FREE');
@@ -590,7 +591,7 @@ async function main() {
   console.log('');
   console.log('  COMPTES DE DEMO (mot de passe : chedy)');
   console.log('  ─────────────────────────────────────────────────────────');
-  console.log('  admin@goconnexions.com           Admin');
+  console.log('  admin@goconnexions.com           Collaborator (npm run set-role -- <email> ADMIN)');
   console.log('  jean.dupont@goconnexions.com     Freelancer FREE');
   console.log('  sarah.benali@goconnexions.com    Freelancer PRO');
   console.log('  leila.trabelsi@goconnexions.com  Freelancer FREE #2');
