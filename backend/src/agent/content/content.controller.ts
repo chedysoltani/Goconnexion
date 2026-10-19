@@ -16,11 +16,11 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { ContentService } from './content.service';
 import { GenerateContentDto, UpdateContentDto } from './dto/content.dto';
 
-// Réservé à l'admin — génération et validation du contenu marketing avant
-// publication manuelle sur LinkedIn/Facebook (pas de publication automatique).
+// Réservé à l'admin et à l'éditeur de contenu (équipe marketing) — génération et validation
+// du contenu marketing avant publication manuelle sur LinkedIn/Facebook (pas de publication automatique).
 @Controller('agent/content')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.EDITOR)
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
 

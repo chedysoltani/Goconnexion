@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -49,25 +48,21 @@ const ROLE_COLORS: Record<string, string> = {
   FREELANCER: '#3b82f6',
   ENTREPRENEUR: '#2563eb',
   COLLABORATOR: '#f59e0b',
+  EDITOR: '#0d9488',
 };
 
 export default function AdminPage() {
-  const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [ambassadors, setAmbassadors] = useState<AmbassadorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editorTogglingId, setEditorTogglingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
+  // L'accès (ADMIN uniquement) est vérifié par app/admin/layout.tsx avant le rendu de cette page.
   useEffect(() => {
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    const user = userStr ? JSON.parse(userStr) : null;
-    if (!user || user.role !== 'ADMIN') {
-      router.push('/auth/login');
-      return;
-    }
-
     const load = async () => {
       try {
         const [statsData, usersData, ambassadorsData] = await Promise.all([
@@ -85,7 +80,7 @@ export default function AdminPage() {
       }
     };
     load();
-  }, [router]);
+  }, []);
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm('Supprimer cet utilisateur ? Cette action est irréversible.')) return;
@@ -116,6 +111,21 @@ export default function AdminPage() {
       // silencieux
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleToggleEditor = async (u: AdminUser) => {
+    const makeEditor = u.role !== 'EDITOR';
+    if (makeEditor && !confirm(`Donner le rôle Éditeur de contenu à ${u.email} ? Il aura accès à « Présentation » et « Contenus » dans l'administration.`)) return;
+    setEditorTogglingId(u.id);
+    setActionError(null);
+    try {
+      const updated = await api.admin.setEditor(u.id, makeEditor);
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, role: updated.role } : x)));
+    } catch (err: any) {
+      setActionError(err?.message || 'Impossible de modifier le rôle.');
+    } finally {
+      setEditorTogglingId(null);
     }
   };
 
@@ -216,6 +226,10 @@ export default function AdminPage() {
                 <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
                   Utilisateurs ({users.length})
                 </h2>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Le rôle Éditeur se donne à un compte dédié de type COLLABORATOR (ex. marketing@…), jamais à un compte membre.
+                </p>
+                {actionError && <p className="text-[12px] text-red-500 mt-2">{actionError}</p>}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -262,6 +276,19 @@ export default function AdminPage() {
                         <td className="px-5 py-4 text-[12px] text-slate-500">{formatDate(u.lastActiveAt)}</td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
+                            {(u.role === 'COLLABORATOR' || u.role === 'EDITOR') && (
+                              <button
+                                onClick={() => handleToggleEditor(u)}
+                                disabled={editorTogglingId === u.id}
+                                className="text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+                                style={u.role === 'EDITOR'
+                                  ? { color: '#0d9488', background: 'rgba(13,148,136,0.12)' }
+                                  : { color: '#475569', background: 'rgba(100,116,139,0.08)' }}
+                                title={u.role === 'EDITOR' ? 'Retirer le rôle Éditeur (repasse en COLLABORATOR)' : 'Donner le rôle Éditeur de contenu'}
+                              >
+                                {editorTogglingId === u.id ? '...' : u.role === 'EDITOR' ? '✎ Éditeur · retirer' : 'Rendre éditeur'}
+                              </button>
+                            )}
                             {u.role !== 'ADMIN' && (
                               <button
                                 onClick={() => handleToggleAmbassador(u)}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { LoginCredentials } from '@/types/auth';
 import { api } from '@/lib/api';
 import { getSafeRedirect } from '@/lib/safe-redirect';
+import { ADMIN_HOME, isAdminRole } from '@/lib/admin-access';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function LoginForm() {
     try {
       const data = await api.auth.login(formData);
       const role = data?.user?.role ?? '';
-      router.push(redirect ?? (role === 'ADMIN' ? '/admin' : '/dashboard'));
+      router.push(redirect ?? (isAdminRole(role) ? ADMIN_HOME[role] : '/dashboard'));
     } catch (err: any) {
       setErrors({ general: err.message || 'Email ou mot de passe incorrect' });
     } finally {

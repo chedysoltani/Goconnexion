@@ -167,8 +167,8 @@ export class AnalyticsService {
           website: user.entrepreneurProfile?.website || '',
         },
       };
-    } else {
-      // ADMIN or fallback
+    } else if (user.role === 'ADMIN') {
+      // Statistiques globales de la plateforme : ADMIN uniquement
       const totalUsers = await this.prisma.user.count();
       const totalProjects = await this.prisma.project.count();
       const totalConversations = await this.prisma.conversation.count();
@@ -181,6 +181,9 @@ export class AnalyticsService {
           totalConversations,
         },
       };
+    } else {
+      // COLLABORATOR, EDITOR… : pas de statistiques plateforme
+      return { role: user.role, stats: {} };
     }
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PlanType } from '@prisma/client';
+import { PlanType, UserRole } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -72,6 +72,29 @@ export class AdminService {
       where: { id },
       data: { isAmbassador },
       select: { id: true, firstName: true, lastName: true, email: true, isAmbassador: true },
+    });
+  }
+
+  // Le rôle EDITOR est réservé à des comptes dédiés (ex. marketing@…) créés comme COLLABORATOR :
+  // on refuse de convertir un compte membre FREELANCER/ENTREPRENEUR (il perdrait son profil)
+  // et on ne touche jamais à un ADMIN. Retirer EDITOR repasse le compte en COLLABORATOR.
+  async setEditor(id: string, editor: boolean) {
+    const user = await this.prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const from = editor ? UserRole.COLLABORATOR : UserRole.EDITOR;
+    const to = editor ? UserRole.EDITOR : UserRole.COLLABORATOR;
+    if (user.role !== to && user.role !== from) {
+      throw new BadRequestException(
+        editor
+          ? `Seul un compte COLLABORATOR peut devenir EDITOR (rôle actuel : ${user.role}). Créez un compte dédié.`
+          : `Ce compte n'est pas EDITOR (rôle actuel : ${user.role}).`,
+      );
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: { role: to },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true },
     });
   }
 

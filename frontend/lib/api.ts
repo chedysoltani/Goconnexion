@@ -1,5 +1,6 @@
 import type { PaidPlan, PlansResponse } from '@/types/auth';
 import { getCampaign } from '@/lib/tracking/campaign';
+import { ROLE_MARKER_COOKIE } from '@/lib/admin-access';
 
 // Les tokens JWT sont stockés dans des cookies httpOnly posés par le backend.
 // Le frontend ne touche jamais aux tokens — le navigateur les envoie automatiquement.
@@ -15,14 +16,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 const CLIENT_SESSION_COOKIE = 'gc_access';
 const CLIENT_SESSION_MAX_AGE = 24 * 60 * 60; // aligné sur la durée de vie de l'access token
 
-function setClientSessionMarker() {
+function setClientSessionMarker(role?: string) {
   if (typeof document === 'undefined') return;
   document.cookie = `${CLIENT_SESSION_COOKIE}=1; path=/; max-age=${CLIENT_SESSION_MAX_AGE}; SameSite=Lax`;
+  if (role) setRoleMarker(role);
+}
+
+// Indice de rôle pour les redirections du middleware (voir lib/admin-access.ts) — pas une autorisation.
+export function setRoleMarker(role: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${ROLE_MARKER_COOKIE}=${encodeURIComponent(role)}; path=/; max-age=${CLIENT_SESSION_MAX_AGE}; SameSite=Lax`;
 }
 
 function clearClientSessionMarker() {
   if (typeof document === 'undefined') return;
   document.cookie = `${CLIENT_SESSION_COOKIE}=; path=/; max-age=0`;
+  document.cookie = `${ROLE_MARKER_COOKIE}=; path=/; max-age=0`;
 }
 
 async function request(endpoint: string, options: RequestInit = {}, retry = true): Promise<any> {
@@ -51,7 +60,7 @@ async function request(endpoint: string, options: RequestInit = {}, retry = true
         if (refreshData.user && typeof window !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(refreshData.user));
         }
-        setClientSessionMarker();
+        setClientSessionMarker(refreshData.user?.role);
         return request(endpoint, options, false);
       }
     } catch {
@@ -103,7 +112,7 @@ export const api = {
       // Les cookies sont posés par le backend — on stocke seulement l'objet user
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        setClientSessionMarker();
+        setClientSessionMarker(data.user.role);
         if (data.streak) {
           sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
         } else {
@@ -141,7 +150,7 @@ export const api = {
       });
       if (data.user && typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        setClientSessionMarker();
+        setClientSessionMarker(data.user.role);
         if (data.streak) {
           sessionStorage.setItem('gc_streak_flash', JSON.stringify(data.streak));
         } else {
@@ -283,6 +292,16 @@ export const api = {
     ambassadors: () => request('/admin/ambassadors'),
     setAmbassador: (id: string, isAmbassador: boolean) =>
       request(`/admin/users/${id}/ambassador`, { method: 'PUT', body: JSON.stringify({ isAmbassador }) }),
+    // Donne (COLLABORATOR → EDITOR) ou retire (EDITOR → COLLABORATOR) le rôle d'éditeur de contenu
+    setEditor: (id: string, editor: boolean) =>
+      request(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ editor }) }),
+  },
+
+  siteContent: {
+    get: (key: string) => request(`/site-content/${key}`),
+    getForEditor: (key: string) => request(`/site-content/${key}/editor`),
+    update: (key: string, data: { title: string; content: unknown }) =>
+      request(`/site-content/${key}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   feed: {

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@/types/auth';
+import { ADMIN_HOME } from '@/lib/admin-access';
 
 type Tab = 'feed' | 'connections' | 'messages' | 'projects' | 'earnings' | 'analytics' | 'incubator' | 'events' | 'business-cards' | 'referral' | 'ads' | 'marketplace';
 
@@ -30,6 +31,7 @@ const ROLE_CONFIG: Record<string, { color: string; bg: string; label: string; do
   entrepreneur: { color: '#c084fc', bg: 'rgba(139,92,246,0.12)', label: 'Entrepreneur', dot: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
   user:         { color: '#60a5fa', bg: 'rgba(37,99,235,0.12)', label: 'Explorateur',  dot: '#2563eb', gradient: 'linear-gradient(135deg,#2563eb,#1d4ed8)' },
   admin:        { color: '#fbbf24', bg: 'rgba(245,158,11,0.12)', label: 'Admin',        dot: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)' },
+  editor:       { color: '#5eead4', bg: 'rgba(13,148,136,0.12)', label: 'Éditeur',      dot: '#0d9488', gradient: 'linear-gradient(135deg,#0d9488,#0f766e)' },
 };
 
 const IconFeed = () => (
@@ -438,7 +440,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
       </nav>
 
       {/* ── Admin link ────────────────────── */}
-      {role === 'admin' && (
+      {(role === 'admin' || role === 'editor') && (
         <div className="relative z-10 px-2 mb-1 flex-shrink-0">
           <AnimatePresence>
             {!collapsed && (
@@ -451,8 +453,8 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
             )}
           </AnimatePresence>
           <Link
-            href="/admin"
-            title={collapsed ? 'Panel Admin' : undefined}
+            href={role === 'editor' ? ADMIN_HOME.EDITOR : ADMIN_HOME.ADMIN}
+            title={collapsed ? (role === 'editor' ? 'Contenus' : 'Panel Admin') : undefined}
             className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl group transition-colors duration-150 hover:bg-white/8"
             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' }}
           >
@@ -465,7 +467,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
               {!collapsed && (
                 <motion.span variants={labelVariants} initial="hide" animate="show" exit="hide"
                   className="text-[13px] font-semibold text-amber-300 truncate">
-                  Panel Admin
+                  {role === 'editor' ? 'Présentation & contenus' : 'Panel Admin'}
                 </motion.span>
               )}
             </AnimatePresence>
@@ -474,7 +476,7 @@ export default function DashboardSidebar({ user, activeTab, setActiveTab, onUpgr
       )}
 
       {/* ── Upgrade Banner ────────────────── */}
-      {!collapsed && user && role !== 'admin' && (!user.plan || user.plan === 'FREE') && (
+      {!collapsed && user && role !== 'admin' && role !== 'editor' && (!user.plan || user.plan === 'FREE') && (
         <div className="relative z-10 px-2.5 mb-2 flex-shrink-0">
           <motion.button
             onClick={onUpgradeClick}

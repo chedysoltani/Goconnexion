@@ -14,6 +14,9 @@ enum UserRole {
   FREELANCER
   ENTREPRENEUR
   COLLABORATOR
+  // Éditeur de contenu (équipe marketing) : présentation du site + contenus de l'agent IA uniquement.
+  // Attribué par un ADMIN (PUT /admin/users/:id/role) ou via node dist/src/cli/set-role.js.
+  EDITOR
 }
 
 enum PlanType {
@@ -174,6 +177,7 @@ model User {
 
   // Agent IA marketing
   reviewedAgentContent AgentContent[]  @relation("AgentContentReviewer")
+  siteContentUpdates   SiteContent[]   @relation("SiteContentUpdatedBy")
   followUps            AgentFollowUp[]
 
   // Stages
@@ -759,4 +763,16 @@ model InternshipApplication {
   updatedAt   DateTime                    @updatedAt
 
   @@unique([offerId, applicantId])
+}
+
+// Textes de présentation éditables depuis /admin/presentation (ADMIN, EDITOR).
+// key = identifiant stable de la page/section (ex. "about"), content = structure propre à chaque clé
+// (validée côté backend dans site-content/site-content.schemas.ts).
+model SiteContent {
+  key         String   @id
+  title       String
+  content     Json
+  updatedById String?
+  updatedBy   User?    @relation("SiteContentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
 }

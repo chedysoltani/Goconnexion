@@ -1,10 +1,12 @@
 import { Controller, Get, Delete, Put, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { SetEditorDto } from './dto/set-editor.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole, PlanType } from '@prisma/client';
 
+// Tout le contrôleur est réservé à ADMIN (EDITOR inclus → 403).
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
@@ -45,5 +47,11 @@ export class AdminController {
   @Put('users/:id/ambassador')
   setAmbassador(@Param('id') id: string, @Body('isAmbassador') isAmbassador: boolean) {
     return this.adminService.setAmbassador(id, isAmbassador);
+  }
+
+  // Donne ou retire le rôle EDITOR. Seul ce rôle est géré ici (ADMIN : script cli/set-role).
+  @Put('users/:id/role')
+  setEditor(@Param('id') id: string, @Body() dto: SetEditorDto) {
+    return this.adminService.setEditor(id, dto.editor);
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { STAFF_ROLES } from '../auth/roles';
 
 @Injectable()
 export class UsersService {
@@ -48,13 +49,13 @@ export class UsersService {
     });
   }
 
-  // Liste complète (hors soi-même et hors admin) — utilisée par la messagerie
+  // Liste complète (hors soi-même et hors comptes internes admin/éditeur) — utilisée par la messagerie
   // pour démarrer une conversation avec n'importe quel utilisateur du réseau.
   async findAllExceptSelf(userId: string) {
     return this.prisma.user.findMany({
       where: {
         NOT: { id: userId },
-        role: { not: 'ADMIN' },
+        role: { notIn: STAFF_ROLES },
       },
       select: {
         id: true,
@@ -133,7 +134,7 @@ export class UsersService {
     const candidates = await this.prisma.user.findMany({
       where: {
         NOT: { id: userId },
-        role: { not: 'ADMIN' },
+        role: { notIn: STAFF_ROLES },
       },
       select: {
         id: true,

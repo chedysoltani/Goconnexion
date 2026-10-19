@@ -1,9 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, Copy, Check, ThumbsUp, ThumbsDown, Rocket, ChevronDown, Loader2 } from 'lucide-react';
+import { Sparkles, Copy, Check, ThumbsUp, ThumbsDown, Rocket, ChevronDown, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 type ContentType = 'LINKEDIN_POST' | 'FACEBOOK_POST' | 'BLOG_ARTICLE';
@@ -63,7 +61,6 @@ const FILTERS: Array<{ label: string; value: ContentStatus | 'ALL' }> = [
 ];
 
 export default function AdminContentPage() {
-  const router = useRouter();
   const [items, setItems] = useState<AgentContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<ContentStatus | 'ALL'>('PENDING_REVIEW');
@@ -82,17 +79,7 @@ export default function AdminContentPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    const user = userStr ? JSON.parse(userStr) : null;
-    if (!user || user.role !== 'ADMIN') {
-      router.push('/auth/login');
-      return;
-    }
-    loadItems(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
+  // L'accès (ADMIN ou EDITOR) est vérifié par app/admin/layout.tsx avant le rendu de cette page.
   useEffect(() => {
     loadItems(filter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +184,7 @@ export default function AdminContentPage() {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-center mb-8"
         >
           <div className="flex items-center gap-3">
             <motion.div
@@ -213,13 +200,6 @@ export default function AdminContentPage() {
               <p className="text-sm text-slate-500">Génère, relis et valide les publications avant diffusion manuelle</p>
             </div>
           </div>
-          <Link
-            href="/admin"
-            className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Panel admin
-          </Link>
         </motion.div>
 
         {/* Formulaire de génération */}
